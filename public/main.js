@@ -3178,13 +3178,13 @@ function trim_chars(){
 
 function auto_start(){
     //console.log(main_api.value)
-    if (main_api.value == "openai"){
+    if (main_api == "openai"){
         document.getElementById("api_button_openai").click()
     }
-    else if (main_api.value == "novel"){
+    else if (main_api == "novel"){
         document.getElementById("api_button_novel").click()
     }
-    else if (main_api.value == "kobold"){
+    else if (main_api == "kobold"){
         document.getElementById("api_button").click()
     }
 }
