@@ -1,3 +1,5 @@
 node_modules/*
 *.7z
 .vscode/launch.json
+public/chats/*
+public/characters/*

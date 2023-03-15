@@ -1711,6 +1711,7 @@ a {
     margin: 0;
     right: -450px;
     padding-left: 20px;
+    padding-bottom: 20vh;
     -webkit-transition: right 0.14s ease-in-out 0.02s;
     -moz-transition: right 0.14s ease-in-out 0.02s;
     transition: right 0.14s ease-in-out 0.02s;
