@@ -1471,7 +1471,7 @@ function select_selected_character(chid) { //character select
         this_avatar = "characters/" + characters[chid].avatar;
     }
     $("#avatar_load_preview").attr('src', this_avatar + "#" + Date.now());
-    $("#name_div").css("display", "none");
+    $("#name_div").css("display", "block");
 
     $("#form_create").attr("actiontype", "editcharacter");
 }
@@ -1937,6 +1937,8 @@ $("#rm_info_button").click(function () {
 $('#character_name_pole').on('change keyup paste', function () {
     if (menu_type == 'create') {
         create_save_name = $('#character_name_pole').val();
+    } else {
+        timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
 
 });
