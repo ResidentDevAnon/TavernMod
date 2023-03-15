@@ -1,0 +1,11 @@
+
+node_modules/*
+public/KoboldAI Settings/*
+characters/*
+chats/*
+public/backgrounds/*
+public/characters/*
+public/chats/*
+uploads/*
+*.7z
+public/settings.json
