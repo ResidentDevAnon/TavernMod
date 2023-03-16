@@ -269,6 +269,7 @@ border-style: none;
 padding:6px;
 
 padding-bottom:20px;
+display: inline-block;
 }
 
 .avatar img {
@@ -667,6 +668,8 @@ input[type=button] {
     vertical-align: top;
     display: inline-block;
     margin-top: 52px;
+    cursor: pointer;
+    color:transparent;
 }
 
 #description_div{
@@ -1124,7 +1127,7 @@ input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
     margin-right: 15px;
-    width: 200px;
+    width: 90%;
     height: 7px;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 15px;
@@ -1593,11 +1596,12 @@ main {
     margin: 0 auto 
 }
 
+/*i have no idea what these are but they yell at me so i fixed it?*/
 article {
     margin: 0 1em;
     padding: 0 22px;
     -webkit-transition: -webkit-transform.3s;
-    -moz-transition: : -moz-transform.3s;
+    -moz-transition: -moz-transform.3s;
     transition: transform.3s;
 }
 
@@ -1779,8 +1783,16 @@ a {
 
 body {
     -webkit-animation: bugfix infinite 1s;
+    animation: bugfix infinite 1s;
 }
 
+/*i have no idea what these are but they yell at me*/
+@keyframes bugfix {
+    to {
+        padding: 0;
+    }
+
+}
 @-webkit-keyframes bugfix {
     to {
         padding: 0;
@@ -1963,10 +1975,6 @@ body {
     transition: width 0s ease;
 }
 
-custom{
-    border:white 
-}
-
 .mes_text > ul>li{
 
     padding: 0px;
@@ -1984,6 +1992,7 @@ custom{
     line-height: 1.5em;
 }
 
+/*yes this is needed to break spacing margins */
 .mes_text > br {
     content: '';
 }
@@ -2015,7 +2024,7 @@ ol li{
     filter: drop-shadow(2px 2px 1px #ffffff44);
 }
 
-/*ordered list */
+/*unordered list */
 ul {
     border: 1px solid black;
     padding: 0px;
@@ -2056,3 +2065,121 @@ pre code {
     color: mintcream;
     filter: drop-shadow(0px 0px 1px #23e98e);
 }
+/* settings buttons */
+.submenu{
+        cursor:pointer;
+        padding-left: 4px;
+        padding-right: 4px;
+        margin-top:3px;
+        display: inline-grid;
+        background: #00000055;
+        filter: none;
+        border-radius: 10px;
+}
+/*blockquote*/
+blockquote {
+    /*border: 1px solid black;
+    padding: 5px;
+    padding-bottom: 5px;
+    background-color: #222222ff;
+    color: mintcream;
+    filter: drop-shadow(0px 0px 1px #006b05);*/
+    margin: 0px;
+}
+/*blockquote*/
+blockquote p{
+    color: #006b05;
+    margin-bottom: 0px !important;
+    display: inline;
+}
+blockquote br{
+    size: 0px;
+}
+/*code outside box*/
+del {
+    background-color: #00000000;
+    padding: 0px;
+    font-family: Consolas, monospace;
+    color: rosybrown;
+    filter: drop-shadow(2px 2px 6px #c91111);
+}
+/* garbo from index */
+
+#openai_max_context{
+    margin-left: 10px;
+    margin-bottom: 20px;
+}
+
+#openai_max_context_counter{
+    margin-bottom: 0px;
+}
+
+#tweaks_box {
+    margin-left: 10px;
+    display: block;
+    width: 100%;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: 50px;
+    height: 25px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border:1px solid #BBBBBB33;
+    background:#6b0500;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 3px;
+    /*background-color: white;*/
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #006b05;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #99a1a7;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(24px);
+    -ms-transform: translateX(24px);
+    transform: translateX(24px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 6px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+.css_checker{display: none;}

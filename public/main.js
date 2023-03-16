@@ -3,7 +3,7 @@
 // remove document ready function wrapper and just move the script to the bottom of index.html so it still waits for DOM
 
 const VERSION = '1.2.8-Tavmod';
-var converter = new showdown.Converter();
+var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true});
 var bg_menu_toggle = false;
 var default_user_name = "You";
 var name1 = default_user_name;
@@ -132,7 +132,6 @@ var openai_msgs_example = [];
 var keep_example_dialogue = true;
 var nsfw_toggle = true;
 var CYOA_mode = true;
-var keep_example_dialogue = false;
 var enhance_definitions = false;
 var agressive_parter = false;
 var partner_mc = false;
@@ -141,11 +140,16 @@ var user_actions = false;
 
 //last character chat
 var last_char = ''
+//system settings tab
+var bg_shuffle_delay = 0
+var open_last_char = true
+var open_nav_bar = true
+var open_bg_bar = true
+var last_menu = ''
 //css
 var bg1_toggle = true;
 var css_mes_bg = $('<div class="mes"></div>').css('background');
 var css_send_form_display = $('<div id=send_form></div>').css('display');
-
 var colab_ini_step = 1;
 setInterval(function () {
     switch (colab_ini_step) {
@@ -569,13 +573,16 @@ function clearChat() {
     count_view_mes = 0;
     $('#chat').html('');
 }
+
+//message modifications
 function messageFormating(mes, ch_name) {
     //this breaks stuff for codeblocks
     //if (this_chid != undefined) mes = mes.replaceAll("<", "&lt;").replaceAll(">", "&gt;");//for Chloe
     if (this_chid === undefined) {
-        mes = mes.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>');
-
+        mes = mes.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>')
     } else {
+        mes = mes.replace(/\n>|">|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
+        //mes = mes.replace(/```/g, '\n```\n')
         mes = converter.makeHtml(mes);
         mes = mes.replace(/\n/g, '<br/>');
     }
@@ -1329,6 +1336,8 @@ $("#rm_button_settings").click(function () {
     $("#rm_button_characters").children("h2").css(deselected_button_style);
     $("#rm_button_settings").children("h2").css(seleced_button_style);
     $("#rm_button_selected_ch").children("h2").css(deselected_button_style);
+    //default selected option
+    $("#api_settings").children("h2").css(seleced_button_style);
 });
 $("#rm_button_characters").click(function () {
     selected_button = 'characters';
@@ -1461,7 +1470,16 @@ function select_selected_character(chid) { //character select
     $("#scenario_pole").val(characters[chid].scenario);
     $("#mes_example_textarea").val(characters[chid].mes_example);
     $("#selected_chat_pole").val(characters[chid].chat);
-    $("#create_date_pole").val(characters[chid].create_date);
+    //console.log(`create date ` + characters[chid].create_date + `number conv`+ Number(characters[chid].create_date))
+    //check for 'bad' cards
+    if (characters[chid].create_date == undefined || Number(characters[chid].create_date) == 'NaN' || Number(characters[chid].create_date) == NaN||Number(characters[chid].create_date) === 0){
+        //update creation date and push the save button
+        $("#create_date_pole").val(Date.now())
+        setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
+    }
+    else{
+        $("#create_date_pole").val(characters[chid].create_date)
+    }
     $("#avatar_url_pole").val(characters[chid].avatar);
     $("#chat_import_avatar_url").val(characters[chid].avatar);
     $("#chat_import_character_name").val(characters[chid].name);
@@ -1937,9 +1955,11 @@ $("#rm_info_button").click(function () {
 $('#character_name_pole').on('change keyup paste', function () {
     if (menu_type == 'create') {
         create_save_name = $('#character_name_pole').val();
-    } else {
+    }
+    else {
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
+
 
 });
 $('#description_textarea').on('keyup paste cut', function () {//change keyup paste cut
@@ -2377,14 +2397,30 @@ $('#enhance_definitions').change(function () {
 $('#agressive_parter').change(function () {
     agressive_parter = !!$('#agressive_parter').prop('checked');
     saveSettings();
-});$('#carry_me').change(function () {
+});
+$('#carry_me').change(function () {
     carry_me = !!$('#carry_me').prop('checked');
     saveSettings();
-});$('#user_actions').change(function () {
+});
+$('#user_actions').change(function () {
     user_actions = !!$('#user_actions').prop('checked');
     saveSettings();
-});$('#partner_mc').change(function () {
+});
+$('#partner_mc').change(function () {
     partner_mc = !!$('#partner_mc').prop('checked');
+    saveSettings();
+});
+//bookmark
+$('#open_last_char_togg').change(function () {
+    open_last_char = !!$('#open_last_char_togg').prop('checked');
+    saveSettings();
+});
+$('#open_sett_start').change(function () {
+    open_nav_bar = !!$('#open_sett_start').prop('checked');
+    saveSettings();
+});
+$('#open_bg_start').change(function () {
+    open_bg_bar = !!$('#open_bg_start').prop('checked');
     saveSettings();
 });
 
@@ -2545,6 +2581,7 @@ async function getSettings(type) {//timer
                 pres_pen_openai = settings.pres_pen_openai ?? 0.7;
                 stream_openai = settings.stream_openai ?? true;
                 openai_max_context = settings.openai_max_context ?? 4095;
+                //future me remember !! converts to bool, ?? is a null check
                 if (settings.nsfw_toggle !== undefined) nsfw_toggle = !!settings.nsfw_toggle;
                 if (settings.CYOA_mode !== undefined) CYOA_mode = !!settings.CYOA_mode;
                 if (settings.keep_example_dialogue !== undefined) keep_example_dialogue = !!settings.keep_example_dialogue;
@@ -2553,7 +2590,16 @@ async function getSettings(type) {//timer
                 if (settings.partner_mc !== undefined) partner_mc = !!settings.partner_mc;
                 if (settings.carry_me !== undefined) carry_me = !!settings.carry_me;
                 if (settings.user_actions !== undefined) user_actions = !!settings.user_actions;
-                if (settings.last_char !== undefined) last_char = !!settings.last_char;
+                //bookmark
+                if (settings.open_last_char !== undefined) open_last_char = !!settings.open_last_char;
+                if (settings.open_nav_bar !== undefined) open_nav_bar = !!settings.open_nav_bar;
+                if (settings.open_bg_bar !== undefined) open_bg_bar = !!settings.open_bg_bar;
+                last_char = settings.last_char ?? "";
+                //console.log(bg_shuffle_delay)
+                //5 min default
+                bg_shuffle_delay = settings.bg_shuffle_delay ?? 300000;
+                //default to character list
+                last_menu = settings.last_menu ?? "char_list";
 
                 $('#stream_toggle').prop('checked', stream_openai);
 
@@ -2568,6 +2614,10 @@ async function getSettings(type) {//timer
                 $('#partner_mc').prop('checked', partner_mc);
                 $('#carry_me').prop('checked', carry_me);
                 $('#user_actions').prop('checked', user_actions);
+                //bookmark
+                $('#open_last_char_togg').prop('checked', open_last_char);
+                $('#open_sett_start').prop('checked', open_nav_bar);
+                $('#open_bg_start').prop('checked', open_bg_bar);
 
                 addZeros = "";
                 if (isInt(temp_openai)) addZeros = ".00";
@@ -2635,7 +2685,6 @@ async function saveSettings(type) {
         if (last_char == true){
             last_char = settings.last_char
         }
-
     jQuery.ajax({
         type: 'POST',
         url: '/savesettings',
@@ -2674,7 +2723,12 @@ async function saveSettings(type) {
             carry_me: carry_me,
             partner_mc: partner_mc,
             user_actions: user_actions,
-            last_char : last_char
+            last_char : last_char,
+            bg_shuffle_delay: bg_shuffle_delay,
+            open_last_char: open_last_char,
+            open_nav_bar: open_nav_bar,
+            open_bg_bar: open_bg_bar,
+            last_menu: last_menu,
         }),
         beforeSend: function () {
 
@@ -3193,20 +3247,40 @@ function auto_start(){
 
 function auto_open(){
     //pasted code
-    document.getElementById("nav-toggle").click()
-    document.getElementById("bg_menu_button").click()
+    if (open_nav_bar){
+        document.getElementById("nav-toggle").click()
+    }
+    if (open_bg_bar){
+        document.getElementById("bg_menu_button").click()
+    }
+};
+function auto_last_menu(){
+    //pasted code
+    //console.log(last_menu)
+    if (last_menu == "char_list"){
+        document.getElementById("rm_button_characters").click()
+    }
+    else if (last_menu == "sett"){
+        document.getElementById("rm_button_settings").click()
+    }
+    else if (last_menu == "last_char"){
+        document.getElementById("rm_button_selected_ch").click()
+    }
 };
 function auto_char(){
+    if (open_last_char == false){
+        return
+    }
     const parentDiv = document.querySelector('#rm_print_charaters_block');
     const characters = parentDiv.querySelectorAll('div.character_select');
     //console.log(characters)
     const last_char_match = settings.last_char
-    console.log(`trying to match ${last_char_match}`)
+    //console.log(`trying to match ${last_char_match}`)
     for (let i = 0; i < characters.length; i++) {
         var avatar = characters[i].querySelector('div.avatar').querySelector('img').getAttribute('src').replace(/#.*/, "")
         //console.log(avatar)
         if (avatar == last_char_match){
-            console.log(`match found? ${avatar}`)
+            //console.log(`match found? ${avatar}`)
             characters[i].click()
         }
     }
@@ -3220,13 +3294,17 @@ async function BG_shuffle(){
     const parentDiv = document.querySelector('#bg_menu_content');
     const BGs = parentDiv.querySelectorAll('img.bg_example_img');
     var BG_shuffler = []
-    BG_shuffler = BGs
-    //console.log(BG_shuffler)
     while (true) {
-        var rng = getRandomInt(Math.floor(Math.random() * BG_shuffler.length))
-        BG_shuffler[rng].click();
-        //5 minutes
-        await new Promise(resolve => setTimeout(resolve, 300000));
+        if (bg_shuffle_delay <= 59000) {
+            await new Promise(resolve => setTimeout(resolve, bg_shuffle_delay));
+        }
+        else{
+            await new Promise(resolve => setTimeout(resolve, bg_shuffle_delay));
+            BG_shuffler = BGs
+            var rng = getRandomInt(Math.floor(Math.random() * BG_shuffler.length))
+            //console.log(BGs)
+            BG_shuffler[rng].click();
+        }
     }
 }
 
@@ -3245,9 +3323,83 @@ async function resize_sheld(){
 
 $(document).ready(function() {
     setTimeout(auto_start, 700)
-    //setTimeout(auto_open, 700)
+    setTimeout(auto_open, 700)
+    setTimeout(auto_last_menu, 1500)
     setTimeout(auto_char, 1000)
-    //5mins
-    setTimeout(BG_shuffle, 300000)
+    setTimeout(BG_shuffle, 700)
     setTimeout(resize_sheld, 700)
 })
+$("#api_settings").click(function () {
+        $("#API_sett_block").css("display", 'block');
+        $("#sys_sett_block").css("display", 'none');
+        $("#api_settings").children("h2").css(seleced_button_style);
+        $("#system_settings").children("h2").css(deselected_button_style);
+    }
+);
+$("#system_settings").click(function () {
+    $("#sys_sett_block").css("display", 'block');
+    $("#API_sett_block").css("display", 'none');
+    $("#system_settings").children("h2").css(seleced_button_style);
+    $("#api_settings").children("h2").css(deselected_button_style);
+        //default is system so we populate those fields
+        console.log(settings.bg_shuffle_delay)
+        var display_var =  msToTime(settings.bg_shuffle_delay)
+        document.getElementById("bg_shuffle_val_display").textContent = `${display_var}`
+        //bookmark
+        document.getElementById("bg_shuffle_time").value = settings.bg_shuffle_delay
+        //bookmark
+        $('#open_last_char_togg').prop('checked', open_last_char);
+        $('#open_sett_start').prop('checked', open_nav_bar);
+        $('#open_bg_start').prop('checked', open_bg_bar);
+        var menu = document.getElementById('menu_sel_box');
+        //console.log(document.getElementById('menu_sel_box'))
+        for (var i = 0; i < menu.options.length; i++) {
+            if (menu.options[i].value === last_menu) {
+              menu.selectedIndex = i;
+              break;
+            }
+          }
+
+}
+);
+$("#sys_sel_box").change(function() {
+    var menu = document.getElementById('sys_sel_box');
+    var selectedValue = menu.options[menu.selectedIndex].value;
+    //console.log(selectedValue)
+    var block = document.getElementById("system_sett_options");
+    for (var i=0; i<block.children.length; i++) {
+        block.children[i].style.display = 'none';
+        if (block.children[i].getAttribute('id') == selectedValue) {
+            block.children[i].style.display = 'block';
+        } 
+    }
+});
+
+$("#menu_sel_box").change(function() {
+    var menu = document.getElementById('menu_sel_box');
+    last_menu = menu.options[menu.selectedIndex].value;
+    //console.log(last_menu)
+    saveSettings();
+} );
+
+function msToTime(duration) {
+    if (duration == 59000){
+        return "Disabled"
+    }
+    var seconds = Math.floor((duration / 1000) % 60),
+    minutes = Math.floor((duration / (1000 * 60)) % 60),
+    hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+
+    hours = (hours < 10) ? "0" + hours : hours;
+    minutes = (minutes < 10) ? "0" + minutes : minutes;
+    seconds = (seconds < 10) ? "0" + seconds : seconds;
+    return hours + " H " + minutes + " M " + seconds + " S";
+  }
+
+$("#bg_shuffle_time").change(function () {
+    bg_shuffle_delay = document.getElementById("bg_shuffle_time").value
+    var display_var =  msToTime(bg_shuffle_delay)
+    document.getElementById("bg_shuffle_val_display").textContent = `${display_var}`
+    saveSettings();
+}
+)

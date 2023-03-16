@@ -10,9 +10,17 @@
 * searchbox for characters
 * fixed going past the bounds of the window (no double scrollbars)
 * background selector now actually goes to the bottom of the screen
-* background shuffler (5 minutes)
+* background shuffler (default 5 minutes)
 * chloe actually uses 'tavern.png' as her introductory message instead of 'stardust city.png'
 * css overhaul
+* (buggy) character name edit
+* fix any 'bad' cards (sets a bad cards create_date to date.now())
+* greentext, strikethrough, codeblock, inline code, order and unorder lists, table format support, HTML tags in messages
+* system toggles for the following
+  * opening left / right menus on startup
+  * what menu to select in right nav bar
+  * set delay for background shuffler (incl disable)
+  * toggle for (attempting to) open last character on startup 
 
 exmaple images (maybe outdated)
 
