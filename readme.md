@@ -15,13 +15,16 @@
 * css overhaul
 * (buggy) character name edit
 * fix any 'bad' cards (sets a bad cards create_date to date.now())
-* greentext, strikethrough, codeblock, inline code, order and unorder lists, table format support, HTML tags in messages
+* greentext, strikethrough, codeblock, inline code, order and unorder lists, table format support, HTML tags in messages, as well as chat selection menu
 * system toggles for the following
   * opening left / right menus on startup
-  * what menu to select in right nav bar
+  * what menu to select in right nav bar as default 
   * set delay for background shuffler (incl disable)
   * toggle for (attempting to) open last character on startup 
-
+* fix saving changes being extremely laggy and added an indicator for when changes are unsaved / saved
+* less if else, more switch statements
+* amount of tokens to generate slider for OAI 
+* proper rending of style elements (*text* ~~text~~ etc.) within chat selector
 exmaple images (maybe outdated)
 
 ![chloe greeting](github_images/chloe.png "chloe greeting")

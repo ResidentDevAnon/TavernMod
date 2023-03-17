@@ -75,8 +75,6 @@
                 <h5>Forms a personality more clearly (<a href="/notes/11" target="_blank">?</a>)</h5>
             </div>
             <textarea id="mes_example_textarea" name="mes_example" placeholder="" form="form_create"></textarea>
-            
-            
             <div id="character_popup_ok" class="menu_button">Save</div>
             <div></div>
             
@@ -151,7 +149,6 @@
             <div id="rm_button_back" class="right_menu_button"><h2 style="color: rgb(188, 193, 200, 0.5);">&#8656;</h2></div>
             
             <form id="form_create"  action="javascript:void(null);" method="post" enctype="multipart/form-data">
-
                 <div id="name_div">
                     <h4>Name</h4><h5>Character name</h5>
                 <input id="character_name_pole" name="ch_name" class="text_pole" maxlength="120" size="35" value="" autocomplete="off">
@@ -185,9 +182,9 @@
                 <input id="last_mes_pole" name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                 </div>
                 <input id="advanced_div" type="button" value="Advanced Edit">
-                <div id="export_character_div">
+                <br>
+                <div id="export_character_div" style="display: flex;">
                     <div id="result_info">&nbsp;</div>
-                
                     </div>
                 <div id="create_button_div">
                 <input id="create_button" type="submit" value="Create">
@@ -196,9 +193,10 @@
             <div id="delete_button_div">
                 <input id="delete_button" type="submit" value="Delete">
                 <input id="export_button" type="submit" value="Export">
-                
             </div>
         </div>
+        <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->
+        <p id="save_indicator"style="position: absolute;"> </p>
         <!--Sub settings-->
         <div id="rm_api_block" class="right_menu" >
             <div class="submenu" id="api_settings"><h2>API Settings</h2></div>
@@ -293,7 +291,6 @@
                 </div>
             </div>
             <hr style="margin-bottom: 5px;">
-            
             <h4>Your Avatar</h4><h5></h5>
             <div id="user_avatar_block"></div>
             <form id='form_change_name' action="javascript:void(null);" method="post" enctype="multipart/form-data">
@@ -317,9 +314,13 @@
                         <input id="stream_toggle" type="checkbox"/><span style="margin-left: 10px"></span><h4 style="display: inline-block;">Streaming</h4><h5>Enables OpenAI completion streaming</h5>
                     </label>
                 </div>
-				<div id="openai_max_context_block">
-                    <h4>OpenAI Context Size</h4><h5 id="openai_max_context_counter">select</h5>
-                    <input type="range" id="openai_max_context" name="volume" min="512" max="4095" step="1">
+                <div id="openai_gen_block">
+                    <h4>Tokens to Generate</h4><h5 id="OAI_gen_display">select</h5>
+                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="4095" step="1">
+                </div>
+				<div id="openai_context_block">
+                    <h4>OpenAI Context Size</h4><h5 id="OAI_context_display">select</h5>
+                    <input type="range" id="OAI_context_slider" name="volume" min="300" max="4095" step="1">
                 </div>
                 <h4>Anchors Order</h4><h5>Helps to increase the length of messages (<a href="/notes/9" target="_blank">?</a>)</h5>
                 <select id="anchor_order">

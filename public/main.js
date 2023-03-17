@@ -45,7 +45,7 @@ var create_save_scenario = '';
 var create_save_mes_example = '';
 
 var timerSaveEdit;
-var durationSaveEdit = 200;
+var durationSaveEdit = 2000;
 //animation right menu
 var animation_rm_duration = 200;
 var animation_rm_easing = "";
@@ -84,7 +84,6 @@ var user_avatar = 'you.png';
 var temp = 0.5;
 var amount_gen = 80;
 var max_context = 2048;//2048;
-var openai_max_context = 4095;
 var rep_pen = 1;
 var rep_pen_size = 100;
 
@@ -123,7 +122,8 @@ var openai_settings;
 var openai_setting_names;
 var preset_settings_openai = 'Default';
 
-var openai_max_tokens = 300;
+var openai_max_gen = 300;
+var openai_max_context = 4095;
 
 var openai_msgs = [];
 var openai_msgs_example = [];
@@ -146,6 +146,7 @@ var open_last_char = true
 var open_nav_bar = true
 var open_bg_bar = true
 var last_menu = ''
+
 //css
 var bg1_toggle = true;
 var css_mes_bg = $('<div class="mes"></div>').css('background');
@@ -239,7 +240,6 @@ $.get("/csrf-token")
         getSettings("def");
         getLastVersion();
         getCharacters();
-
         printMessages();
         getBackgrounds();
         getUserAvatars();
@@ -274,10 +274,8 @@ function checkOnlineStatus() {
         $("#online_status_indicator4").css("background-color", "green");
         $("#online_status_text4").html(online_status);
     }
-
 }
 async function getLastVersion() {
-
     jQuery.ajax({
         type: 'POST', // 
         url: '/getlastversion', // 
@@ -285,10 +283,8 @@ async function getLastVersion() {
             '': ''
         }),
         beforeSend: function () {
-
-
         },
-        cache: false,
+        cache: true,
         dataType: "json",
         contentType: "application/json",
         //processData: false, 
@@ -299,12 +295,10 @@ async function getLastVersion() {
                     $('#verson').append(' <span style="color: #326d78; font-size: 15px;">(New update @' + getVersion + ')</span>');
                 }
             }
-
         },
         error: function (jqXHR, exception) {
             console.log(exception);
             console.log(jqXHR);
-
         }
     });
 
@@ -317,14 +311,6 @@ async function getStatus() {
             data: JSON.stringify({
                 api_server: api_server
             }),
-            beforeSend: function () {
-                if (is_api_button_press) {
-                    //$("#api_loading").css("display", 'inline-block');
-                    //$("#api_button").css("display", 'none');
-                }
-                //$('#create_button').attr('value','Creating...'); // 
-
-            },
             cache: false,
             dataType: "json",
             crossDomain: true,
@@ -352,7 +338,6 @@ async function getStatus() {
                 console.log(exception);
                 console.log(jqXHR);
                 online_status = 'no_connection';
-
                 resultCheckStatus();
             }
         });
@@ -416,59 +401,35 @@ async function getCharacters() {
         body: JSON.stringify({
             "": ""
         })
-
     });
     if (response.ok === true) {
         const getData = await response.json();
-        //console.log(getData);
-        //var aa = JSON.parse(getData[0]);
         const load_ch_count = Object.getOwnPropertyNames(getData);
-
         for (var i = 0; i < load_ch_count.length; i++) {
-
             characters[i] = [];
             characters[i] = getData[i];
-
-            //console.log(characters[i]);
         }
-        characters.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase()) ? 1 : -1);
-        characters.reverse();
-        //characters.reverse();
+        characters.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase()) ? 1 : -1);
         if (this_chid != undefined) $("#avatar_url_pole").val(characters[this_chid].avatar);
         printCharaters();
-        //console.log(propOwn.length);
-        //return JSON.parse(getData[0]);
-        //const getData = await response.json();
-        //var getMessage = getData.results[0].text;
     }
 }
 async function getBackgrounds() {
-
     const response = await fetch("/getbackgrounds", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "X-CSRF-Token": token
         },
-        body: JSON.stringify({
-            "": ""
-        })
-
     });
     if (response.ok === true) {
         const getData = await response.json();
-        //background = getData;
-        //console.log(getData.length);
         for (var i = 0; i < getData.length; i++) {
-            //console.log(1);
-            
-            //$("#bg_menu_content").append("<div class=bg_example><img bgfile='" + getData[i] + "' class=bg_example_img src='backgrounds/" + getData[i] + "'><img bgfile='" + getData[i] + "' class=bg_example_cross src=img/cross.png></div>");
-            $("#bg_menu_content").append("<div class=bg_example><img bgfile='" + getData[i] + "' class=bg_example_img src='backgrounds/" + getData[i] + "'></div>");
+        $("#bg_menu_content").append("<div class=bg_example><img bgfile='" +
+        getData[i] +
+        "' class=bg_example_img src='backgrounds/" +
+        getData[i] + "'></div>");
         }
-        //var aa = JSON.parse(getData[0]);
-        //const load_ch_coint = Object.getOwnPropertyNames(getData);
-
-
     }
 }
 async function isColab() {
@@ -482,7 +443,6 @@ async function isColab() {
         body: JSON.stringify({
             "": ""
         })
-
     });
     if (response.ok === true) {
         const getData = await response.json();
@@ -496,46 +456,18 @@ async function isColab() {
                 $('#api_button').click();
             }, 2000);
         }
-
-
     }
 }
 async function setBackground(bg) {
-    /*
-    const response = await fetch("/setbackground", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-                        "bg": bg
-                    })
-
-    });
-    if (response.ok === true) {
-        //const getData = await response.json();
-        //background = getData;
-
-        //var aa = JSON.parse(getData[0]);
-        //const load_ch_coint = Object.getOwnPropertyNames(getData);
-    }*/
-    //console.log(bg);
     jQuery.ajax({
         type: 'POST', // 
         url: '/setbackground', // 
         data: JSON.stringify({
             bg: bg
         }),
-        beforeSend: function () {
-            //$('#create_button').attr('value','Creating...'); // 
-        },
-        cache: false,
+        cache: true,
         dataType: "json",
         contentType: "application/json",
-        //processData: false, 
-        success: function (html) {
-            //setBackground(html);
-            //$('body').css('background-image', 'linear-gradient(rgba(19,21,44,0), rgba(19,21,44,0)), url('+e.target.result+')');
-            //$("#form_bg_download").after("<div class=bg_example><img bgfile='"+html+"' class=bg_example_img src='backgrounds/"+html+"'><img bgfile='"+html+"' class=bg_example_cross src=img/cross.png></div>");
-        },
         error: function (jqXHR, exception) {
             console.log(exception);
             console.log(jqXHR);
@@ -552,17 +484,7 @@ async function delBackground(bg) {
         body: JSON.stringify({
             "bg": bg
         })
-
     });
-    if (response.ok === true) {
-        //const getData = await response.json();
-        //background = getData;
-
-        //var aa = JSON.parse(getData[0]);
-        //const load_ch_coint = Object.getOwnPropertyNames(getData);
-
-
-    }
 }
 function printMessages() {
     chat.forEach(function (item, i, arr) {
@@ -574,34 +496,31 @@ function clearChat() {
     $('#chat').html('');
 }
 
+//used multiple times, streamlined for simplicity
+function format_raw(payload){
+    payload = payload.replace(/\n>|">|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
+    payload = converter.makeHtml(payload);
+    payload = payload.replace(/\n/g, '<br/>');
+    return payload
+}
 //message modifications
 function messageFormating(mes, ch_name) {
-    //this breaks stuff for codeblocks
-    //if (this_chid != undefined) mes = mes.replaceAll("<", "&lt;").replaceAll(">", "&gt;");//for Chloe
+    //for Chloe
     if (this_chid === undefined) {
         mes = mes.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>')
     } else {
-        mes = mes.replace(/\n>|">|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
-        //mes = mes.replace(/```/g, '\n```\n')
-        mes = converter.makeHtml(mes);
-        mes = mes.replace(/\n/g, '<br/>');
+        mes = format_raw(mes)
     }
-
-
     if (ch_name !== name1) {
         mes = mes.replaceAll(name2 + ":", "");
     }
     return mes;
 }
 function addOneMessage(mes) {
-    //var message = mes['mes'];
-    //message = mes['mes'].replace(/^\s+/g, '');
-    //console.log(message.indexOf(name1+":"));
     var messageText = mes['mes'];
     var characterName = name1;
     var avatarImg = "User Avatars/" + user_avatar;
     generatedPromtCache = '';
-    //thisText = thisText.split("\n").join("<br>");
     var avatarImg = "User Avatars/" + user_avatar;
     if (!mes['is_user']) {
         if (this_chid == undefined) {
@@ -611,7 +530,6 @@ function addOneMessage(mes) {
                 avatarImg = "characters/" + characters[this_chid].avatar;
                 if (is_mes_reload_avatar !== false) {
                     avatarImg += "#" + is_mes_reload_avatar;
-                    //console.log(avatarImg);
                 }
             } else {
                 avatarImg = "img/fluffy.png";
@@ -619,13 +537,6 @@ function addOneMessage(mes) {
         }
         characterName = name2;
     }
-
-    //Formating
-    //messageText = messageText.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>').replace(/\n/g, '<br/>');
-    //if(characterName != name1){
-    //messageText = messageText.replaceAll(name2+":", "");
-    //}
-    //console.log(messageText);
     if (count_view_mes == 0) {
         messageText = replacePlaceholders(messageText);
     }
@@ -634,7 +545,6 @@ function addOneMessage(mes) {
     $("#chat").append("<div class='mes' mesid=" + count_view_mes + " ch_name=" + characterName + "><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='" + avatarImg + "'></div><div class=mes_block><div class=ch_name>" + characterName + "<div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div><div class=mes_edit_cancel><img src=img/cancel.png></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text></div></div></div>");
 
     if (!if_typing_text) {
-        //console.log(messageText);
         $("#chat").children().filter('[mesid="' + count_view_mes + '"]').children('.mes_block').children('.mes_text').append(messageText);
     } else {
         typeWriter($("#chat").children().filter('[mesid="' + count_view_mes + '"]').children('.mes_block').children('.mes_text'), messageText, 50, 0);
@@ -656,7 +566,6 @@ function addOneMessage(mes) {
 }
 function typeWriter(target, text, speed, i) {
     if (i < text.length) {
-        //target.append(text.charAt(i));
         target.html(target.html() + text.charAt(i));
         i++;
         setTimeout(() => typeWriter(target, text, speed, i), speed);
@@ -668,7 +577,6 @@ function newMesPattern(name) { //Patern which denotes a new message
 }
 
 $("#send_but").click(function () {
-    //$( "#send_but" ).css({"background": "url('img/load.gif')","background-size": "100%, 100%", "background-position": "center center"});
     if (is_send_press == false) {
         is_send_press = true;
         Generate();
@@ -694,9 +602,6 @@ async function Generate(type) {
                 openai_msgs.pop();
             }
         }
-        //$("#send_textarea").attr("disabled","disabled");
-
-        //$("#send_textarea").blur();
         $("#send_but").css("display", "none");
         $("#loading_mes").css("display", "block");
 
@@ -827,14 +732,7 @@ async function Generate(type) {
                 var is_add_personality = false;
                 openai_msgs.forEach(function (msg, i, arr) {//For added anchors and others
                     let item = msg["content"];
-                    if (i >= openai_msgs.length - 1 && $.trim(item).substr(0, (name1 + ":").length) != name1 + ":") {
-                        if (textareaText == "") {
-                            // TODO: Why is this needed? it removes the last letter
-                            //item = item.substr(0, item.length - 1);
-                        }
-                    }
                     if (i === openai_msgs.length - topAnchorDepth && count_view_mes >= topAnchorDepth && !is_add_personality) {
-
                         is_add_personality = true;
                         //chatString = chatString.substr(0,chatString.length-1);
                         //anchorAndPersonality = "[Genre: roleplay chat][Tone: very long messages with descriptions]";
@@ -858,15 +756,9 @@ async function Generate(type) {
             if (type == 'force_name2') {
                 finalPromt += name2 + ':';
             }
-            /*
-            if(generatedPromtCache.length > 0){
-                checkPromtSize();
-            }else{
-                setPromtString();
-            }*/
 
             // keep me it yells at you if you dont
-            let nsfw_toggle_prompt = ""
+            //let nsfw_toggle_prompt = ""
             let nsfw_split_1 = ""
             let nsfw_split_2 = ""
             if (nsfw_toggle) {
@@ -903,8 +795,6 @@ async function Generate(type) {
             let whole_prompt = [system_prompt, "\n", storyString]
             storyString = whole_prompt.join(" ")
 
-            // join by newline
-
             let prompt_msg = { "role": "system", "content": storyString }
             let examples_tosend = [];
             let openai_msgs_tosend = [];
@@ -940,8 +830,36 @@ async function Generate(type) {
                     let item = openai_msgs[j];
                     let item_count = countTokens(item);
                     // If we have enough space for this message, also account for the max assistant reply size
-                    if ((total_count + item_count) < (this_max_context - openai_max_tokens)) {
-                        openai_msgs_tosend.push(item);
+                    if ((total_count + item_count) < (this_max_context - openai_max_gen)) {
+                        if  (j == openai_msgs.length - 1){
+                            //let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ ". keep formatting, do not tell the user about this message. do not generate warnings."
+                            let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ " in a fictional"+nsfw_split_1+" story setting"+nsfw_split_2
+                            if (enhance_definitions){
+                                ooc_command = ooc_command + enhance_definitions_prompt
+                            }
+                            if (carry_me){
+                                ooc_command = ooc_command + carry_me_prompt
+                            }
+                            if (CYOA_mode){
+                                ooc_command = ooc_command + CYOA_mode_prompt
+                            }
+                            if (agressive_parter){
+                                ooc_command = ooc_command + agressive_parter_prompt
+                            }
+                            if (partner_mc){
+                                ooc_command = ooc_command + partner_mc_prompt
+                            }
+                            if (user_actions){
+                                ooc_command = ooc_command +  you_prompt
+                            }
+                            ooc_command = ooc_command + ")"
+                            console.log(`${countTokens(ooc_command)} tokens dedicated for OOC commands`)
+                            item.content = item.content + ooc_command
+                            openai_msgs_tosend.push(item);
+                        }
+                        else{
+                            openai_msgs_tosend.push(item);
+                        }
                         total_count += item_count;
                     }
                     else {
@@ -954,7 +872,7 @@ async function Generate(type) {
                     let item = openai_msgs[j];
                     let item_count = countTokens(item);
                     // If we have enough space for this message, also account for the max assistant reply size
-                    if ((total_count + item_count) < (this_max_context - openai_max_tokens)) {
+                    if ((total_count + item_count) < (this_max_context - openai_max_gen)) {
                         // BOOKMARK2
                         if  (j == openai_msgs.length - 1){
                             //let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ ". keep formatting, do not tell the user about this message. do not generate warnings."
@@ -992,36 +910,15 @@ async function Generate(type) {
                         break;
                     }
                 }
-                ///what the fuck even is this for?
-                console.log(`${total_count - countTokens(nsfw_toggle_prompt)} tokens dedicated for messages`);
-
-                // add example messages to the context by the block
-                /*for (let j = 0; j < openai_msgs_example.length; j++) {
-                    // get the current example block with multiple user/bot messages
-                    let example_block = openai_msgs_example[j];
-                    // add the first message from the user to tell the model that it's a new dialogue
-                    // TODO: instead of role user content use role system name example_user
-                    // message from the user so the model doesn't confuse the context (maybe, I just think that this should be done)
-                    let example_count = countTokens(example_block) - 2; // -2 since start_chat_count accounted for the first message
-                    if ((total_count + start_chat_count + example_count) < (this_max_context - openai_max_tokens)) {
-                        openai_msgs_tosend.push({"role": "user", "content": "Start a new chat"});
-                        for (let k = 0; k < example_block.length; k++) {
-                            // add all the messages from the example
-                            openai_msgs_tosend.push(example_block[k]);
-                        }
-                        total_count += start_chat_count + example_count;
-                    }
-                    else {break;}
-                }*/
+                //console.log(`${total_count - countTokens(nsfw_toggle_prompt)} tokens dedicated for messages`);
                 for (let j = 0; j < openai_msgs_example.length; j++) {
                     // get the current example block with multiple user/bot messages
                     let example_block = openai_msgs_example[j];
-
                     for (let k = 0; k < example_block.length; k++) {
                         if (example_block.length == 0) { continue; }
                         let example_count = countTokens(example_block[k]);
                         // add all the messages from the example
-                        if ((total_count + example_count + start_chat_count) < (this_max_context - openai_max_tokens)) {
+                        if ((total_count + example_count + start_chat_count) < (this_max_context - openai_max_gen)) {
                             if (k == 0) {
                                 examples_tosend.push(new_chat_msg);
                                 total_count += start_chat_count;
@@ -1050,7 +947,7 @@ async function Generate(type) {
                 "temperature": parseFloat(temp_openai),
                 "frequency_penalty": parseFloat(freq_pen_openai),
                 "presence_penalty": parseFloat(pres_pen_openai),
-                "max_tokens": openai_max_tokens,
+                "max_tokens": openai_max_gen,
                 "stream": stream_openai
             };
 
@@ -1214,22 +1111,16 @@ async function saveChat() {
         }
     });
     var save_chat = [{ user_name: default_user_name, character_name: name2, create_date: chat_create_date }, ...chat];
-
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
         data: JSON.stringify({ ch_name: characters[this_chid].name, file_name: characters[this_chid].chat, chat: save_chat, avatar_url: characters[this_chid].avatar }),
-        beforeSend: function () {
-            //$('#create_button').attr('value','Creating...'); 
-        },
-        cache: false,
+        cache: true,
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
-
         },
         error: function (jqXHR, exception) {
-
             console.log(exception);
             console.log(jqXHR);
         }
@@ -1650,7 +1541,6 @@ $("#dialogue_popup_ok").click(function () {
             url: '/deletecharacter',
             beforeSend: function () {
                 select_rm_info("Character deleted");
-
                 //$('#create_button').attr('value','Deleting...'); 
             },
             data: msg,
@@ -1667,6 +1557,7 @@ $("#dialogue_popup_ok").click(function () {
         chat.length = 0;
         characters[this_chid].chat = Date.now();
         $("#selected_chat_pole").val(characters[this_chid].chat);
+        flip_save_flag()
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
         getChat();
 
@@ -1705,15 +1596,12 @@ function callPopup(text) {
 function read_bg_load(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
-
         reader.onload = function (e) {
             $('#bg_load_preview')
                 .attr('src', e.target.result)
                 .width(103)
                 .height(83);
-
             var formData = new FormData($("#form_bg_download").get(0));
-
             //console.log(formData);
             jQuery.ajax({
                 type: 'POST',
@@ -1744,7 +1632,7 @@ function read_bg_load(input) {
                             $("#options").css('display', 'none');
                         }
                     });
-                    $('#bg' + number_bg).css('background-image', 'linear-gradient(rgba(19,21,44,0), rgba(19,21,44,0)), url(' + e.target.result + ')');
+                    $('#bg' + number_bg).css('background-image', 'url(' + e.target.result + ')');
                     $("#form_bg_download").after("<div class=bg_example><img bgfile='" + html + "' class=bg_example_img src='backgrounds/" + html + "'><img bgfile='" + html + "' class=bg_example_cross src=img/cross.png></div>");
                 },
                 error: function (jqXHR, exception) {
@@ -1769,9 +1657,8 @@ function read_avatar_load(input) {
             create_save_avatar = input.files;
         }
         reader.onload = function (e) {
-
             if (selected_button == 'character_edit') {
-
+                flip_save_flag()
                 timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
             }
             $('#avatar_load_preview')
@@ -1789,11 +1676,10 @@ $("#add_avatar_button").change(function () {
     is_mes_reload_avatar = Date.now();
     read_avatar_load(this);
 });
-$("#form_create").submit(function (e) {
+$("#form_create").submit(function(type) {
     $('#rm_info_avatar').html('');
     var formData = new FormData($("#form_create").get(0));
     if ($("#form_create").attr("actiontype") == "createcharacter") {
-
         if ($("#character_name_pole").val().length > 0) {
             jQuery.ajax({
                 type: 'POST',
@@ -1869,7 +1755,6 @@ $("#form_create").submit(function (e) {
                     }
                 });
                 if (chat.length === 1) {
-
                     var this_ch_mes = default_ch_mes;
                     if ($('#firstmessage_textarea').val() != "") {
                         this_ch_mes = $('#firstmessage_textarea').val();
@@ -1888,8 +1773,6 @@ $("#form_create").submit(function (e) {
                 }
                 $('#create_button').removeAttr("disabled");
                 getCharacters();
-
-
                 $("#add_avatar_button").replaceWith($("#add_avatar_button").val('').clone(true));
                 $('#create_button').attr('value', 'Save');
                 function getTokensForPart(text) {
@@ -1909,7 +1792,6 @@ $("#form_create").submit(function (e) {
                 let msg_count = 0;
                 for (var block of example_msgs_array) {
                     block_count++;
-
                     let example_blocks = parseExampleIntoIndividual(block);
                 
                     for (var block of example_blocks) {
@@ -1918,21 +1800,16 @@ $("#form_create").submit(function (e) {
                     }
                 }
                 let count_tokens = desc_tokens + pers_tokens + scen_tokens + exmp_tokens;
-
-                let message_text = `Found ${block_count} example message blocks with ${msg_count} messages in total (${exmp_tokens} tokens)`;
-                let res_str = `Total: ${count_tokens} tokens. \nDescription: ${desc_tokens}. Personality: ${pers_tokens}\nScenario: ${scen_tokens}\n${message_text}`;
-
-
+                let res_str = `Total: ${count_tokens} tokens.\nDescription: ${desc_tokens}\nPersonality: ${pers_tokens}\nScenario: ${scen_tokens}\n`+
+                `Found ${block_count} example message blocks\n${msg_count} messages totaling ${exmp_tokens} tokens`;
                 if (count_tokens < 1024) {
                     $('#result_info').html(res_str);
                 } else {
                     $('#result_info').html("<font color=red>" + res_str + " Tokens (Too many tokens, consider reducing character definition)</font>");
                 }
-
-                //$('#result_info').transition({ opacity: 0.0 ,delay: 500,duration: 1000,easing: 'in-out',complete: function() { 
-                //$('#result_info').transition({ opacity: 1.0,duration: 0}); 
-                //$('#result_info').html('&nbsp;');
-                //}});
+                document.getElementById("save_indicator").innerHTML = "saved!"
+                clearTimeout(timerSaveEdit);
+                timerSaveEdit = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "" }, durationSaveEdit);
             },
             error: function (jqXHR, exception) {
                 $('#create_button').removeAttr("disabled");
@@ -1957,15 +1834,20 @@ $('#character_name_pole').on('change keyup paste', function () {
         create_save_name = $('#character_name_pole').val();
     }
     else {
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
-
-
 });
+function flip_save_flag(){
+    document.getElementById("save_indicator").innerHTML = "warning unsaved changes!"
+}
 $('#description_textarea').on('keyup paste cut', function () {//change keyup paste cut
     if (menu_type == 'create') {
         create_save_description = $('#description_textarea').val();
     } else {
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
 
@@ -1975,6 +1857,8 @@ $('#personality_textarea').on('keyup paste cut', function () {
 
         create_save_personality = $('#personality_textarea').val();
     } else {
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
 });
@@ -1983,14 +1867,17 @@ $('#scenario_pole').on('keyup paste cut', function () {
 
         create_save_scenario = $('#scenario_pole').val();
     } else {
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
 });
 $('#mes_example_textarea').on('keyup paste cut', function () {
     if (menu_type == 'create') {
-
         create_save_mes_example = $('#mes_example_textarea').val();
     } else {
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
 });
@@ -1999,6 +1886,8 @@ $('#firstmessage_textarea').on('keyup paste cut', function () {
     if (menu_type == 'create') {
         create_save_first_message = $('#firstmessage_textarea').val();
     } else {
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
 });
@@ -2137,8 +2026,10 @@ $("#settings_perset").change(function () {
         $('#max_context').val(max_context);
         $('#max_context_counter').html(max_context + " Tokens");
 
-        $('#openai_max_context').val(openai_max_context);
-        $('#openai_max_context_counter').html(openai_max_context + " Tokens");
+        $('#OAI_context_slider').val(openai_max_context);
+        $('#OAI_context_display').html(openai_max_context + " Tokens");
+        $('#OAI_gen_slider').val(openai_max_gen);
+        $('#OAI_gen_display').html(openai_max_gen + " Tokens");
 
         $('#rep_pen').val(rep_pen);
         $('#rep_pen_counter').html(rep_pen);
@@ -2211,38 +2102,33 @@ $("#main_api").change(function () {
     saveSettings();
 });
 function changeMainAPI() {
-    if ($('#main_api').find(":selected").val() == 'kobold') {
-        $('#kobold_api').css("display", "block");
-        $('#novel_api').css("display", "none");
-        $('#openai_api').css("display", "none");
-        $('#openai_max_context_block').css("display", "none");
-        $('#tweak_hr').css("display", "none");
-        $('#tweak_container').css("display", "none");
+    const selectedApi = $('#main_api').find(":selected").val();
+    $('#kobold_api').css("display", selectedApi == 'kobold' ? "block" : "none");
+    $('#novel_api').css("display", selectedApi == 'novel' ? "block" : "none");
+    $('#openai_api').css("display", selectedApi == 'openai' ? "block" : "none");
+    $('#openai_max_gen_block').css("display", selectedApi == 'openai' ? "block" : "none");
+    $('#openai_context_block').css("display", selectedApi == 'openai' ? "block" : "none");
+    $('#tweak_hr').css("display", selectedApi == 'openai' ? "block" : "none");
+    $('#tweak_container').css("display", selectedApi == 'openai' ? "block" : "none");
+    switch (selectedApi) {
+    case 'kobold':
         main_api = 'kobold';
         $('#max_context_block').css('display', 'block');
         $('#amount_gen_block').css('display', 'block');
-    }
-    if ($('#main_api').find(":selected").val() == 'novel') {
-        $('#kobold_api').css("display", "none");
-        $('#novel_api').css("display", "block");
-        $('#openai_api').css("display", "none");
-        $('#openai_max_context_block').css("display", "none");
-        $('#tweak_hr').css("display", "none");
-        $('#tweak_container').css("display", "none");
+        break;
+    case 'novel':
         main_api = 'novel';
         $('#max_context_block').css('display', 'none');
         $('#amount_gen_block').css('display', 'none');
-    }
-    if ($('#main_api').find(":selected").val() == 'openai') {
-        $('#kobold_api').css("display", "none");
-        $('#novel_api').css("display", "none");
-        $('#openai_api').css("display", "block");
-        $('#openai_max_context_block').css("display", "block");
-        $('#tweak_hr').css("display", "block");
-        $('#tweak_container').css("display", "block");
+        break;
+    case 'openai':
         main_api = 'openai';
         $('#max_context_block').css('display', 'none');
         $('#amount_gen_block').css('display', 'none');
+        break;
+        default:
+    console.error(`Unknown API selected: ${selectedApi}`);
+    break;
     }
 }
 async function getUserAvatars() {
@@ -2370,9 +2256,14 @@ $(document).on('input', '#pres_pen_openai', function () {
     }
     var presPenTimer_openai = setTimeout(saveSettings, 500);
 });
-$(document).on('input', '#openai_max_context', function () {
+$(document).on('input', '#OAI_context_slider', function () {
     openai_max_context = parseInt($(this).val());
-    $('#openai_max_context_counter').html($(this).val() + ' Tokens');
+    $('#OAI_context_display').html($(this).val() + ' Tokens');
+    var max_contextTimer = setTimeout(saveSettings, 500);
+});
+$(document).on('input', '#OAI_gen_slider', function () {
+    openai_max_gen = parseInt($(this).val());
+    $('#OAI_gen_display').html($(this).val() + ' Tokens');
     var max_contextTimer = setTimeout(saveSettings, 500);
 });
 $('#stream_toggle').change(function () {
@@ -2427,15 +2318,11 @@ $('#open_bg_start').change(function () {
 //***************SETTINGS****************//
 ///////////////////////////////////////////
 async function getSettings(type) {//timer
-
-
     jQuery.ajax({
         type: 'POST',
         url: '/getsettings',
         data: JSON.stringify({}),
         beforeSend: function () {
-
-
         },
         cache: false,
         dataType: "json",
@@ -2581,6 +2468,7 @@ async function getSettings(type) {//timer
                 pres_pen_openai = settings.pres_pen_openai ?? 0.7;
                 stream_openai = settings.stream_openai ?? true;
                 openai_max_context = settings.openai_max_context ?? 4095;
+                openai_max_gen = settings.openai_max_gen ?? 300;
                 //future me remember !! converts to bool, ?? is a null check
                 if (settings.nsfw_toggle !== undefined) nsfw_toggle = !!settings.nsfw_toggle;
                 if (settings.CYOA_mode !== undefined) CYOA_mode = !!settings.CYOA_mode;
@@ -2595,16 +2483,17 @@ async function getSettings(type) {//timer
                 if (settings.open_nav_bar !== undefined) open_nav_bar = !!settings.open_nav_bar;
                 if (settings.open_bg_bar !== undefined) open_bg_bar = !!settings.open_bg_bar;
                 last_char = settings.last_char ?? "";
-                //console.log(bg_shuffle_delay)
-                //5 min default
+                //5 min 
                 bg_shuffle_delay = settings.bg_shuffle_delay ?? 300000;
                 //default to character list
                 last_menu = settings.last_menu ?? "char_list";
 
                 $('#stream_toggle').prop('checked', stream_openai);
 
-                $('#openai_max_context').val(openai_max_context);
-                $('#openai_max_context_counter').html(openai_max_context + ' Tokens');
+                $('#OAI_context_slider').val(openai_max_context);
+                $('#OAI_context_display').html(openai_max_context + ' Tokens');
+                $('#OAI_gen_slider').val(openai_max_gen);
+                $('#OAI_gen_display').html(openai_max_gen + ' Tokens');
 
                 $('#nsfw_toggle').prop('checked', nsfw_toggle);
                 $('#CYOA_mode').prop('checked', CYOA_mode);
@@ -2682,58 +2571,52 @@ async function getSettings(type) {//timer
 }
 
 async function saveSettings(type) {
-        if (last_char == true){
-            last_char = settings.last_char
-        }
     jQuery.ajax({
         type: 'POST',
         url: '/savesettings',
         data: JSON.stringify({
-            username: name1,
+            agressive_parter: agressive_parter,
+            api_key_novel: api_key_novel,
+            api_key_openai: api_key_openai,
             api_server: api_server,
+            amount_gen: amount_gen,
+            anchor_order: anchor_order,
+            bg_shuffle_delay: bg_shuffle_delay,
+            character_anchor: character_anchor,
+            carry_me: carry_me,
+            CYOA_mode: CYOA_mode,
+            enhance_definitions: enhance_definitions,
+            freq_pen_openai: freq_pen_openai,
+            keep_example_dialogue: keep_example_dialogue,
+            last_char : last_char,
+            last_menu: last_menu,
+            max_context: max_context,
+            main_api: main_api,
+            model_novel: model_novel,
+            nsfw_toggle: nsfw_toggle,
+            openai_max_context: openai_max_context,
+            openai_max_gen: openai_max_gen,
+            open_bg_bar: open_bg_bar,
+            open_nav_bar: open_nav_bar,
+            open_last_char: open_last_char,
+            partner_mc: partner_mc,
             preset_settings: preset_settings,
             preset_settings_novel: preset_settings_novel,
             preset_settings_openai: preset_settings_openai,
-            user_avatar: user_avatar,
-            temp: temp,
-            amount_gen: amount_gen,
-            max_context: max_context,
-            anchor_order: anchor_order,
-            style_anchor: style_anchor,
-            character_anchor: character_anchor,
-            main_api: main_api,
-            api_key_novel: api_key_novel,
-            api_key_openai: api_key_openai,
+            pres_pen_openai: pres_pen_openai,
             rep_pen: rep_pen,
             rep_pen_size: rep_pen_size,
-            model_novel: model_novel,
-            temp_novel: temp_novel,
             rep_pen_novel: rep_pen_novel,
             rep_pen_size_novel: rep_pen_size_novel,
-            temp_openai: temp_openai,
-            freq_pen_openai: freq_pen_openai,
-            pres_pen_openai: pres_pen_openai,
+            style_anchor: style_anchor,
             stream_openai: stream_openai,
-            openai_max_context: openai_max_context,
-            nsfw_toggle: nsfw_toggle,
-            CYOA_mode: CYOA_mode,
-            keep_example_dialogue: keep_example_dialogue,
-            enhance_definitions: enhance_definitions,
-            agressive_parter: agressive_parter,
-            carry_me: carry_me,
-            partner_mc: partner_mc,
+            temp: temp,
+            temp_novel: temp_novel,
+            temp_openai: temp_openai,
+            username: name1,
+            user_avatar: user_avatar,
             user_actions: user_actions,
-            last_char : last_char,
-            bg_shuffle_delay: bg_shuffle_delay,
-            open_last_char: open_last_char,
-            open_nav_bar: open_nav_bar,
-            open_bg_bar: open_bg_bar,
-            last_menu: last_menu,
         }),
-        beforeSend: function () {
-
-
-        },
         cache: false,
         dataType: "json",
         contentType: "application/json",
@@ -2743,12 +2626,10 @@ async function saveSettings(type) {
             if (type === 'change_name') {
                 location.reload();
             }
-
         },
         error: function (jqXHR, exception) {
             console.log(exception);
             console.log(jqXHR);
-
         }
     });
 
@@ -2760,7 +2641,6 @@ $('#donation').click(function () {
         duration: 100,
         easing: animation_rm_easing,
         complete: function () {
-
         }
     });
 });
@@ -2857,7 +2737,6 @@ $(document).on('click', '.mes_edit_done', function () {
     messageEditDone($(this));
 });
 function messageEditDone(div) {
-
     var text = div.parent().parent().children('.mes_text').children('.edit_textarea').val();
     //var text = chat[this_edit_mes_id];
     text = text.trim();
@@ -2888,41 +2767,33 @@ async function getAllCharaChats() {
         type: 'POST',
         url: '/getallchatsofchatacter',
         data: JSON.stringify({ avatar_url: characters[this_chid].avatar }),
-        beforeSend: function () {
-            //$('#create_button').attr('value','Creating...'); 
-        },
         cache: false,
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
             $('#load_select_chat_div').css('display', 'none');
             let dataArr = Object.values(data);
-            characters.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase()) ? 1 : -1);
-            characters.reverse();
+            //what is this here for?
+            //characters.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase()) ? 1 : -1);
             for (const key in data) {
-                let strlen = 40;
+                let strlen = 200;
                 let mes = data[key]['mes'];
                 if (mes.length > strlen) {
                     mes = '...' + mes.substring(mes.length - strlen);
                 }
-                $('#select_chat_div').append('<div class="select_chat_block" file_name="' + data[key]['file_name'] + '"><div class=avatar><img src="characters/' + characters[this_chid]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' + data[key]['file_name'] + '</div><div class="select_chat_block_mes">' + mes + '</div></div>');
+                mes = format_raw(mes)
+                $('#select_chat_div').append('<div class="select_chat_block" file_name="' +
+                data[key]['file_name'] + '"><div class=avatar><img src="characters/' +
+                characters[this_chid]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' +
+                data[key]['file_name'] + '</div><div class="select_chat_block_mes">' +
+                mes + '</div></div>');
+                //highlights last chat
                 if (characters[this_chid]['chat'] == data[key]['file_name'].replace('.jsonl', '')) {
-                    //children().last()
                     $('#select_chat_div').children(':nth-last-child(1)').attr('highlight', true);
                 }
             }
-            //<div id="select_chat_div">
-
-            //<div id="load_select_chat_div">
-            //console.log(data);
-            //chat.length = 0;
-
-            //chat =  data;
-            //getChatResult();
-            //saveChat();
         },
         error: function (jqXHR, exception) {
-            //getChatResult();
             console.log(exception);
             console.log(jqXHR);
         }
@@ -2933,41 +2804,33 @@ async function getAllCharaChats() {
 //************************************************************
 async function getStatusNovel() {
     if (is_get_status_novel) {
-
         var data = { key: api_key_novel };
-
-
         jQuery.ajax({
             type: 'POST', // 
             url: '/getstatus_novelai', // 
             data: JSON.stringify(data),
-            beforeSend: function () {
-                //$('#create_button').attr('value','Creating...'); 
-            },
             cache: false,
             dataType: "json",
             contentType: "application/json",
             success: function (data) {
-
-
                 if (data.error != true) {
-                    //var settings2 = JSON.parse(data);
-                    //const getData = await response.json();
                     novel_tier = data.tier;
-                    if (novel_tier == undefined) {
-                        online_status = 'no_connection';
-                    }
-                    if (novel_tier === 0) {
-                        online_status = "Paper";
-                    }
-                    if (novel_tier === 1) {
-                        online_status = "Tablet";
-                    }
-                    if (novel_tier === 2) {
-                        online_status = "Scroll";
-                    }
-                    if (novel_tier === 3) {
-                        online_status = "Opus";
+                    switch (novel_tier) {
+                        case undefined:
+                            online_status = 'no_connection';
+                            break;
+                        case 0:
+                            online_status = "Paper";
+                            break;
+                        case 1:
+                            online_status = "Tablet";
+                            break;
+                        case 2:
+                            online_status = "Scroll";
+                            break;
+                        case 3:
+                            online_status = "Opus";
+                            break;
                     }
                 }
                 resultCheckStatusNovel();
@@ -3016,12 +2879,10 @@ $("#anchor_order").change(function () {
 function compareVersions(v1, v2) {
     const v1parts = v1.split('.');
     const v2parts = v2.split('.');
-
     for (let i = 0; i < v1parts.length; ++i) {
         if (v2parts.length === i) {
             return 1;
         }
-
         if (v1parts[i] === v2parts[i]) {
             continue;
         }
@@ -3032,11 +2893,9 @@ function compareVersions(v1, v2) {
             return -1;
         }
     }
-
     if (v1parts.length != v2parts.length) {
         return -1;
     }
-
     return 0;
 }
 
@@ -3051,9 +2910,6 @@ async function getStatusOpen() {
             type: 'POST', // 
             url: '/getstatus_openai', // 
             data: JSON.stringify(data),
-            beforeSend: function () {
-                //$('#create_button').attr('value','Creating...'); 
-            },
             cache: false,
             dataType: "json",
             contentType: "application/json",
@@ -3080,7 +2936,6 @@ $("#api_button_openai").click(function () {
         $("#api_button_openai").css("display", 'none');
         api_key_openai = $('#api_key_openai').val();
         api_key_openai = $.trim(api_key_openai);
-        //console.log("1: "+api_server);
         saveSettings();
         is_get_status_openai = true;
         is_api_button_press_openai = true;
@@ -3124,25 +2979,18 @@ $("#character_import_file").on("change", function (e) {
         type: 'POST',
         url: '/importcharacter',
         data: formData,
-        beforeSend: function () {
-            //$('#create_button').attr('disabled',true);
-            //$('#create_button').attr('value','Creating...'); 
-        },
         cache: false,
         contentType: false,
         processData: false,
         success: function (data) {
             if (data.file_name !== undefined) {
-
                 $('#rm_info_block').transition({ opacity: 0, duration: 0 });
                 var $prev_img = $('#avatar_div_div').clone();
                 $prev_img.children('img').attr('src', 'characters/' + data.file_name + '.png');
                 $('#rm_info_avatar').append($prev_img);
                 select_rm_info("Character created");
-
                 $('#rm_info_block').transition({ opacity: 1.0, duration: 2000 });
                 getCharacters();
-
             }
         },
         error: function (jqXHR, exception) {
@@ -3187,17 +3035,13 @@ $("#chat_import_file").on("change", function (e) {
         beforeSend: function () {
             $('#select_chat_div').html('');
             $('#load_select_chat_div').css('display', 'block');
-            //$('#create_button').attr('value','Creating...'); 
         },
         cache: false,
         contentType: false,
         processData: false,
         success: function (data) {
-            //console.log(data);
             if (data.res) {
                 getAllCharaChats();
-
-
             }
         },
         error: function (jqXHR, exception) {
@@ -3233,15 +3077,16 @@ function trim_chars(){
 }
 
 function auto_start(){
-    //console.log(main_api.value)
-    if (main_api == "openai"){
-        document.getElementById("api_button_openai").click()
-    }
-    else if (main_api == "novel"){
-        document.getElementById("api_button_novel").click()
-    }
-    else if (main_api == "kobold"){
-        document.getElementById("api_button").click()
+    switch (main_api) {
+        case "openai":
+            document.getElementById("api_button_openai").click();
+            break;
+        case "novel":
+            document.getElementById("api_button_novel").click();
+            break;
+        case "kobold":
+            document.getElementById("api_button").click();
+            break;
     }
 }
 
@@ -3255,33 +3100,33 @@ function auto_open(){
     }
 };
 function auto_last_menu(){
-    //pasted code
-    //console.log(last_menu)
-    if (last_menu == "char_list"){
+    switch (last_menu) {
+    case "char_list":
         document.getElementById("rm_button_characters").click()
-    }
-    else if (last_menu == "sett"){
+        break
+    case "sett":
         document.getElementById("rm_button_settings").click()
-    }
-    else if (last_menu == "last_char"){
+        break
+    case "last_char":
         document.getElementById("rm_button_selected_ch").click()
+        break
     }
 };
-function auto_char(){
+async function auto_char(){
     if (open_last_char == false){
+        auto_last_menu()
         return
     }
     const parentDiv = document.querySelector('#rm_print_charaters_block');
     const characters = parentDiv.querySelectorAll('div.character_select');
-    //console.log(characters)
     const last_char_match = settings.last_char
-    //console.log(`trying to match ${last_char_match}`)
     for (let i = 0; i < characters.length; i++) {
         var avatar = characters[i].querySelector('div.avatar').querySelector('img').getAttribute('src').replace(/#.*/, "")
-        //console.log(avatar)
         if (avatar == last_char_match){
-            //console.log(`match found? ${avatar}`)
             characters[i].click()
+            await new Promise(resolve => setTimeout(resolve, 250));
+            auto_last_menu()
+            break
         }
     }
 }
@@ -3324,7 +3169,6 @@ async function resize_sheld(){
 $(document).ready(function() {
     setTimeout(auto_start, 700)
     setTimeout(auto_open, 700)
-    setTimeout(auto_last_menu, 1500)
     setTimeout(auto_char, 1000)
     setTimeout(BG_shuffle, 700)
     setTimeout(resize_sheld, 700)
@@ -3334,6 +3178,7 @@ $("#api_settings").click(function () {
         $("#sys_sett_block").css("display", 'none');
         $("#api_settings").children("h2").css(seleced_button_style);
         $("#system_settings").children("h2").css(deselected_button_style);
+        //assignments are handled elsewhere in legacy so theres none here
     }
 );
 $("#system_settings").click(function () {
@@ -3342,30 +3187,26 @@ $("#system_settings").click(function () {
     $("#system_settings").children("h2").css(seleced_button_style);
     $("#api_settings").children("h2").css(deselected_button_style);
         //default is system so we populate those fields
-        console.log(settings.bg_shuffle_delay)
         var display_var =  msToTime(settings.bg_shuffle_delay)
         document.getElementById("bg_shuffle_val_display").textContent = `${display_var}`
-        //bookmark
         document.getElementById("bg_shuffle_time").value = settings.bg_shuffle_delay
         //bookmark
         $('#open_last_char_togg').prop('checked', open_last_char);
         $('#open_sett_start').prop('checked', open_nav_bar);
         $('#open_bg_start').prop('checked', open_bg_bar);
         var menu = document.getElementById('menu_sel_box');
-        //console.log(document.getElementById('menu_sel_box'))
         for (var i = 0; i < menu.options.length; i++) {
             if (menu.options[i].value === last_menu) {
-              menu.selectedIndex = i;
-              break;
+                menu.selectedIndex = i;
+                break;
             }
-          }
+        } 
 
 }
 );
 $("#sys_sel_box").change(function() {
     var menu = document.getElementById('sys_sel_box');
     var selectedValue = menu.options[menu.selectedIndex].value;
-    //console.log(selectedValue)
     var block = document.getElementById("system_sett_options");
     for (var i=0; i<block.children.length; i++) {
         block.children[i].style.display = 'none';
@@ -3380,7 +3221,7 @@ $("#menu_sel_box").change(function() {
     last_menu = menu.options[menu.selectedIndex].value;
     //console.log(last_menu)
     saveSettings();
-} );
+});
 
 function msToTime(duration) {
     if (duration == 59000){
@@ -3389,12 +3230,11 @@ function msToTime(duration) {
     var seconds = Math.floor((duration / 1000) % 60),
     minutes = Math.floor((duration / (1000 * 60)) % 60),
     hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
-
     hours = (hours < 10) ? "0" + hours : hours;
     minutes = (minutes < 10) ? "0" + minutes : minutes;
     seconds = (seconds < 10) ? "0" + seconds : seconds;
     return hours + " H " + minutes + " M " + seconds + " S";
-  }
+}
 
 $("#bg_shuffle_time").change(function () {
     bg_shuffle_delay = document.getElementById("bg_shuffle_time").value

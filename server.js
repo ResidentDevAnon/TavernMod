@@ -459,13 +459,11 @@ app.post("/editcharacter", urlencodedParser, function(request, response){
     char = JSON.stringify(char);
     let target_img = (request.body.avatar_url).replace('.png', '');
     if(!filedata){
-
         charaWrite(img_path+request.body.avatar_url, char, target_img, response, 'Character saved');
     }else{
         //console.log(filedata.filename);
         img_path = "uploads/";
         img_file = filedata.filename;
-
         charaWrite(img_path+img_file, char, target_img, response, 'Character saved');
         //response.send('Character saved');
     }
