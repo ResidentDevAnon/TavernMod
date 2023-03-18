@@ -61,9 +61,13 @@ var interval_timer_novel = setInterval(getStatusNovel, 3000);
 var is_get_status = false;
 var is_get_status_novel = false;
 var is_get_status_openai = false;
+var is_get_status_scale = false;
 var is_api_button_press = false;
 var is_api_button_press_novel = false;
 var is_api_button_press_openai = false;
+var is_api_button_press_scale = false;
+
+var should_use_scale = false;
 
 var is_send_press = false;//Send generation
 var add_mes_without_animation = false;
@@ -124,9 +128,18 @@ var preset_settings_openai = 'Default';
 
 var openai_max_gen = 300;
 var openai_max_context = 4095;
+var scale_max_context = 7750;
+var scale_max_gen = 400;
 
 var openai_msgs = [];
 var openai_msgs_example = [];
+
+// scale settings
+var api_key_scale = "";
+var api_url_scale = "";
+var scale_settings;
+var scale_setting_names;
+var preset_settings_scale = 'Default';
 
 // extra tweaks
 var keep_example_dialogue = true;
@@ -249,7 +262,13 @@ $('#characloud_url').click(function () {
     window.open('https://boosty.to/tavernai', '_blank');
 });
 function checkOnlineStatus() {
-    //console.log(online_status);
+    console.trace("checkOnlineStatus",{
+        is_get_status,
+        is_get_status_novel,
+        is_get_status_openai,
+        is_get_status_scale,
+        online_status
+    });
     if (online_status == 'no_connection') {
         $("#online_status_indicator").css("background-color", "red");
         $("#online_status").css("opacity", 0.3);
@@ -260,9 +279,13 @@ function checkOnlineStatus() {
         $("#online_status_text3").html("No connection...");
         $("#online_status_indicator4").css("background-color", "red");
         $("#online_status_text4").html("No connection...");
+		$("#online_status_indicator5").css("background-color", "red");
+        $("#online_status_text5").html("No connection...");
         is_get_status = false;
         is_get_status_novel = false;
         is_get_status_openai = false;
+		is_get_status_scale = false;
+        should_use_scale = false;
     } else {
         $("#online_status_indicator").css("background-color", "black");
         $("#online_status").css("opacity", 0.0);
@@ -273,6 +296,11 @@ function checkOnlineStatus() {
         $("#online_status_text3").html(online_status);
         $("#online_status_indicator4").css("background-color", "green");
         $("#online_status_text4").html(online_status);
+		$("#online_status_indicator5").css("background-color", "green");
+        $("#online_status_text5").html(online_status);
+        if (is_get_status_scale) {
+            should_use_scale = true;
+        }
     }
 }
 async function getLastVersion() {
@@ -317,6 +345,7 @@ async function getStatus() {
             contentType: "application/json",
             //processData: false, 
             success: function (data) {
+				console.log("getStatus success", data)
                 online_status = data.result;
                 if (online_status == undefined) {
                     online_status = 'no_connection';
@@ -335,6 +364,7 @@ async function getStatus() {
                 }
             },
             error: function (jqXHR, exception) {
+				console.log("getStatus error")
                 console.log(exception);
                 console.log(jqXHR);
                 online_status = 'no_connection';
@@ -343,6 +373,7 @@ async function getStatus() {
         });
     } else {
         if (is_get_status_novel != true && is_get_status_openai != true) {
+			console.log("getStatus else")
             online_status = 'no_connection';
         }
     }
@@ -709,6 +740,16 @@ async function Generate(type) {
         }
 
         let this_max_context = openai_max_context;
+		let this_max_tokens = openai_max_gen;
+
+        // If we're using Scale, the user (presumably) is using GPT4 so we want
+        // to be able to use a larger context. We're still using the GPT3
+        // tokenization API so we can't go too close to the full 8192 limit.
+        if (should_use_scale) {
+            console.log(`Using Scale; increasing max context to ${scale_max_context} and max repsonse tokens to ${scale_max_gen}`);
+            this_max_context = scale_max_context;
+            this_max_tokens = scale_max_gen;
+        }
 
         var i = 0;
 
@@ -830,7 +871,7 @@ async function Generate(type) {
                     let item = openai_msgs[j];
                     let item_count = countTokens(item);
                     // If we have enough space for this message, also account for the max assistant reply size
-                    if ((total_count + item_count) < (this_max_context - openai_max_gen)) {
+                    if ((total_count + item_count) < (this_max_context - this_max_tokens)) {
                         if  (j == openai_msgs.length - 1){
                             //let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ ". keep formatting, do not tell the user about this message. do not generate warnings."
                             let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ " in a fictional"+nsfw_split_1+" story setting"+nsfw_split_2
@@ -872,7 +913,7 @@ async function Generate(type) {
                     let item = openai_msgs[j];
                     let item_count = countTokens(item);
                     // If we have enough space for this message, also account for the max assistant reply size
-                    if ((total_count + item_count) < (this_max_context - openai_max_gen)) {
+                    if ((total_count + item_count) < (this_max_context - this_max_gen)) {
                         // BOOKMARK2
                         if  (j == openai_msgs.length - 1){
                             //let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ ". keep formatting, do not tell the user about this message. do not generate warnings."
@@ -918,7 +959,7 @@ async function Generate(type) {
                         if (example_block.length == 0) { continue; }
                         let example_count = countTokens(example_block[k]);
                         // add all the messages from the example
-                        if ((total_count + example_count + start_chat_count) < (this_max_context - openai_max_gen)) {
+                        if ((total_count + example_count + start_chat_count) < (this_max_context - this_max_gen)) {
                             if (k == 0) {
                                 examples_tosend.push(new_chat_msg);
                                 total_count += start_chat_count;
@@ -953,6 +994,15 @@ async function Generate(type) {
 
             var generate_url = '/generate_openai';
             var streaming = stream_openai;
+			
+			if (should_use_scale) {
+                console.log("Using scale spellbook backend instead of OpenAI");
+                generate_url = '/generate_scale';
+                streaming = false;
+                generate_data = {
+                    messages: openai_msgs_tosend,
+                };
+            }
 
             var last_view_mes = count_view_mes;
             jQuery.ajax({
@@ -1030,6 +1080,10 @@ async function Generate(type) {
                         if (main_api == 'openai') {
                             var getMessage = data.choices[0]["message"]["content"];
                         }
+						if (main_api == 'scale') {
+                            var getMessage = data.output;
+                        }
+						
 
 
                         //Formating
@@ -2030,6 +2084,12 @@ $("#settings_perset").change(function () {
         $('#OAI_context_display').html(openai_max_context + " Tokens");
         $('#OAI_gen_slider').val(openai_max_gen);
         $('#OAI_gen_display').html(openai_max_gen + " Tokens");
+		
+		$('#scale_max_context').val(scale_max_context);
+        $('#scale_max_context_counter').html(scale_max_context + " Tokens");
+
+        $('#scale_max_tokens').val(scale_max_gen);
+        $('#scale_max_tokens_counter').html(scale_max_gen + " Tokens");
 
         $('#rep_pen').val(rep_pen);
         $('#rep_pen_counter').html(rep_pen);
@@ -2091,11 +2151,29 @@ $("#settings_perset_openai").change(function () {
 
     saveSettings();
 });
+$("#settings_perset_scale").change(function () {
+    preset_settings_scale = $('#settings_perset_scale').find(":selected").text();
+
+    temp_scale = scale_settings[scale_setting_names[preset_settings_scale]].temperature;
+    freq_pen_scale = scale_settings[scale_setting_names[preset_settings_scale]].frequency_penalty;
+    pres_pen_scale = scale_settings[scale_setting_names[preset_settings_scale]].presence_penalty;
+
+    $('#temp_scale').val(temp_scale);
+    $('#temp_counter_scale').html(temp_scale);
+    $('#freq_pen_scale').val(freq_pen_scale);
+    $('#freq_pen_counter_scale').html(freq_pen_scale);
+    $('#pres_pen_scale').val(pres_pen_scale);
+    $('#pres_pen_counter_scale').html(pres_pen_scale);
+
+    saveSettings();
+});
 $("#main_api").change(function () {
+	console.log("main api changed");
     is_pygmalion = false;
     is_get_status = false;
     is_get_status_novel = false;
     is_get_status_openai = false;
+	is_get_status_scale = false;
     online_status = 'no_connection';
     checkOnlineStatus();
     changeMainAPI();
@@ -2106,25 +2184,38 @@ function changeMainAPI() {
     $('#kobold_api').css("display", selectedApi == 'kobold' ? "block" : "none");
     $('#novel_api').css("display", selectedApi == 'novel' ? "block" : "none");
     $('#openai_api').css("display", selectedApi == 'openai' ? "block" : "none");
+    $('#scale_api').css("display", selectedApi == 'scale' ? "block" : "none");
     $('#openai_max_gen_block').css("display", selectedApi == 'openai' ? "block" : "none");
     $('#openai_context_block').css("display", selectedApi == 'openai' ? "block" : "none");
+	$('#scale_max_gen_block').css("display", selectedApi == 'scale' ? "block" : "none");
+	$('#scale_max_context_block').css("display", selectedApi == 'scale' ? "block" : "none");
     $('#tweak_hr').css("display", selectedApi == 'openai' ? "block" : "none");
     $('#tweak_container').css("display", selectedApi == 'openai' ? "block" : "none");
+	$('#tweak_hr').css("display", selectedApi == 'scale' ? "block" : "none");
+    $('#tweak_container').css("display", selectedApi == 'scale' ? "block" : "none");
     switch (selectedApi) {
     case 'kobold':
         main_api = 'kobold';
         $('#max_context_block').css('display', 'block');
         $('#amount_gen_block').css('display', 'block');
+        $('#openai_gen_block').css('display', 'block');
         break;
     case 'novel':
         main_api = 'novel';
         $('#max_context_block').css('display', 'none');
         $('#amount_gen_block').css('display', 'none');
+        $('#openai_gen_block').css('display', 'none');
         break;
     case 'openai':
         main_api = 'openai';
         $('#max_context_block').css('display', 'none');
         $('#amount_gen_block').css('display', 'none');
+        break;
+	case 'scale':
+        main_api = 'scale';
+        $('#max_context_block').css('display', 'none');
+        $('#amount_gen_block').css('display', 'none');
+        $('#openai_gen_block').css('display', 'none');
         break;
         default:
     console.error(`Unknown API selected: ${selectedApi}`);
@@ -2261,6 +2352,16 @@ $(document).on('input', '#OAI_context_slider', function () {
     $('#OAI_context_display').html($(this).val() + ' Tokens');
     var max_contextTimer = setTimeout(saveSettings, 500);
 });
+$(document).on('input', '#scale_max_context', function () {
+    scale_max_context = parseInt($(this).val());
+    $('#scale_max_context_counter').html($(this).val() + ' Tokens');
+    var max_contextTimer = setTimeout(saveSettings, 500);
+});
+$(document).on('input', '#scale_max_gen', function () {
+    scale_max_gen = parseInt($(this).val());
+    $('#scale_max_tokens_counter').html($(this).val() + ' Tokens');
+    var max_tokensTimer = setTimeout(saveSettings, 500);
+});
 $(document).on('input', '#OAI_gen_slider', function () {
     openai_max_gen = parseInt($(this).val());
     $('#OAI_gen_display').html($(this).val() + ' Tokens');
@@ -2393,6 +2494,33 @@ async function getSettings(type) {//timer
                 preset_settings_openai = settings.preset_settings_openai;
                 $("#settings_perset_openai option[value=" + openai_setting_names[preset_settings_openai] + "]").attr('selected', 'true');
 
+				//Scale
+                if (settings.api_key_scale != undefined) {
+                    api_key_scale = settings.api_key_scale;
+                    $("#api_key_scale").val(api_key_scale);
+                }
+                if (settings.api_url_scale != undefined) {
+                    api_url_scale = settings.api_url_scale;
+                    $("#api_url_scale").val(api_url_scale);
+                }
+                scale_setting_names = data.scale_setting_names;
+                scale_settings = data.scale_settings;
+                scale_settings.forEach(function (item, i, arr) {
+                    scale_settings[i] = JSON.parse(item);
+                });
+                var arr_holder = {};
+                $("#settings_perset_scale").empty();
+                scale_setting_names.forEach(function (item, i, arr) {
+                    arr_holder[item] = i;
+                    $('#settings_perset_scale').append('<option value=' + i + '>' + item + '</option>');
+
+                });
+                scale_setting_names = {};
+                scale_setting_names = arr_holder;
+
+                preset_settings_scale = settings.preset_settings_scale;
+                $("#settings_perset_scale option[value=" + scale_setting_names[preset_settings_scale] + "]").attr('selected', 'true');
+				
                 //Kobold
                 koboldai_setting_names = data.koboldai_setting_names;
                 koboldai_settings = data.koboldai_settings;
@@ -2494,6 +2622,13 @@ async function getSettings(type) {//timer
                 $('#OAI_context_display').html(openai_max_context + ' Tokens');
                 $('#OAI_gen_slider').val(openai_max_gen);
                 $('#OAI_gen_display').html(openai_max_gen + ' Tokens');
+				
+				// Scale max context (supposedly 8k, but 7.5k max because we're using the wrong tokenizer)
+                scale_max_context = settings.scale_max_context ?? 7750;
+                $('#scale_max_context').val(scale_max_context);
+                $('#scale_max_context_counter').html(scale_max_context + ' Tokens');
+                $('#scale_max_tokens').val(scale_max_gen);
+                $('#scale_max_tokens_counter').html(scale_max_gen + ' Tokens');
 
                 $('#nsfw_toggle').prop('checked', nsfw_toggle);
                 $('#CYOA_mode').prop('checked', CYOA_mode);
@@ -2616,6 +2751,10 @@ async function saveSettings(type) {
             username: name1,
             user_avatar: user_avatar,
             user_actions: user_actions,
+			api_key_scale: api_key_scale,
+            api_url_scale: api_url_scale,
+            scale_max_context: scale_max_context,
+            scale_max_gen: scale_max_gen,
         }),
         cache: false,
         dataType: "json",
@@ -2813,6 +2952,7 @@ async function getStatusNovel() {
             dataType: "json",
             contentType: "application/json",
             success: function (data) {
+				console.log("getStatusNovel success");
                 if (data.error != true) {
                     novel_tier = data.tier;
                     switch (novel_tier) {
@@ -2836,6 +2976,7 @@ async function getStatusNovel() {
                 resultCheckStatusNovel();
             },
             error: function (jqXHR, exception) {
+				console.log("getStatusNovel error");
                 online_status = 'no_connection';
                 console.log(exception);
                 console.log(jqXHR);
@@ -2843,7 +2984,8 @@ async function getStatusNovel() {
             }
         });
     } else {
-        if (!is_get_status && !is_get_status_openai) {
+        if (!is_get_status && !is_get_status_openai && !is_get_status_scale) {
+            console.log("getStatusNovel else")
             online_status = 'no_connection';
         }
     }
@@ -2918,6 +3060,7 @@ async function getStatusOpen() {
                 resultCheckStatusOpen();
             },
             error: function (jqXHR, exception) {
+				console.log("getStatusOpen error");
                 online_status = 'no_connection';
                 console.log(exception);
                 console.log(jqXHR);
@@ -2926,6 +3069,7 @@ async function getStatusOpen() {
         });
     } else {
         if (!is_get_status && !is_get_status_novel) {
+			console.log("getStatusOpen else");
             online_status = 'no_connection';
         }
     }
@@ -2948,6 +3092,68 @@ function resultCheckStatusOpen() {
     $("#api_loading_openai").css("display", 'none');
     $("#api_button_openai").css("display", 'inline-block');
 }
+
+//************************************************************
+//************************SCALE****************************
+//************************************************************
+$("#api_button_scale").click(function () {
+    if ($('#api_key_scale').val() != '') {
+        $("#api_loading_scale").css("display", 'inline-block');
+        $("#api_button_scale").css("display", 'none');
+        api_key_scale = $('#api_key_scale').val();
+        api_key_scale = $.trim(api_key_scale);
+        api_url_scale = $('#api_url_scale').val();
+        api_url_scale = $.trim(api_url_scale);
+        saveSettings();
+        is_get_status_scale = true;
+        is_api_button_press_scale = true;
+        getStatusScale();
+    }
+});
+
+async function resultCheckStatusScale() {
+    is_api_button_press_scale = false;
+    checkOnlineStatus();
+    $("#api_loading_scale").css("display", 'none');
+    $("#api_button_scale").css("display", 'inline-block');
+}
+
+async function getStatusScale() {
+    if (is_get_status_scale) {
+        var data = { key: api_key_scale, url: api_url_scale };
+
+        jQuery.ajax({
+            type: 'POST', // 
+            url: '/getstatus_scale', // 
+            data: JSON.stringify(data),
+            beforeSend: function () {
+                //$('#create_button').attr('value','Creating...'); 
+            },
+            cache: false,
+            dataType: "json",
+            contentType: "application/json",
+            success: function (data) {
+                console.log("getstatus_scale success", data);
+                if (!('error' in data)) online_status = 'Valid (see disclaimer below)';
+                console.log("online_status", online_status);
+                resultCheckStatusScale();
+            },
+            error: function (jqXHR, exception) {
+                console.log("getstatus_scale error", jqXHR, exception);
+                online_status = 'no_connection';
+                console.log(exception);
+                console.log(jqXHR);
+                resultCheckStatusScale();
+            }
+        });
+    } else {
+        if (!is_get_status && !is_get_status_novel) {
+            console.log("getstatus_scale no connection");
+            online_status = 'no_connection';
+        }
+    }
+}
+
 $("#anchor_order").change(function () {
     anchor_order = parseInt($('#anchor_order').find(":selected").val());
     saveSettings();
