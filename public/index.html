@@ -293,12 +293,13 @@
             </div>
 			<div id="scale_api" style="display: none;position: relative;">
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
-                    <h4>API key / url</h4>
-                    <div style="display:flex; flex-direction:column">
-                        <input id="api_key_scale" name="api_key_scale" class="text_pole" maxlength="500" size="35" placeholder = "api_key go here" value="clfbo9iia00a6un1a5pp5s2mz" autocomplete="off">
-                        <input id="api_url_scale" name="api_url_scale" class="text_pole" maxlength="500" size="35" placeholder = "api_URL go here"
-                            value="https://dashboard.scale.com/spellbook/api/v2/deploy/kl43bbe" autocomplete="off">
-                    </div>
+                    <h4>API key</h4>
+                    <input id="api_key_scale" name="api_key_scale" class="text_pole" maxlength="500" size="35" placeholder = "api_key go here" value="clfbo9iia00a6un1a5pp5s2mz" autocomplete="off">
+                    <br>
+                    <h4>API url</h4>
+                    <input id="api_url_scale" name="api_url_scale" class="text_pole" maxlength="500" size="35" placeholder = "api_URL go here"
+                        value="https://dashboard.scale.com/spellbook/api/v2/deploy/kl43bbe" autocomplete="off" style="padding-left: 10px;">
+                    <br>
                     <!-- 
                         yeah that's a hardcoded api key
                         if it gets rate limited, just get your own
@@ -323,7 +324,7 @@
                     <h4>Scale Max Response Length</h4>
                     <h5 id="scale_max_tokens_counter">select</h5>
                     <input type="range" id="scale_max_gen" name="volume" min="100" max="4096" step="1">
-                    <p style="white-space: normal; padding-left:8px;padding-right:8px;margin-top:-12px">
+                    <p style="white-space: normal; padding-left:8px;padding-right:8px;">
                         This value must match the Spellbook deployment's
                         "Maximum Tokens" setting or you may send prompts that are too large.
                         <br>
