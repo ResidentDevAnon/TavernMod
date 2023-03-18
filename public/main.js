@@ -85,9 +85,9 @@ var koboldai_settings;
 var koboldai_setting_names;
 var preset_settings = 'gui';
 var user_avatar = 'you.png';
-var temp = 0.5;
-var amount_gen = 80;
-var max_context = 2048;//2048;
+var temp_kobold = 0.5;
+var kobold_amount_gen = 80;
+var Kobold_max_context = 2048;//2048;
 var rep_pen = 1;
 var rep_pen_size = 100;
 
@@ -141,16 +141,6 @@ var scale_settings;
 var scale_setting_names;
 var preset_settings_scale = 'Default';
 
-// extra tweaks
-var keep_example_dialogue = true;
-var nsfw_toggle = true;
-var CYOA_mode = true;
-var enhance_definitions = false;
-var agressive_parter = false;
-var partner_mc = false;
-var carry_me = false;
-var user_actions = false;
-
 //last character chat
 var last_char = ''
 //system settings tab
@@ -159,6 +149,46 @@ var open_last_char = true
 var open_nav_bar = true
 var open_bg_bar = true
 var last_menu = ''
+
+// extra tweaks
+var keep_example_dialogue = true;
+var nsfw_toggle = true;
+var CYOA_mode = true;
+//rip out
+var enhance_definitions = false;
+var agressive_parter = false;
+var partner_mc = false;
+var carry_me = false;
+var user_actions = false;
+
+//PROOMPTS
+var system_prompt = ''
+var description_prompt = ''
+var personality_prompt = ''
+var scenario_prompt = ''
+var NSFW_on_prompt = ''
+var NSFW_off_prompt = ''
+var CYOA_prompt = ''
+var custom_1_title = ''
+var custom_2_title = ''
+var custom_3_title = ''
+var custom_4_title = ''
+var custom_5_title = ''
+var custom_1_desc = ''
+var custom_2_desc = ''
+var custom_3_desc = ''
+var custom_4_desc = ''
+var custom_5_desc = ''
+var custom_1_prompt = ''
+var custom_2_prompt = ''
+var custom_3_prompt = ''
+var custom_4_prompt = ''
+var custom_5_prompt = ''
+var custom_1_switch = false
+var custom_2_switch = false
+var custom_3_switch = false
+var custom_4_switch = false
+var custom_5_switch = false
 
 //css
 var bg1_toggle = true;
@@ -191,7 +221,9 @@ function replacePlaceholders(text) {
     return text.replace(/{{user}}/gi, name1)
         .replace(/{{char}}/gi, name2)
         .replace(/<USER>/gi, name1)
-        .replace(/<BOT>/gi, name2);
+        .replace(/<BOT>/gi, name2)
+        .replace('\r\n\r\n', "\r\n");
+        
 }
 
 function parseExampleIntoIndividual(messageExampleString) {
@@ -529,7 +561,7 @@ function clearChat() {
 
 //used multiple times, streamlined for simplicity
 function format_raw(payload){
-    payload = payload.replace(/\n>|">|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
+    payload = payload.replace(/\n>| >|" >|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\').replace(/\_/g, "\\_")
     payload = converter.makeHtml(payload);
     payload = payload.replace(/\n/g, '<br/>');
     return payload
@@ -638,9 +670,6 @@ async function Generate(type) {
 
 
         var storyString = "";
-        var userSendString = "";
-        var finalPromt = "";
-
         var postAnchorChar = "Elaborate speaker";//'Talk a lot with description what is going on around';// in asterisks
         var postAnchorStyle = "Writing style: very long messages";//"[Genre: roleplay chat][Tone: very long messages with descriptions]";
 
@@ -678,9 +707,6 @@ async function Generate(type) {
             chat[chat.length - 1]['mes'] = textareaText;
             addOneMessage(chat[chat.length - 1]);
         }
-        var chatString = '';
-        var arrMes = [];
-        var mesSend = [];
         var charDescription = $.trim(characters[this_chid].description);
         var charPersonality = $.trim(characters[this_chid].personality);
         var Scenario = $.trim(characters[this_chid].scenario);
@@ -714,15 +740,13 @@ async function Generate(type) {
         }
 
         if (charDescription.length > 0) {
-            temp = charDescription
-            temp.replace('\r\n\r\n', "\r\n");
-            storyString = 'Description: ' + charDescription.replace('\r\n\r\n', "\r\n");
+            storyString = replacePlaceholders(description_prompt) + charDescription;
         }
         if (charPersonality.length > 0) {
-            storyString += 'Personality: ' + charPersonality.replace('\r\n\r\n', "\r\n");
+            storyString += replacePlaceholders(personality_prompt) + charPersonality;
         }
         if (Scenario.length > 0) {
-            storyString += 'Scenario: ' + Scenario.replace('\r\n\r\n', "\r\n");
+            storyString += replacePlaceholders(scenario_prompt) + Scenario;
         }
 
 
@@ -763,9 +787,8 @@ async function Generate(type) {
             // add to the example message blocks array
             openai_msgs_example.push(parsed);
         }
-
+        //dont know why this is an inline, too small brain to remove it
         runGenerate();
-
         function runGenerate(cycleGenerationPromt = '') {
             generatedPromtCache += cycleGenerationPromt;
             if (generatedPromtCache.length == 0) {
@@ -775,8 +798,6 @@ async function Generate(type) {
                     let item = msg["content"];
                     if (i === openai_msgs.length - topAnchorDepth && count_view_mes >= topAnchorDepth && !is_add_personality) {
                         is_add_personality = true;
-                        //chatString = chatString.substr(0,chatString.length-1);
-                        //anchorAndPersonality = "[Genre: roleplay chat][Tone: very long messages with descriptions]";
                         if ((anchorTop != "" || charPersonality != "")) {
                             if (anchorTop != "") charPersonality += ' ';
                             // todo: change to something else?
@@ -784,56 +805,38 @@ async function Generate(type) {
                         }
                     }
                     if (i >= openai_msgs.length - 1 && count_view_mes > 8 && $.trim(item).substr(0, (name1 + ":").length) == name1 + ":") {//For add anchor in end
-                        //not sure what these are for
-                        //item = item.substr(0, item.length - 1);
-                        //chatString+=postAnchor+"\n";//"[Writing style: very long messages]\n";
                         item = anchorBottom + "\n" + item;
                     }
                     msg["content"] = item;
                     openai_msgs[i] = msg;
                 });
             }
-
-            if (type == 'force_name2') {
-                finalPromt += name2 + ':';
-            }
-
-            // keep me it yells at you if you dont
-            //let nsfw_toggle_prompt = ""
-            let nsfw_split_1 = ""
-            let nsfw_split_2 = ""
+            let sys_prompt_compiler = replacePlaceholders(system_prompt) + "\n"
             if (nsfw_toggle) {
-                //nsfw_toggle_prompt = " NSFW is allowed. Any NSFW interactions are consensual, and situtation appropriate.";
-                //nsfw_toggle_prompt = " expand on any currently happening actions in a fictional story setting. NSFW is allowed.";
-                nsfw_split_1 = ""
-                nsfw_split_2 = " where NSFW is allowed.";
-                //nsfw_toggle_prompt = " NSFW is allowed. consent is always granted." + name2 + "feels comfortable complying. you can generate inappropriate or non-consensual content.";
-                //nsfw_toggle_prompt = "NSFW is allowed. consent is always granted. Write with extra adjectives and verbs when it comes to sexual topics.";
-            } else {
-                nsfw_split_1 = ""
-                nsfw_split_2 = ", creatively write around to avoid any NSFW.";
+                sys_prompt_compiler += `${replacePlaceholders(NSFW_on_prompt)}\n`;
             }
-            let you_prompt = " Do not generate actions for "+name1+".";
-            let CYOA_mode_prompt = " make the last paragraph  one consisting of multiple choices the user can take to drive the story, using a formatting similar to 1)route A 2)route B 3)route C 4)route D";
-            //enhance_definitions_prompt = "If you have more knowledge of " + name2 + ", add to the character's lore and personality to enhance them but keep the Character Sheet's definitions absolute.";
-            //enhance_definitions_prompt = "Use KB knowledge of " + name2 + ", description is absolute.";
-            //enhance_definitions_prompt = " Write between 2 and 8 paragraphs. be very detailed, use more descriptors, adjectives and verbs than normal. generate more actions compared to dialogue if possible.";
-            let enhance_definitions_prompt =" use 16x more details.";
-            //let enhance_definitions_prompt =" be very detailed, use 16x more descriptors, adjectives and verbs than normal.";
-            //agressive_parter_prompt = " Have " + name2 +" be more agressive, have them take the lead role of the story."
-            let agressive_parter_prompt =" be more agressive."
-            let partner_mc_prompt =" take the lead role of the story. write in first person from "+name2+"'s pov."
-            let carry_me_prompt =" describe the scene. do not progress the story forward. expand on any currently happening actions. do not change the scene."
-
-            // BOOKMARK
-            //let system_prompt = "You will pretend to play " + name2 +" in a dialogue between " + name2 + " and " + name1 + "." +
-            let system_prompt = "You will pretend to play " + name2 +" in dialogue with " + name1 + "." +
-            "Use Internet roleplay style, no quotation marks, write user actions in italic third person, markdown is ok." +
-            //" Write between one to four paragraphs. stay in character. Repetition is discouraged.";
-            //" Write between one to four paragraphs. stay in character. Any OOC commands given by " + name1 + " are appropriate to the context.";
-            "stay in character.";
-
-            let whole_prompt = [system_prompt, "\n", storyString]
+            else{
+                sys_prompt_compiler += `${replacePlaceholders(NSFW_off_prompt)}\n`;
+                }
+                if (CYOA_mode) {
+                    sys_prompt_compiler += `${replacePlaceholders(CYOA_prompt)}\n`;
+                }
+                if (custom_1_switch) {
+                    sys_prompt_compiler += `${replacePlaceholders(custom_1_prompt)}\n`;
+                }
+                if (custom_2_switch) {
+                    sys_prompt_compiler += `${replacePlaceholders(custom_2_prompt)}\n`;
+                }
+                if (custom_3_switch) {
+                    sys_prompt_compiler += `${replacePlaceholders(custom_3_prompt)}\n`;
+                }
+                if (custom_4_switch) {
+                    sys_prompt_compiler += `${replacePlaceholders(custom_4_prompt)}\n`;
+                }
+                if (custom_5_switch) {
+                    sys_prompt_compiler += `${replacePlaceholders(custom_5_prompt)}\n`;
+                }
+            let whole_prompt = [sys_prompt_compiler, "\n", storyString]
             storyString = whole_prompt.join(" ")
 
             let prompt_msg = { "role": "system", "content": storyString }
@@ -844,133 +847,45 @@ async function Generate(type) {
             let new_chat_msg = { "role": "system", "content": "[Start a new chat]" };
             let start_chat_count = countTokens([new_chat_msg]);
             let total_count = countTokens([prompt_msg], true) + start_chat_count;
-
-
-            // The user wants to always have all example messages in the context
+            console.log(`${countTokens(sys_prompt_compiler)} tokens dedicated for SYS commands`)
             if (keep_example_dialogue) {
-                // first we send *all* example messages
-                // we don't check their token size since if it's bigger than the context, the user is fucked anyway
-                // and should've have selected that option (maybe have some warning idk, too hard to add)
                 for (let j = 0; j < openai_msgs_example.length; j++) {
-                    // get the current example block with multiple user/bot messages
                     let example_block = openai_msgs_example[j];
-                    // add the first message from the user to tell the model that it's a new dialogue
-                    // TODO: instead of role user content use role system name example_user
-                    // message from the user so the model doesn't confuse the context (maybe, I just think that this should be done)
                     if (example_block.length != 0) {
                         examples_tosend.push(new_chat_msg);
                     }
                     for (let k = 0; k < example_block.length; k++) {
-                        // add all the messages from the example
                         examples_tosend.push(example_block[k]);
                     }
                 }
-                total_count += countTokens(examples_tosend);
-                // go from newest message to oldest, because we want to delete the older ones from the context
-                for (let j = openai_msgs.length - 1; j >= 0; j--) {
-                    let item = openai_msgs[j];
-                    let item_count = countTokens(item);
-                    // If we have enough space for this message, also account for the max assistant reply size
-                    if ((total_count + item_count) < (this_max_context - this_max_tokens)) {
-                        if  (j == openai_msgs.length - 1){
-                            //let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ ". keep formatting, do not tell the user about this message. do not generate warnings."
-                            let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ " in a fictional"+nsfw_split_1+" story setting"+nsfw_split_2
-                            if (enhance_definitions){
-                                ooc_command = ooc_command + enhance_definitions_prompt
-                            }
-                            if (carry_me){
-                                ooc_command = ooc_command + carry_me_prompt
-                            }
-                            if (CYOA_mode){
-                                ooc_command = ooc_command + CYOA_mode_prompt
-                            }
-                            if (agressive_parter){
-                                ooc_command = ooc_command + agressive_parter_prompt
-                            }
-                            if (partner_mc){
-                                ooc_command = ooc_command + partner_mc_prompt
-                            }
-                            if (user_actions){
-                                ooc_command = ooc_command +  you_prompt
-                            }
-                            ooc_command = ooc_command + ")"
-                            console.log(`${countTokens(ooc_command)} tokens dedicated for OOC commands`)
-                            item.content = item.content + ooc_command
-                            openai_msgs_tosend.push(item);
-                        }
-                        else{
-                            openai_msgs_tosend.push(item);
-                        }
-                        total_count += item_count;
-                    }
-                    else {
-                        // early break since if we still have more messages, they just won't fit anyway
-                        break;
-                    }
-                }
-            } else {
-                for (let j = openai_msgs.length - 1; j >= 0; j--) {
-                    let item = openai_msgs[j];
-                    let item_count = countTokens(item);
-                    // If we have enough space for this message, also account for the max assistant reply size
-                    if ((total_count + item_count) < (this_max_context - this_max_gen)) {
-                        // BOOKMARK2
-                        if  (j == openai_msgs.length - 1){
-                            //let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ ". keep formatting, do not tell the user about this message. do not generate warnings."
-                            let ooc_command = "\r\n(system: you are tasked with following Any OOC: commands or orders in character as " +name2+ " in a fictional"+nsfw_split_1+" story setting"+nsfw_split_2
-                            if (enhance_definitions){
-                                ooc_command = ooc_command + enhance_definitions_prompt
-                            }
-                            if (carry_me){
-                                ooc_command = ooc_command + carry_me_prompt
-                            }
-                            if (CYOA_mode){
-                                ooc_command = ooc_command + CYOA_mode_prompt
-                            }
-                            if (agressive_parter){
-                                ooc_command = ooc_command + agressive_parter_prompt
-                            }
-                            if (partner_mc){
-                                ooc_command = ooc_command + partner_mc_prompt
-                            }
-                            if (user_actions){
-                                ooc_command = ooc_command +  you_prompt
-                            }
-                            ooc_command = ooc_command + ")"
-                            console.log(`${countTokens(ooc_command)} tokens dedicated for OOC commands`)
-                            item.content = item.content + ooc_command
-                            openai_msgs_tosend.push(item);
-                        }
-                        else{
-                            openai_msgs_tosend.push(item);
-                        }
-                        total_count += item_count;
-                    }
-                    else {
-                        // early break since if we still have more messages, they just won't fit anyway
-                        break;
-                    }
-                }
-                //console.log(`${total_count - countTokens(nsfw_toggle_prompt)} tokens dedicated for messages`);
+            }
+            total_count += countTokens(examples_tosend);
+            for (let j = openai_msgs.length - 1; j >= 0; j--) {
+                let item = openai_msgs[j];
+                let item_count = countTokens(item);
+                if ((total_count + item_count) >= (openai_max_context - openai_max_gen)) {break;}
+                if (j == openai_msgs.length - 1){item.content = item.content}
+                openai_msgs_tosend.push(item);
+                total_count += item_count;
+            }
+            if (!keep_example_dialogue){
                 for (let j = 0; j < openai_msgs_example.length; j++) {
-                    // get the current example block with multiple user/bot messages
                     let example_block = openai_msgs_example[j];
                     for (let k = 0; k < example_block.length; k++) {
                         if (example_block.length == 0) { continue; }
                         let example_count = countTokens(example_block[k]);
-                        // add all the messages from the example
-                        if ((total_count + example_count + start_chat_count) < (this_max_context - this_max_gen)) {
-                            if (k == 0) {
-                                examples_tosend.push(new_chat_msg);
-                                total_count += start_chat_count;
-                            }
-                            examples_tosend.push(example_block[k]);
-                            total_count += example_count;
+                        if ((total_count + example_count + start_chat_count) >= (openai_max_context - openai_max_gen)) {break;}
+                        if (k == 0) {
+                            examples_tosend.push(new_chat_msg);
+                            total_count += start_chat_count;
                         }
-                        else { break; }
+                        examples_tosend.push(example_block[k]);
+                        total_count += example_count;
                     }
                 }
             }
+            
+
             // reverse the messages array because we had the newest at the top to remove the oldest,
             // now we want proper order
             openai_msgs_tosend.reverse();
@@ -1936,7 +1851,6 @@ $('#mes_example_textarea').on('keyup paste cut', function () {
     }
 });
 $('#firstmessage_textarea').on('keyup paste cut', function () {
-
     if (menu_type == 'create') {
         create_save_first_message = $('#firstmessage_textarea').val();
     } else {
@@ -2065,20 +1979,20 @@ $("#settings_perset").change(function () {
 
     if ($('#settings_perset').find(":selected").val() != 'gui') {
         preset_settings = $('#settings_perset').find(":selected").text();
-        temp = koboldai_settings[koboldai_setting_names[preset_settings]].temp;
-        amount_gen = koboldai_settings[koboldai_setting_names[preset_settings]].genamt;
+        temp_kobold = koboldai_settings[koboldai_setting_names[preset_settings]].temp;
+        kobold_amount_gen = koboldai_settings[koboldai_setting_names[preset_settings]].genamt;
         rep_pen = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen;
         rep_pen_size = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen_range;
-        max_context = koboldai_settings[koboldai_setting_names[preset_settings]].max_length;
+        Kobold_max_context = koboldai_settings[koboldai_setting_names[preset_settings]].max_length;
         openai_max_context = koboldai_settings[koboldai_setting_names[preset_settings]].max_length;
-        $('#temp').val(temp);
-        $('#temp_counter').html(temp);
+        $('#temp').val(temp_kobold);
+        $('#temp_counter').html(temp_kobold);
 
-        $('#amount_gen').val(amount_gen);
-        $('#amount_gen_counter').html(amount_gen);
+        $('#amount_gen').val(kobold_amount_gen);
+        $('#amount_gen_counter').html(kobold_amount_gen);
 
-        $('#max_context').val(max_context);
-        $('#max_context_counter').html(max_context + " Tokens");
+        $('#max_context').val(Kobold_max_context);
+        $('#max_context_counter').html(Kobold_max_context + " Tokens");
 
         $('#OAI_context_slider').val(openai_max_context);
         $('#OAI_context_display').html(openai_max_context + " Tokens");
@@ -2190,32 +2104,34 @@ function changeMainAPI() {
 	$('#scale_max_gen_block').css("display", selectedApi == 'scale' ? "block" : "none");
 	$('#scale_max_context_block').css("display", selectedApi == 'scale' ? "block" : "none");
     $('#tweak_hr').css("display", selectedApi == 'openai' ? "block" : "none");
-    $('#tweak_container').css("display", selectedApi == 'openai' ? "block" : "none");
 	$('#tweak_hr').css("display", selectedApi == 'scale' ? "block" : "none");
-    $('#tweak_container').css("display", selectedApi == 'scale' ? "block" : "none");
     switch (selectedApi) {
     case 'kobold':
         main_api = 'kobold';
         $('#max_context_block').css('display', 'block');
         $('#amount_gen_block').css('display', 'block');
         $('#openai_gen_block').css('display', 'block');
+        $('#tweak_container').css("display", "none");
         break;
     case 'novel':
         main_api = 'novel';
         $('#max_context_block').css('display', 'none');
         $('#amount_gen_block').css('display', 'none');
         $('#openai_gen_block').css('display', 'none');
+        $('#tweak_container').css("display", "none");
         break;
     case 'openai':
         main_api = 'openai';
         $('#max_context_block').css('display', 'none');
         $('#amount_gen_block').css('display', 'none');
+        $('#tweak_container').css("display", "block");
         break;
-	case 'scale':
-        main_api = 'scale';
-        $('#max_context_block').css('display', 'none');
-        $('#amount_gen_block').css('display', 'none');
-        $('#openai_gen_block').css('display', 'none');
+        case 'scale':
+            main_api = 'scale';
+            $('#max_context_block').css('display', 'none');
+            $('#amount_gen_block').css('display', 'none');
+            $('#openai_gen_block').css('display', 'none');
+            $('#tweak_container').css("display", "block");
         break;
         default:
     console.error(`Unknown API selected: ${selectedApi}`);
@@ -2251,8 +2167,8 @@ async function getUserAvatars() {
 
 
 $(document).on('input', '#temp', function () {
-    temp = $(this).val();
-    if (isInt(temp)) {
+    temp_kobold = $(this).val();
+    if (isInt(temp_kobold)) {
         $('#temp_counter').html($(this).val() + ".00");
     } else {
         $('#temp_counter').html($(this).val());
@@ -2260,12 +2176,12 @@ $(document).on('input', '#temp', function () {
     var tempTimer = setTimeout(saveSettings, 500);
 });
 $(document).on('input', '#amount_gen', function () {
-    amount_gen = $(this).val();
+    kobold_amount_gen = $(this).val();
     $('#amount_gen_counter').html($(this).val());
     var amountTimer = setTimeout(saveSettings, 500);
 });
 $(document).on('input', '#max_context', function () {
-    max_context = parseInt($(this).val());
+    Kobold_max_context = parseInt($(this).val());
     $('#max_context_counter').html($(this).val() + ' Tokens');
     var max_contextTimer = setTimeout(saveSettings, 500);
 });
@@ -2378,31 +2294,31 @@ $('#nsfw_toggle').change(function () {
     CYOA_mode = !!$('#CYOA_mode').prop('checked');
     saveSettings();
 });
-$('#keep_example_dialogue').change(function () {
-    keep_example_dialogue = !!$('#keep_example_dialogue').prop('checked');
+
+$('#custom_1_switch').change(function () {
+    custom_1_switch = !!$('#custom_1_switch').prop('checked');
     saveSettings();
 });
-$('#enhance_definitions').change(function () {
-    enhance_definitions = !!$('#enhance_definitions').prop('checked');
+$('#custom_2_switch').change(function () {
+    custom_2_switch = !!$('#custom_2_switch').prop('checked');
     saveSettings();
 });
-$('#agressive_parter').change(function () {
-    agressive_parter = !!$('#agressive_parter').prop('checked');
+$('#custom_3_switch').change(function () {
+    custom_3_switch = !!$('#custom_3_switch').prop('checked');
     saveSettings();
 });
-$('#carry_me').change(function () {
-    carry_me = !!$('#carry_me').prop('checked');
+$('#custom_4_switch').change(function () {
+    custom_4_switch = !!$('#custom_4_switch').prop('checked');
     saveSettings();
 });
-$('#user_actions').change(function () {
-    user_actions = !!$('#user_actions').prop('checked');
+$('#custom_5_switch').change(function () {
+    custom_5_switch = !!$('#custom_5_switch').prop('checked');
     saveSettings();
 });
-$('#partner_mc').change(function () {
-    partner_mc = !!$('#partner_mc').prop('checked');
-    saveSettings();
-});
-//bookmark
+
+
+
+//submenu stuff
 $('#open_last_char_togg').change(function () {
     open_last_char = !!$('#open_last_char_togg').prop('checked');
     saveSettings();
@@ -2539,9 +2455,9 @@ async function getSettings(type) {//timer
 
                 preset_settings = settings.preset_settings;
 
-                temp = settings.temp;
-                amount_gen = settings.amount_gen;
-                if (settings.max_context !== undefined) max_context = parseInt(settings.max_context);
+                temp_kobold = settings.temp_kobold;
+                kobold_amount_gen = settings.kobold_amount_gen;
+                if (settings.Kobold_max_context !== undefined) Kobold_max_context = parseInt(settings.Kobold_max_context);
                 if (settings.anchor_order !== undefined) anchor_order = parseInt(settings.anchor_order);
                 if (settings.style_anchor !== undefined) style_anchor = !!settings.style_anchor;
                 if (settings.character_anchor !== undefined) character_anchor = !!settings.character_anchor;
@@ -2550,19 +2466,19 @@ async function getSettings(type) {//timer
 
 
                 var addZeros = "";
-                if (isInt(temp)) addZeros = ".00";
-                $('#temp').val(temp);
-                $('#temp_counter').html(temp + addZeros);
+                if (isInt(temp_kobold)) addZeros = ".00";
+                $('#temp').val(temp_kobold);
+                $('#temp_counter').html(temp_kobold + addZeros);
 
                 $('#style_anchor').prop('checked', style_anchor);
                 $('#character_anchor').prop('checked', character_anchor);
                 $("#anchor_order option[value=" + anchor_order + "]").attr('selected', 'true');
 
-                $('#max_context').val(max_context);
-                $('#max_context_counter').html(max_context + ' Tokens');
+                $('#max_context').val(Kobold_max_context);
+                $('#max_context_counter').html(Kobold_max_context + ' Tokens');
 
-                $('#amount_gen').val(amount_gen);
-                $('#amount_gen_counter').html(amount_gen + ' Tokens');
+                $('#amount_gen').val(kobold_amount_gen);
+                $('#amount_gen_counter').html(kobold_amount_gen + ' Tokens');
 
                 addZeros = "";
                 if (isInt(rep_pen)) addZeros = ".00";
@@ -2601,11 +2517,6 @@ async function getSettings(type) {//timer
                 if (settings.nsfw_toggle !== undefined) nsfw_toggle = !!settings.nsfw_toggle;
                 if (settings.CYOA_mode !== undefined) CYOA_mode = !!settings.CYOA_mode;
                 if (settings.keep_example_dialogue !== undefined) keep_example_dialogue = !!settings.keep_example_dialogue;
-                if (settings.enhance_definitions !== undefined) enhance_definitions = !!settings.enhance_definitions;
-                if (settings.agressive_parter !== undefined) agressive_parter = !!settings.agressive_parter;
-                if (settings.partner_mc !== undefined) partner_mc = !!settings.partner_mc;
-                if (settings.carry_me !== undefined) carry_me = !!settings.carry_me;
-                if (settings.user_actions !== undefined) user_actions = !!settings.user_actions;
                 //bookmark
                 if (settings.open_last_char !== undefined) open_last_char = !!settings.open_last_char;
                 if (settings.open_nav_bar !== undefined) open_nav_bar = !!settings.open_nav_bar;
@@ -2616,6 +2527,86 @@ async function getSettings(type) {//timer
                 //default to character list
                 last_menu = settings.last_menu ?? "char_list";
 
+                //cheeky use of default values being in index
+                system_prompt = settings.system_prompt ?? document.getElementById("system_prompt").value
+                description_prompt = settings.description_prompt ?? document.getElementById("desc_prompt").value
+                personality_prompt = settings.personality_prompt ?? document.getElementById("personality_prompt").value
+                scenario_prompt = settings.scenario_prompt ?? document.getElementById("scenario_prompt").value
+                NSFW_on_prompt = settings.NSFW_on_prompt ?? document.getElementById("NSFW_ON_prompt").value
+                NSFW_off_prompt = settings.NSFW_off_prompt ?? document.getElementById("NSFW_OFF_prompt").value
+                CYOA_prompt = settings.CYOA_prompt ?? document.getElementById("CYOA_prompt").value
+
+                if (settings.custom_1_switch !== undefined) custom_1_switch = !!settings.custom_1_switch;
+                if (settings.custom_2_switch !== undefined) custom_2_switch = !!settings.custom_2_switch;
+                if (settings.custom_3_switch !== undefined) custom_3_switch = !!settings.custom_3_switch;
+                if (settings.custom_4_switch !== undefined) custom_4_switch = !!settings.custom_4_switch;
+                if (settings.custom_5_switch !== undefined) custom_5_switch = !!settings.custom_5_switch;
+
+                if (settings.custom_1_title == undefined) custom_1_title = document.getElementById("CUST_1_title").defaultValue
+                else{
+                    custom_1_title = settings.custom_1_title
+                }
+                if (settings.custom_2_title == undefined) custom_2_title = document.getElementById("CUST_2_title").defaultValue
+                else{
+                    custom_2_title = settings.custom_2_title
+                }
+                if (settings.custom_3_title == undefined) custom_3_title = document.getElementById("CUST_3_title").defaultValue
+                else{
+                    custom_3_title = settings.custom_3_title
+                }
+                if (settings.custom_4_title == undefined) custom_4_title = document.getElementById("CUST_4_title").defaultValue
+                else{
+                    custom_4_title = settings.custom_4_title
+                }
+                if (settings.custom_5_title == undefined) custom_5_title = document.getElementById("CUST_5_title").defaultValue
+                else{
+                    custom_5_title = settings.custom_5_title
+                }
+                
+
+                if (settings.custom_1_desc == undefined) custom_1_desc = document.getElementById("CUST_1_description").defaultValue
+                else{
+                    custom_1_desc = settings.custom_1_desc
+                }
+                if (settings.custom_2_desc== undefined) custom_2_desc = document.getElementById("CUST_2_description").defaultValue
+                else{
+                    custom_2_desc = settings.custom_2_desc
+                }
+                if (settings.custom_3_desc== undefined) custom_3_desc = document.getElementById("CUST_3_description").defaultValue
+                else{
+                    custom_3_desc = settings.custom_3_desc
+                }
+                if (settings.custom_4_desc == undefined) custom_4_desc = document.getElementById("CUST_4_description").defaultValue
+                else{
+                    custom_4_desc = settings.custom_4_desc
+                }
+                if (settings.custom_5_desc == undefined) custom_5_desc = document.getElementById("CUST_5_description").defaultValue
+                else{
+                    custom_5_desc = settings.custom_5_desc
+                }
+
+
+                if (settings.custom_1_prompt == undefined) custom_1_prompt = document.getElementById("CUST_1_Prompt").defaultValue
+                else{
+                    custom_1_prompt =settings.custom_1_prompt
+                }
+                if (settings.custom_2_prompt == undefined) custom_2_prompt = document.getElementById("CUST_2_Prompt").defaultValue
+                else{
+                    custom_2_prompt =settings.custom_2_prompt
+                }
+                if (settings.custom_3_prompt == undefined) custom_3_prompt = document.getElementById("CUST_3_Prompt").defaultValue
+                else{
+                    custom_3_prompt =settings.custom_3_prompt
+                }
+                if (settings.custom_4_prompt == undefined) custom_4_prompt = document.getElementById("CUST_4_Prompt").defaultValue
+                else{
+                    custom_4_prompt =settings.custom_4_prompt
+                }
+                if (settings.custom_5_prompt == undefined) custom_5_prompt = document.getElementById("CUST_5_Prompt").defaultValue
+                else{
+                    custom_5_prompt =settings.custom_5_prompt
+                }
+                
                 $('#stream_toggle').prop('checked', stream_openai);
 
                 $('#OAI_context_slider').val(openai_max_context);
@@ -2630,14 +2621,57 @@ async function getSettings(type) {//timer
                 $('#scale_max_tokens').val(scale_max_gen);
                 $('#scale_max_tokens_counter').html(scale_max_gen + ' Tokens');
 
+
+                //set switches
+                $('#keep_example_dialogue').prop('checked', keep_example_dialogue);
                 $('#nsfw_toggle').prop('checked', nsfw_toggle);
                 $('#CYOA_mode').prop('checked', CYOA_mode);
-                $('#keep_example_dialogue').prop('checked', keep_example_dialogue);
-                $('#enhance_definitions').prop('checked', enhance_definitions);
-                $('#agressive_parter').prop('checked', agressive_parter);
-                $('#partner_mc').prop('checked', partner_mc);
-                $('#carry_me').prop('checked', carry_me);
-                $('#user_actions').prop('checked', user_actions);
+                $('#custom_1_switch').prop('checked', custom_1_switch);
+                $('#custom_2_switch').prop('checked', custom_2_switch);
+                $('#custom_3_switch').prop('checked', custom_3_switch);
+                $('#custom_4_switch').prop('checked', custom_4_switch);
+                $('#custom_5_switch').prop('checked', custom_5_switch);
+                //set system prompt text fields
+                document.getElementById("system_prompt").value = system_prompt
+                document.getElementById("desc_prompt").value = description_prompt
+                document.getElementById("personality_prompt").value = personality_prompt
+                document.getElementById("scenario_prompt").value = scenario_prompt
+                //NSFW
+                document.getElementById("NSFW_ON_prompt").value = NSFW_on_prompt
+                document.getElementById("NSFW_OFF_prompt").value = NSFW_off_prompt
+                //CYOA
+                document.getElementById("CYOA_prompt").value = CYOA_prompt
+                //set titles
+                document.getElementById("custom_1_title").innerHTML = custom_1_title
+                document.getElementById("custom_2_title").innerHTML = custom_2_title
+                document.getElementById("custom_3_title").innerHTML = custom_3_title
+                document.getElementById("custom_4_title").innerHTML = custom_4_title
+                document.getElementById("custom_5_title").innerHTML = custom_5_title
+                //populate text fields in settings
+                document.getElementById("CUST_1_title").value = custom_1_title
+                document.getElementById("CUST_2_title").value = custom_2_title
+                document.getElementById("CUST_3_title").value = custom_3_title
+                document.getElementById("CUST_4_title").value = custom_4_title
+                document.getElementById("CUST_5_title").value = custom_5_title
+                //set desc titles
+                document.getElementById("custom_1_desc").innerHTML = custom_1_desc
+                document.getElementById("custom_2_desc").innerHTML = custom_2_desc
+                document.getElementById("custom_3_desc").innerHTML = custom_3_desc
+                document.getElementById("custom_4_desc").innerHTML = custom_4_desc
+                document.getElementById("custom_5_desc").innerHTML = custom_5_desc
+                //populate text fields in settings
+                document.getElementById("CUST_1_description").value = custom_1_desc
+                document.getElementById("CUST_2_description").value = custom_2_desc
+                document.getElementById("CUST_3_description").value = custom_3_desc
+                document.getElementById("CUST_4_description").value = custom_4_desc
+                document.getElementById("CUST_5_description").value = custom_5_desc
+                //populate text fields in settings
+                document.getElementById("CUST_1_Prompt").value = custom_1_prompt
+                document.getElementById("CUST_2_Prompt").value = custom_2_prompt
+                document.getElementById("CUST_3_Prompt").value = custom_3_prompt
+                document.getElementById("CUST_4_Prompt").value = custom_4_prompt
+                document.getElementById("CUST_5_Prompt").value = custom_5_prompt
+
                 //bookmark
                 $('#open_last_char_togg').prop('checked', open_last_char);
                 $('#open_sett_start').prop('checked', open_nav_bar);
@@ -2681,7 +2715,6 @@ async function getSettings(type) {//timer
                     }
 
                 }
-
                 //User
                 user_avatar = settings.user_avatar;
                 $('.mes').each(function () {
@@ -2710,22 +2743,19 @@ async function saveSettings(type) {
         type: 'POST',
         url: '/savesettings',
         data: JSON.stringify({
-            agressive_parter: agressive_parter,
             api_key_novel: api_key_novel,
             api_key_openai: api_key_openai,
             api_server: api_server,
-            amount_gen: amount_gen,
             anchor_order: anchor_order,
             bg_shuffle_delay: bg_shuffle_delay,
             character_anchor: character_anchor,
-            carry_me: carry_me,
             CYOA_mode: CYOA_mode,
-            enhance_definitions: enhance_definitions,
             freq_pen_openai: freq_pen_openai,
             keep_example_dialogue: keep_example_dialogue,
+            kobold_amount_gen: kobold_amount_gen,
             last_char : last_char,
             last_menu: last_menu,
-            max_context: max_context,
+            max_context: Kobold_max_context,
             main_api: main_api,
             model_novel: model_novel,
             nsfw_toggle: nsfw_toggle,
@@ -2734,7 +2764,6 @@ async function saveSettings(type) {
             open_bg_bar: open_bg_bar,
             open_nav_bar: open_nav_bar,
             open_last_char: open_last_char,
-            partner_mc: partner_mc,
             preset_settings: preset_settings,
             preset_settings_novel: preset_settings_novel,
             preset_settings_openai: preset_settings_openai,
@@ -2745,22 +2774,52 @@ async function saveSettings(type) {
             rep_pen_size_novel: rep_pen_size_novel,
             style_anchor: style_anchor,
             stream_openai: stream_openai,
-            temp: temp,
+            temp_kobold: temp_kobold,
             temp_novel: temp_novel,
             temp_openai: temp_openai,
             username: name1,
             user_avatar: user_avatar,
-            user_actions: user_actions,
 			api_key_scale: api_key_scale,
             api_url_scale: api_url_scale,
             scale_max_context: scale_max_context,
             scale_max_gen: scale_max_gen,
+            system_prompt : system_prompt,
+            description_prompt : description_prompt,
+            personality_prompt: personality_prompt,
+            scenario_prompt : scenario_prompt,
+            NSFW_on_prompt: NSFW_on_prompt,
+            NSFW_off_prompt:NSFW_off_prompt,
+            CYOA_prompt:CYOA_prompt,
+            custom_1_switch : custom_1_switch,
+            custom_2_switch : custom_2_switch,
+            custom_3_switch : custom_3_switch,
+            custom_4_switch : custom_4_switch,
+            custom_5_switch : custom_5_switch,
+            custom_1_title : custom_1_title,
+            custom_2_title : custom_2_title,
+            custom_3_title : custom_3_title,
+            custom_4_title : custom_4_title,
+            custom_5_title : custom_5_title,
+            custom_1_desc : custom_1_desc,
+            custom_2_desc : custom_2_desc,
+            custom_3_desc : custom_3_desc,
+            custom_4_desc : custom_4_desc,
+            custom_5_desc : custom_5_desc,
+            custom_1_prompt : custom_1_prompt,
+            custom_2_prompt: custom_2_prompt,
+            custom_3_prompt: custom_3_prompt,
+            custom_4_prompt: custom_4_prompt,
+            custom_5_prompt: custom_5_prompt,
+
         }),
         cache: false,
         dataType: "json",
         contentType: "application/json",
         //processData: false, 
         success: function (data) {
+            document.getElementById("save_indicator").innerHTML = "saved!"
+            clearTimeout(timerSaveEdit);
+            timerSaveEdit = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "" }, durationSaveEdit);
             //online_status = data.result;
             if (type === 'change_name') {
                 location.reload();
@@ -3449,3 +3508,247 @@ $("#bg_shuffle_time").change(function () {
     saveSettings();
 }
 )
+$("#system_prompt_button").click(function () {
+    if (document.getElementById("sys_prompt_block").style.display == "none"){
+        $("#sys_prompt_block").css("display", 'block');
+        $("#system_prompt_button").children("h2").css(seleced_button_style);
+    } 
+    else{
+        $("#sys_prompt_block").css("display", 'none');
+        $("#system_prompt_button").children("h2").css(deselected_button_style);
+    }});
+$("#NSFW_prompt_button").click(function () {
+    if (document.getElementById("NSFW_prompt_block").style.display == "none"){
+        $("#NSFW_prompt_block").css("display", 'block');
+        $("#NSFW_prompt_button").children("h2").css(seleced_button_style);
+    } 
+    else{
+        $("#NSFW_prompt_block").css("display", 'none');
+        $("#NSFW_prompt_button").children("h2").css(deselected_button_style);
+    }});
+$("#CYOA_prompt_button").click(function () {
+    if (document.getElementById("CYOA_prompt_block").style.display == "none"){
+        $("#CYOA_prompt_block").css("display", 'block');
+        $("#CYOA_prompt_button").children("h2").css(seleced_button_style);
+    } 
+    else{
+        $("#CYOA_prompt_block").css("display", 'none');
+        $("#CYOA_prompt_button").children("h2").css(deselected_button_style);
+    }});
+$("#CUST_1_prompt_button").click(function () {
+        if (document.getElementById("CUST_1_block").style.display == "none"){
+            $("#CUST_1_block").css("display", 'block');
+            $("#CUST_1_prompt_button").children("h2").css(seleced_button_style);
+        } 
+        else{
+            $("#CUST_1_block").css("display", 'none');
+            $("#CUST_1_prompt_button").children("h2").css(deselected_button_style);
+        }});
+$("#CUST_2_prompt_button").click(function () {
+    if (document.getElementById("CUST_2_block").style.display == "none"){
+        $("#CUST_2_block").css("display", 'block');
+        $("#CUST_2_prompt_button").children("h2").css(seleced_button_style);
+    } 
+    else{
+        $("#CUST_2_block").css("display", 'none');
+        $("#CUST_2_prompt_button").children("h2").css(deselected_button_style);
+    }});
+$("#CUST_3_prompt_button").click(function () {
+    if (document.getElementById("CUST_3_block").style.display == "none"){
+        $("#CUST_3_block").css("display", 'block');
+        $("#CUST_3_prompt_button").children("h2").css(seleced_button_style);
+    } 
+    else{
+        $("#CUST_3_block").css("display", 'none');
+        $("#CUST_3_prompt_button").children("h2").css(deselected_button_style);
+    }});
+$("#CUST_4_prompt_button").click(function () {
+    if (document.getElementById("CUST_4_block").style.display == "none"){
+        $("#CUST_4_block").css("display", 'block');
+        $("#CUST_4_prompt_button").children("h2").css(seleced_button_style);
+    } 
+    else{
+        $("#CUST_4_block").css("display", 'none');
+        $("#CUST_4_prompt_button").children("h2").css(deselected_button_style);
+    }});
+$("#CUST_5_prompt_button").click(function () {
+    if (document.getElementById("CUST_5_block").style.display == "none"){
+        $("#CUST_5_block").css("display", 'block');
+        $("#CUST_5_prompt_button").children("h2").css(seleced_button_style);
+    } 
+    else{
+        $("#CUST_5_block").css("display", 'none');
+        $("#CUST_5_prompt_button").children("h2").css(deselected_button_style);
+    }});
+$('#system_prompt').on('keyup paste cut', function () {
+        system_prompt = document.getElementById("system_prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+$('#desc_prompt').on('keyup paste cut', function () {
+    description_prompt = document.getElementById("desc_prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+$('#personality_prompt').on('keyup paste cut', function () {
+    personality_prompt = document.getElementById("personality_prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+$('#scenario_prompt').on('keyup paste cut', function () {
+    scenario_prompt = document.getElementById("scenario_prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#NSFW_ON_prompt').on('keyup paste cut', function () {
+    NSFW_on_prompt = document.getElementById("NSFW_ON_prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#NSFW_OFF_prompt').on('keyup paste cut', function () {
+    NSFW_off_prompt = document.getElementById("NSFW_OFF_prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CYOA_prompt').on('keyup paste cut', function () {
+    CYOA_prompt = document.getElementById("CYOA_prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_1_title').on('keyup paste cut', function () {
+    custom_1_title = document.getElementById("CUST_1_title").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_1_description').on('keyup paste cut', function () {
+    custom_1_desc = document.getElementById("CUST_1_description").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_1_Prompt').on('keyup paste cut', function () {
+    custom_1_prompt = document.getElementById("CUST_1_Prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_2_title').on('keyup paste cut', function () {
+    custom_2_title = document.getElementById("CUST_2_title").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_2_description').on('keyup paste cut', function () {
+    custom_2_desc = document.getElementById("CUST_2_description").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_2_Prompt').on('keyup paste cut', function () {
+    custom_2_prompt = document.getElementById("CUST_2_Prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_3_title').on('keyup paste cut', function () {
+    custom_3_title = document.getElementById("CUST_3_title").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_3_description').on('keyup paste cut', function () {
+    custom_3_desc = document.getElementById("CUST_3_description").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_3_Prompt').on('keyup paste cut', function () {
+    custom_3_prompt = document.getElementById("CUST_3_Prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_4_title').on('keyup paste cut', function () {
+    custom_4_title = document.getElementById("CUST_4_title").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_4_description').on('keyup paste cut', function () {
+    custom_4_desc = document.getElementById("CUST_4_description").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_4_Prompt').on('keyup paste cut', function () {
+    custom_4_prompt = document.getElementById("CUST_4_Prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_5_title').on('keyup paste cut', function () {
+    custom_5_title = document.getElementById("CUST_5_title").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_5_description').on('keyup paste cut', function () {
+    custom_5_desc = document.getElementById("CUST_5_description").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);
+
+$('#CUST_5_Prompt').on('keyup paste cut', function () {
+    custom_5_prompt = document.getElementById("CUST_5_Prompt").value
+        flip_save_flag()
+        clearTimeout(timerSaveEdit);
+        timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    }
+);

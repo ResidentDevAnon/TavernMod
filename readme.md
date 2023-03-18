@@ -25,6 +25,10 @@
 * less if else, more switch statements
 * amount of tokens to generate slider for OAI 
 * proper rending of style elements (*text* ~~text~~ etc.) within chat selector
+* scale support
+* custom prompt support
+
+
 exmaple images (maybe outdated)
 
 ![chloe greeting](github_images/chloe.png "chloe greeting")

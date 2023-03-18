@@ -2115,3 +2115,17 @@ input:checked + .slider:before {
     margin-left: 10px;
     margin-top: 10px;
 }
+.system_prompt :before{
+    color : white;
+}
+#reply_sett{
+    margin-right: 20px;
+}
+#reply_sett p{
+    white-space: normal;
+}#reply_sett h4{
+margin-left: 0px;
+}
+#reply_sett textarea{
+    height: 200px;
+}
