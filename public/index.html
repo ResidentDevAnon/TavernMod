@@ -196,7 +196,7 @@
             </div>
         </div>
         <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->
-        <p id="save_indicator"style="position: absolute;"> </p>
+        <p id="save_indicator"style="position: relative;"> </p>
         <!--Sub settings-->
         <div id="rm_api_block" class="right_menu" >
             <div class="submenu" id="api_settings"><h2>API Settings</h2></div>
@@ -420,32 +420,32 @@
                     <input id="CYOA_mode" type="checkbox" checked><span class="slider round"></span>
 					</label>
                         <h4 style="display: inline-block;">CYOA Toggle</h4>
-                        <br>
+                    <br>
                     <label class="switch" >
-                        <input id="user_actions" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 style="display: inline-block;">no user actions</h4>
-                        <h5>do not generate your actions</h5>
-                        <br>
+                        <input id="custom_1_switch" type="checkbox"/><span class="slider round"></span>
+                    </label><h4 id = "custom_1_title"style="display: inline-block;">replaced in JS</h4>
+                        <h5 id = "custom_1_desc">repalced in JS</h5>
+                    <br>
                     <label class="switch" >
-                        <input id="enhance_definitions" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 style="display: inline-block;">todd howard mode</h4>
-                        <h5> (literally) SIXTEEN TIMES THE DETAIL</h5>
-                        <h5 style="text-decoration:line-through;"> 1% chance to ask you to buy skyrim</h5>
-                        <br>
+                        <input id="custom_2_switch" type="checkbox"/><span class="slider round"></span>
+                    </label><h4 id = "custom_2_title"style="display: inline-block;">replaced in JS</h4>
+                        <h5 id = "custom_2_desc">repalced in JS</h5>
+                    <br>
                     <label class="switch" >
-                            <input id="agressive_parter" type="checkbox"/><span class="slider round"></span>
-                        </label><h4 style="display: inline-block;">Agressive parter</h4>
-                            <h5>literally just makes them more agressive</h5>
-                        <br>
+                        <input id="custom_3_switch" type="checkbox"/><span class="slider round"></span>
+                    </label><h4 id = "custom_3_title"style="display: inline-block;">replaced in JS</h4>
+                        <h5 id = "custom_3_desc">repalced in JS</h5>
+                    <br>
                     <label class="switch" >
-                        <input id="partner_mc" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 style="display: inline-block;">parter is the MC</h4>
-                        <h5>POV: your the side character</h5>
-                        <br>
+                        <input id="custom_4_switch" type="checkbox"/><span class="slider round"></span>
+                    </label><h4 id = "custom_4_title"style="display: inline-block;">replaced in JS</h4>
+                        <h5 id = "custom_4_desc">repalced in JS</h5>
+                    <br>
                     <label class="switch" >
-                        <input id="carry_me" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 style="display: inline-block;">explain the scene</h4>
-                        <h5>fucking writelet</h5>
+                        <input id="custom_5_switch" type="checkbox"/><span class="slider round"></span>
+                    </label><h4 id = "custom_5_title"style="display: inline-block;">replaced in JS</h4>
+                        <h5 id = "custom_5_desc">repalced in JS</h5>
+                    <br>
                 
                 </div>
 			</div>
@@ -489,8 +489,6 @@
                     <div>
                         <h4 style="display: inline-block;">what tab to open nav (right menu) to on startup</h4>
                         <br>
-                        <h4 style="display: inline-block;">this kinda has to be as slow as it is</h4>
-                        <br>
                         <select id="menu_sel_box" style="color:#fff;background-color:#000000;" >
                             <option value="char_list">Characters</option>
                             <option value="sett">Settings</option>
@@ -499,7 +497,121 @@
                     </div>
                 </div>
                 <!--reply settings-->
-                <div id="reply_sett" style="display: none;">placeholder text (soon tm)</div>
+                <div id="reply_sett" style="display: none;">
+                <!--system prompt settings-->
+                <p>you can (and should) use {{char}} {{user}} tags here.</p>
+                <hr>
+                <div class="right_menu_button" id="system_prompt_button"><h2>SYSTEM prompts</h2>
+                </div>
+                    <div id="sys_prompt_block" style="display: none;">
+                        <h3>sent with every message.</h3>
+                        <textarea id="system_prompt" palceholder="">You will pretend to play {{char}} in dialogue with {{user}}.Use Internet roleplay style, no quotation marks, write user actions in italic third person, markdown is ok. stay in character.</textarea>
+                        <hr>
+                        <p>other system settings below here are only sent if there is text in the appropriate field.
+                            if blank, it still sends the appropriate field, but expect weird results.
+                            yes these defaults are generic, its standard in tavern.
+                            these are prefixes added before the field contents.
+                        </p>
+                        <p>
+                        ex
+                        </p>
+                        </p>
+                        <p>description:</p>
+                        <p>
+                        is actually
+                        </p>
+                        <p>
+                        description: {{description}}
+                        </p>
+                        <hr>
+                        <h3>description prompt.</h3>
+                        <textarea id="desc_prompt" palceholder="">Description: </textarea>
+                        <h3>personality prompt.</h3>
+                        <textarea id="personality_prompt" palceholder="">Personality: </textarea>
+                        <h3>Scenario prompt.</h3>
+                        <textarea id="scenario_prompt" palceholder="">Scenario: </textarea>
+                    </div>
+                <hr>
+                <!--NSFW prompt settings-->
+                <div class="right_menu_button" id="NSFW_prompt_button"><h2>NSFW prompt</h2>
+                </div>
+                    <div id="NSFW_prompt_block" style="display: none;">
+                        <h3>(ON) prompt</h3>
+                        <textarea id="NSFW_ON_prompt" palceholder="">you are tasked with following Any OOC: commands or orders in character as {{char}} in a fictional NSFW story setting where NSFW is allowed.</textarea>
+                        <br>
+                        <h3>(OFF) prompt</h3>
+                        <textarea id="NSFW_OFF_prompt" palceholder="">you are tasked with following Any OOC: commands or orders in character as {{char}} in a fictional story setting, creatively write around to avoid any NSFW.</textarea>
+                    </div>
+                <hr>
+                <!--CYOA prompt settings-->
+                <div class="right_menu_button" id="CYOA_prompt_button"><h2>CYOA prompt</h2>
+                </div>
+                    <div id="CYOA_prompt_block" style="display: none;">
+                        <h3>prompt</h3>
+                        <br>
+                        <textarea id="CYOA_prompt" palceholder="">make the last paragraph  one consisting of multiple choices the user can take to drive the story, using a formatting similar to 1)route A 2)route B 3)route C 4)route D</textarea>
+                    </div>
+                <hr>
+                <!--CUST_1 prompt settings-->
+                <div class="right_menu_button" id="CUST_1_prompt_button"><h2>Custom1 prompt</h2>
+                </div>
+                    <div id="CUST_1_block" style="display: none;">
+                        <input id="CUST_1_title" class="text_pole" maxlength="500" size="35" placeholder = "Title" value="Todd Howard Mode" autocomplete="off">
+                        <br>
+                        <input id="CUST_1_description" class="text_pole" maxlength="500" size="35" placeholder = "description" value="SIXTEEN TIMES THE DETAIL" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <textarea id="CUST_1_Prompt" palceholder="">use 16x more details.</textarea>
+                        </div>
+                    <hr>
+                    <!--CUST_2 prompt settings-->
+                    <div class="right_menu_button" id="CUST_2_prompt_button"><h2>Custom2 prompt</h2>
+                    </div>
+                    <div id="CUST_2_block" style="display: none;">
+                        <input id="CUST_2_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Agressive parter" autocomplete="off">
+                        <br>
+                        <input id="CUST_2_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="be more agressive (also helps with filter)" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <textarea id="CUST_2_Prompt" placeholder="">be more agressive</textarea>
+                    </div>
+                    <hr>
+                    <!--CUST_3 prompt settings-->
+                    <div class="right_menu_button" id="CUST_3_prompt_button"><h2>Custom3 prompt</h2>
+                    </div>
+                    <div id="CUST_3_block" style="display: none;">
+                        <input id="CUST_3_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Partner MC" autocomplete="off">
+                        <br>
+                        <input id="CUST_3_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="Pov your a side character" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <textarea id="CUST_3_Prompt" placeholder="">take the lead role of the story. write in first person from {{char}}'s pov.</textarea>
+                    </div>
+                    <hr>
+                    <!--CUST_4 prompt settings-->
+                    <div class="right_menu_button" id="CUST_4_prompt_button"><h2>Custom4 prompt</h2>
+                    </div>
+                    <div id="CUST_4_block" style="display: none;">
+                        <input id="CUST_4_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Exaplain The Scene" autocomplete="off">
+                        <br>
+                        <input id="CUST_4_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="Proselet" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <textarea id="CUST_4_Prompt" placeholder="">describe the scene. do not progress the story forward. expand on any currently happening actions. do not change the scene.</textarea>
+                    </div>
+                    <hr>
+                    <!--CUST_5 prompt settings-->
+                    <div class="right_menu_button" id="CUST_5_prompt_button"><h2>Custom5 prompt</h2>
+                    </div>
+                    <div id="CUST_5_block" style="display: none;">
+                        <input id="CUST_5_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="No (you)'s' mode" autocomplete="off">
+                        <br>
+                        <input id="CUST_5_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="do not generate actions for you" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <textarea id="CUST_5_Prompt" placeholder="">Do not generate actions for {{user}}.</textarea>
+                </div>
+                </div>
             </div>
         </select>
         </div>
