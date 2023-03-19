@@ -40,19 +40,14 @@ var api_novelai = "https://api.novelai.net";
 var api_openai = "https://api.openai.com/v1";
 var api_scale = "https://dashboard.scale.com/spellbook/api/v2/deploy/q64278n";
 
-var response_get_story;
 var response_generate;
 var response_generate_novel;
 var response_generate_openai;
 var response_generate_scale;
 var request_promt;
-var response_promt;
-var characters = {};
-var character_i = 0;
-var response_create;
-var response_edit;
+var characters_obj = {};
 var response_dw_bg;
-var response_getstatus;
+var response_getstatus_kobold;
 var response_getstatus_novel;
 var response_getstatus_openai;
 var response_getstatus_scale;
@@ -525,16 +520,11 @@ async function charaWrite(img_url, data, target_img, response = undefined, mes =
 
         fs.writeFileSync(charactersPath+target_img+'.png', new Buffer.from(encode(chunks)));
         if(response !== undefined) response.send(mes);
-            
-
     } catch (err) {
         console.log(err);
         if(response !== undefined) response.send(err);
     }
 }
-
-      
-            
 
 
 function charaRead(img_url){
@@ -556,14 +546,14 @@ function charaRead(img_url){
 app.post("/getcharacters", jsonParser, function(request, response){
     fs.readdir(charactersPath, (err, files) => {
         if (err) {
-          console.error(err);
-          return;
+            console.error(err);
+            return;
         }
 
         const pngFiles = files.filter(file => file.endsWith('.png'));
 
         //console.log(pngFiles);
-        characters = {};
+        characters_obj = {};
         var i = 0;
         pngFiles.forEach(item => {
             //console.log(item);
@@ -572,8 +562,8 @@ app.post("/getcharacters", jsonParser, function(request, response){
                 let jsonObject = JSON.parse(img_data);
                 jsonObject.avatar = item;
                 //console.log(jsonObject);
-                characters[i] = {};
-                characters[i] = jsonObject;
+                characters_obj[i] = {};
+                characters_obj[i] = jsonObject;
                 i++;
             } catch (error) {
                 if (error instanceof SyntaxError) {
@@ -583,15 +573,8 @@ app.post("/getcharacters", jsonParser, function(request, response){
                 }
             }
         });
-        //console.log(characters);
-        response.send(JSON.stringify(characters));
+        response.send(JSON.stringify(characters_obj));
     });
-    //var directories = getDirectories("public/characters");
-    //console.log(directories[0]);
-    //characters = {};
-    //character_i = 0;
-    //getCharaterFile(directories, response,0);
-    
 });
 app.post("/getbackgrounds", jsonParser, function(request, response){
     var images = getImages("public/backgrounds");
@@ -816,35 +799,6 @@ app.post('/getsettings', jsonParser, (request, response) => { //Wintermute's cod
     });
 });
 
-
-function getCharaterFile(directories,response,i){ //old need del
-    if(directories.length > i){
-        
-        fs.stat(charactersPath+directories[i]+'/'+directories[i]+".json", function(err, stat) {
-            if (err == null) {
-                fs.readFile(charactersPath+directories[i]+'/'+directories[i]+".json", 'utf8', (err, data) => {
-                    if (err) {
-                      console.error(err);
-                      return;
-                    }
-                    //console.log(data);
-
-                    characters[character_i] = {};
-                    characters[character_i] = data;
-                    i++;
-                    character_i++;
-                    getCharaterFile(directories,response,i);
-                });
-            }else{
-                i++;
-                getCharaterFile(directories,response,i);
-            }
-        });
-        
-    }else{
-        response.send(JSON.stringify(characters));
-    }
-}
 function getImages(path) {
     return fs.readdirSync(path).sort(function (a, b) {
 return new Date(fs.statSync(path + '/' + a).mtime) - new Date(fs.statSync(path + '/' + b).mtime);
@@ -952,7 +906,7 @@ app.post("/generate_novelai", jsonParser, function(request, response_generate_no
     }).on('error', function (err) {
         //console.log('');
 	//console.log('something went wrong on the request', err.request.options);
-        response_getstatus.send({error: true});
+        response_getstatus_kobold.send({error: true});
     });
 });
 
@@ -962,9 +916,9 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
     var char_dir = (request.body.avatar_url).replace('.png','')
     fs.readdir(chatsPath+char_dir, (err, files) => {
         if (err) {
-          console.error(err);
-          response.send({error: true});
-          return;
+            console.error(err);
+            response.send({error: true});
+            return;
         }
 
         // filter for JSON files
@@ -1005,7 +959,7 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
                     }else{
                         return;
                     }
-                  }
+                }
                 rl.close();
             });
         }
@@ -1062,7 +1016,7 @@ app.post("/getstatus_scale", jsonParser, function(request, response_getstatus_sc
         // }
     }).on('error', function (err) {
         console.log('');
-	      console.log('something went wrong on the request', err.request.options);
+        console.log('something went wrong on the request', err.request.options);
         response_getstatus_scale.send({error: true});
     });
 });

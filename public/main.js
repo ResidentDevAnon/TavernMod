@@ -23,7 +23,7 @@ var default_ch_mes = "Hello";
 var count_view_mes = 0;
 var mesStr = '';
 var generatedPromtCache = '';
-var characters = [];
+var characters_array = [];
 var this_chid;
 var backgrounds = [];
 var default_avatar = 'img/fluffy.png';
@@ -441,7 +441,7 @@ function resultCheckStatus() {
 function printCharaters() {
     //console.log(1);
     $("#rm_print_charaters_block").empty();
-    characters.forEach(function (item, i, arr) {
+    characters_array.forEach(function (item, i, arr) {
         var this_avatar = default_avatar;
         if (item.avatar != 'none') {
             this_avatar = "characters/" + item.avatar + "#" + Date.now();
@@ -469,11 +469,11 @@ async function getCharacters() {
         const getData = await response.json();
         const load_ch_count = Object.getOwnPropertyNames(getData);
         for (var i = 0; i < load_ch_count.length; i++) {
-            characters[i] = [];
-            characters[i] = getData[i];
+            characters_array[i] = [];
+            characters_array[i] = getData[i];
         }
-        characters.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase()) ? 1 : -1);
-        if (this_chid != undefined) $("#avatar_url_pole").val(characters[this_chid].avatar);
+        characters_array.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase()) ? 1 : -1);
+        if (this_chid != undefined) $("#avatar_url_pole").val(characters_array[this_chid].avatar);
         printCharaters();
     }
 }
@@ -589,8 +589,8 @@ function addOneMessage(mes) {
         if (this_chid == undefined) {
             avatarImg = "img/chloe.png";
         } else {
-            if (characters[this_chid].avatar != 'none') {
-                avatarImg = "characters/" + characters[this_chid].avatar;
+            if (characters_array[this_chid].avatar != 'none') {
+                avatarImg = "characters/" + characters_array[this_chid].avatar;
                 if (is_mes_reload_avatar !== false) {
                     avatarImg += "#" + is_mes_reload_avatar;
                 }
@@ -605,7 +605,32 @@ function addOneMessage(mes) {
     }
     messageText = messageFormating(messageText, characterName);
 
-    $("#chat").append("<div class='mes' mesid=" + count_view_mes + " ch_name=" + characterName + "><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='" + avatarImg + "'></div><div class=mes_block><div class=ch_name>" + characterName + "<div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div><div class=mes_edit_cancel><img src=img/cancel.png></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text></div></div></div>");
+        const chatTemplate = `
+        <div class='mes' mesid=${count_view_mes} ch_name=${characterName}>
+            <div class='for_checkbox'></div>
+            <input type='checkbox' class='del_checkbox'>
+            <div class=avatar>
+                <img src='${avatarImg}'>
+            </div>
+            <div class=mes_block>
+                <div class=ch_name>
+                    ${characterName}
+                    <div title=Edit class=mes_edit>
+                        <img src='img/scroll.png' style='width:20px;height:20px;'>
+                    </div>
+                    <div class=mes_edit_cancel>
+                        <img src='img/cancel.png'>
+                    </div>
+                    <div class=mes_edit_done>
+                        <img src='img/done.png'>
+                    </div>
+                </div>
+                <div class=mes_text></div>
+            </div>
+        </div>
+    `;
+
+    $("#chat").append(chatTemplate);
 
     if (!if_typing_text) {
         $("#chat").children().filter('[mesid="' + count_view_mes + '"]').children('.mes_block').children('.mes_text').append(messageText);
@@ -707,10 +732,10 @@ async function Generate(type) {
             chat[chat.length - 1]['mes'] = textareaText;
             addOneMessage(chat[chat.length - 1]);
         }
-        var charDescription = $.trim(characters[this_chid].description);
-        var charPersonality = $.trim(characters[this_chid].personality);
-        var Scenario = $.trim(characters[this_chid].scenario);
-        var mesExamples = $.trim(characters[this_chid].mes_example);
+        var charDescription = $.trim(characters_array[this_chid].description);
+        var charPersonality = $.trim(characters_array[this_chid].personality);
+        var Scenario = $.trim(characters_array[this_chid].scenario);
+        var mesExamples = $.trim(characters_array[this_chid].mes_example);
         var checkMesExample = $.trim(mesExamples.replace(/<START>/gi, ''));//for check length without tag
         if (checkMesExample.length == 0) mesExamples = '';
         var mesExamplesArray = [];
@@ -1083,7 +1108,7 @@ async function saveChat() {
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
-        data: JSON.stringify({ ch_name: characters[this_chid].name, file_name: characters[this_chid].chat, chat: save_chat, avatar_url: characters[this_chid].avatar }),
+        data: JSON.stringify({ ch_name: characters_array[this_chid].name, file_name: characters_array[this_chid].chat, chat: save_chat, avatar_url: characters_array[this_chid].avatar }),
         cache: true,
         dataType: "json",
         contentType: "application/json",
@@ -1100,7 +1125,7 @@ async function getChat() {
     jQuery.ajax({
         type: 'POST',
         url: '/getchat',
-        data: JSON.stringify({ ch_name: characters[this_chid].name, file_name: characters[this_chid].chat, avatar_url: characters[this_chid].avatar }),
+        data: JSON.stringify({ ch_name: characters_array[this_chid].name, file_name: characters_array[this_chid].chat, avatar_url: characters_array[this_chid].avatar }),
         beforeSend: function () {
             //$('#create_button').attr('value','Creating...'); 
         },
@@ -1134,7 +1159,7 @@ async function getChat() {
 }
 
 function getChatResult() {
-    name2 = characters[this_chid].name;
+    name2 = characters_array[this_chid].name;
     if (chat.length > 1) {
 
         chat.forEach(function (item, i) {
@@ -1153,8 +1178,8 @@ function getChatResult() {
         chat[0]['is_user'] = false;
         chat[0]['is_name'] = true;
         chat[0]['send_date'] = Date.now();
-        if (characters[this_chid].first_mes != "") {
-            chat[0]['mes'] = characters[this_chid].first_mes;
+        if (characters_array[this_chid].first_mes != "") {
+            chat[0]['mes'] = characters_array[this_chid].first_mes;
         } else {
             chat[0]['mes'] = default_ch_mes;
         }
@@ -1200,21 +1225,21 @@ $("#rm_button_settings").click(function () {
     $("#api_settings").children("h2").css(seleced_button_style);
 });
 $("#rm_button_characters").click(function () {
-    selected_button = 'characters';
-    select_rm_characters();
+        selected_button = 'characters';
+        select_rm_characters();
 });
 $("#rm_button_back").click(function () {
-    selected_button = 'characters';
-    select_rm_characters();
+        selected_button = 'characters';
+        select_rm_characters();
 });
 $("#rm_button_create").click(function () {
-    selected_button = 'create';
-    select_rm_create();
+        selected_button = 'create';
+        select_rm_create();
 });
 $("#rm_button_selected_ch").click(function () {
-    selected_button = 'character_edit';
-    select_selected_character(this_chid);
-});
+        selected_button = 'character_edit';
+        select_selected_character(this_chid);
+  });
 function select_rm_create() {
     menu_type = 'create';
     if (selected_button == 'create') {
@@ -1304,7 +1329,7 @@ function select_selected_character(chid) { //character select
     menu_type = 'character_edit';
     $("#delete_button_div").css("display", "block");
     $("#rm_button_selected_ch").children("h2").css(seleced_button_style);
-    var display_name = characters[chid].name;
+    var display_name = characters_array[chid].name;
 
     $("#rm_button_selected_ch").children("h2").text(display_name);
 
@@ -1322,31 +1347,31 @@ function select_selected_character(chid) { //character select
     }
     $("#add_avatar_button").val('');
 
-    $('#character_popup_text_h3').text(characters[chid].name);
-    $("#character_name_pole").val(characters[chid].name);
-    $("#description_textarea").val(characters[chid].description);
-    $("#personality_textarea").val(characters[chid].personality);
-    $("#firstmessage_textarea").val(characters[chid].first_mes);
-    $("#scenario_pole").val(characters[chid].scenario);
-    $("#mes_example_textarea").val(characters[chid].mes_example);
-    $("#selected_chat_pole").val(characters[chid].chat);
+    $('#character_popup_text_h3').text(characters_array[chid].name);
+    $("#character_name_pole").val(characters_array[chid].name);
+    $("#description_textarea").val(characters_array[chid].description);
+    $("#personality_textarea").val(characters_array[chid].personality);
+    $("#firstmessage_textarea").val(characters_array[chid].first_mes);
+    $("#scenario_pole").val(characters_array[chid].scenario);
+    $("#mes_example_textarea").val(characters_array[chid].mes_example);
+    $("#selected_chat_pole").val(characters_array[chid].chat);
     //console.log(`create date ` + characters[chid].create_date + `number conv`+ Number(characters[chid].create_date))
     //check for 'bad' cards
-    if (characters[chid].create_date == undefined || Number(characters[chid].create_date) == 'NaN' || Number(characters[chid].create_date) == NaN||Number(characters[chid].create_date) === 0){
+    if (characters_array[chid].create_date == undefined || Number(characters_array[chid].create_date) == 'NaN' || Number(characters_array[chid].create_date) == NaN||Number(characters_array[chid].create_date) === 0){
         //update creation date and push the save button
         $("#create_date_pole").val(Date.now())
         setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
     else{
-        $("#create_date_pole").val(characters[chid].create_date)
+        $("#create_date_pole").val(characters_array[chid].create_date)
     }
-    $("#avatar_url_pole").val(characters[chid].avatar);
-    $("#chat_import_avatar_url").val(characters[chid].avatar);
-    $("#chat_import_character_name").val(characters[chid].name);
+    $("#avatar_url_pole").val(characters_array[chid].avatar);
+    $("#chat_import_avatar_url").val(characters_array[chid].avatar);
+    $("#chat_import_character_name").val(characters_array[chid].name);
     //$("#avatar_div").css("display", "none");
     var this_avatar = default_avatar;
-    if (characters[chid].avatar != 'none') {
-        this_avatar = "characters/" + characters[chid].avatar;
+    if (characters_array[chid].avatar != 'none') {
+        this_avatar = "characters/" + characters_array[chid].avatar;
     }
     $("#avatar_load_preview").attr('src', this_avatar + "#" + Date.now());
     $("#name_div").css("display", "block");
@@ -1368,7 +1393,6 @@ $(document).on('click', '.character_select', function () {
             clearChat();
             chat.length = 0;
             getChat();
-
         }
     } else {
         selected_button = 'character_edit';
@@ -1524,8 +1548,8 @@ $("#dialogue_popup_ok").click(function () {
     if (popup_type == 'new_chat' && this_chid != undefined && menu_type != "create") {//Fix it; New chat doesn't create while open create character menu
         clearChat();
         chat.length = 0;
-        characters[this_chid].chat = Date.now();
-        $("#selected_chat_pole").val(characters[this_chid].chat);
+        characters_array[this_chid].chat = Date.now();
+        $("#selected_chat_pole").val(characters_array[this_chid].chat);
         flip_save_flag()
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
         getChat();
@@ -1749,12 +1773,12 @@ $("#form_create").submit(function(type) {
                     let result = countTokens(msg) - 4 - 1;
                     return result;
                 }
-                let desc_tokens = getTokensForPart(characters[this_chid].description);
-                let pers_tokens = getTokensForPart(characters[this_chid].personality);
-                let scen_tokens = getTokensForPart(characters[this_chid].scenario);
+                let desc_tokens = getTokensForPart(characters_array[this_chid].description);
+                let pers_tokens = getTokensForPart(characters_array[this_chid].personality);
+                let scen_tokens = getTokensForPart(characters_array[this_chid].scenario);
                 
                 // ugly but that's what we have, have to replicate the normal example message parsing code
-                let blocks = replacePlaceholders(characters[this_chid].mes_example).split(/<START>/gi);
+                let blocks = replacePlaceholders(characters_array[this_chid].mes_example).split(/<START>/gi);
                 let example_msgs_array = blocks.slice(1).map(block => `<START>\n${block.trim()}\n`);
                 let exmp_tokens = 0;
                 let block_count = 0;
@@ -2152,17 +2176,16 @@ async function getUserAvatars() {
     });
     if (response.ok === true) {
         const getData = await response.json();
-        //background = getData;
-        //console.log(getData.length);
-        for (var i = 0; i < getData.length; i++) {
-            //console.log(1);
-            $("#user_avatar_block").append('<div imgfile="' + getData[i] + '" class=avatar><img src="User Avatars/' + getData[i] + '" width=60px height=120px></div>');
-        }
-        //var aa = JSON.parse(getData[0]);
-        //const load_ch_coint = Object.getOwnPropertyNames(getData);
-
-
+        const avatarTemplate = (avatar) => `
+            <div imgfile="${avatar}" class="avatar">
+                <img src="User Avatars/${avatar}" width="60px" height="120px">
+            </div>
+        `;
+        getData.forEach((avatar) => {
+            $("#user_avatar_block").append(avatarTemplate(avatar));
+        });
     }
+    
 }
 
 
@@ -2283,6 +2306,8 @@ $(document).on('input', '#OAI_gen_slider', function () {
     $('#OAI_gen_display').html($(this).val() + ' Tokens');
     var max_contextTimer = setTimeout(saveSettings, 500);
 });
+
+//absolutely could compress these to be loop implementation
 $('#stream_toggle').change(function () {
     stream_openai = !!$('#stream_toggle').prop('checked');
     saveSettings();
@@ -2294,7 +2319,6 @@ $('#nsfw_toggle').change(function () {
     CYOA_mode = !!$('#CYOA_mode').prop('checked');
     saveSettings();
 });
-
 $('#custom_1_switch').change(function () {
     custom_1_switch = !!$('#custom_1_switch').prop('checked');
     saveSettings();
@@ -2315,8 +2339,6 @@ $('#custom_5_switch').change(function () {
     custom_5_switch = !!$('#custom_5_switch').prop('checked');
     saveSettings();
 });
-
-
 
 //submenu stuff
 $('#open_last_char_togg').change(function () {
@@ -2964,7 +2986,7 @@ async function getAllCharaChats() {
     jQuery.ajax({
         type: 'POST',
         url: '/getallchatsofchatacter',
-        data: JSON.stringify({ avatar_url: characters[this_chid].avatar }),
+        data: JSON.stringify({ avatar_url: characters_array[this_chid].avatar }),
         cache: false,
         dataType: "json",
         contentType: "application/json",
@@ -2982,11 +3004,11 @@ async function getAllCharaChats() {
                 mes = format_raw(mes)
                 $('#select_chat_div').append('<div class="select_chat_block" file_name="' +
                 data[key]['file_name'] + '"><div class=avatar><img src="characters/' +
-                characters[this_chid]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' +
+                characters_array[this_chid]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' +
                 data[key]['file_name'] + '</div><div class="select_chat_block_mes">' +
                 mes + '</div></div>');
                 //highlights last chat
-                if (characters[this_chid]['chat'] == data[key]['file_name'].replace('.jsonl', '')) {
+                if (characters_array[this_chid]['chat'] == data[key]['file_name'].replace('.jsonl', '')) {
                     $('#select_chat_div').children(':nth-last-child(1)').attr('highlight', true);
                 }
             }
@@ -3265,8 +3287,8 @@ $("#character_import_file").on("change", function (e) {
 });
 $('#export_button').click(function () {
     var link = document.createElement('a');
-    link.href = 'characters/' + characters[this_chid].avatar;
-    link.download = characters[this_chid].avatar;
+    link.href = 'characters/' + characters_array[this_chid].avatar;
+    link.download = characters_array[this_chid].avatar;
     document.body.appendChild(link);
     link.click();
 });
@@ -3316,8 +3338,7 @@ $("#chat_import_file").on("change", function (e) {
 });
 $(document).on('click', '.select_chat_block', function () {
     let file_name = $(this).attr("file_name").replace('.jsonl', '');
-    //console.log(characters[this_chid]['chat']);
-    characters[this_chid]['chat'] = file_name;
+    characters_array[this_chid]['chat'] = file_name;
     clearChat();
     chat.length = 0;
     getChat();

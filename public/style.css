@@ -1974,6 +1974,7 @@ pre {
     background-color: #222222ff;
     color: mintcream;
     filter: drop-shadow(0px 0px 1px #23e98e);
+    white-space: normal;
 }
 
 /*code inside box*/
