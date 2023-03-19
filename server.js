@@ -567,7 +567,7 @@ app.post("/getcharacters", jsonParser, function(request, response){
                 i++;
             } catch (error) {
                 if (error instanceof SyntaxError) {
-                    console.log("String [" + (i) + "] is not valid JSON!");
+                    console.log(`could not load ${item}\nreason: ${error}`);
                 } else {
                     console.log("An unexpected error occurred: ", error);
                 }

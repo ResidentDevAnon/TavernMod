@@ -3373,6 +3373,9 @@ function auto_start(){
         case "kobold":
             document.getElementById("api_button").click();
             break;
+        case "scale":
+            document.getElementById("api_button_scale").click();
+            break;
     }
 }
 
@@ -3521,7 +3524,7 @@ function msToTime(duration) {
     seconds = (seconds < 10) ? "0" + seconds : seconds;
     return hours + " H " + minutes + " M " + seconds + " S";
 }
-
+//i hate this
 $("#bg_shuffle_time").change(function () {
     bg_shuffle_delay = document.getElementById("bg_shuffle_time").value
     var display_var =  msToTime(bg_shuffle_delay)
