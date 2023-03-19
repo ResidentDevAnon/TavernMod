@@ -3,7 +3,7 @@
 // remove document ready function wrapper and just move the script to the bottom of index.html so it still waits for DOM
 
 const VERSION = '1.2.8-Tavmod';
-var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true});
+var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true, underline:true});
 var bg_menu_toggle = false;
 var default_user_name = "You";
 var name1 = default_user_name;
@@ -560,8 +560,9 @@ function clearChat() {
 }
 
 //used multiple times, streamlined for simplicity
+//does replacements on a message when its displayed to user
 function format_raw(payload){
-    payload = payload.replace(/\n>| >|" >|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\').replace(/\_/g, "\\_")
+    payload = payload.replace(/\n>| >|" >|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
     payload = converter.makeHtml(payload);
     payload = payload.replace(/\n/g, '<br/>');
     return payload
@@ -571,6 +572,7 @@ function messageFormating(mes, ch_name) {
     //for Chloe
     if (this_chid === undefined) {
         mes = mes.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>')
+        //TD add option
     } else {
         mes = format_raw(mes)
     }
@@ -936,7 +938,7 @@ async function Generate(type) {
             var streaming = stream_openai;
 			
 			if (should_use_scale) {
-                console.log("Using scale spellbook backend instead of OpenAI");
+                //console.log("Using scale spellbook backend instead of OpenAI");
                 generate_url = '/generate_scale';
                 streaming = false;
                 generate_data = {
