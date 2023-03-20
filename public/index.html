@@ -15,19 +15,20 @@
     <div id="bg1"></div>
     <div id="bg2"></div>
     
-    <div id="shadow_popup" id="dialog">
+    <div id="shadow_popup" id="dialog"class="generic_hidden">
         <div id="dialogue_popup">
             <div id="dialogue_popup_text"><h3>text</h3></div>
             <div id="dialogue_popup_ok" class="menu_button">Delete</div>
             <div id="dialogue_popup_cancel" class="menu_button">Cancel</div>
         </div>
     </div>
-    <div id="shadow_popup" id="colab" class="colab">
+    <div id="shadow_popup" id="colab" class="colab generic_hidden">
         <div id="colab_popup">
             <div id="colab_popup_text" style="float: left;margin-left: 88px;"><h3>Initialization</h3></div>
         </div>
     </div>
-    <div id="shadow_select_chat_popup">
+    <!--select chat block popup-->
+    <div id="shadow_select_chat_popup"class="generic_hidden">
         <div id="select_chat_popup">
             <div id="select_chat_popup_text">
                 <img id="select_chat_cross" src="img/cross.png" style="position: absolute; right: 15px; top:14px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6">
@@ -35,8 +36,8 @@
                 <!--<h3 style="margin: 0px;margin-left: 5px;margin-top: 5px;">Select chat</h3>-->
 
             </div>
+            <!--chat import-->
             <div id="select_chat_import" style="filter:none">
-                
                 <div style="display: inline-block;" id="chat_import_button"><a>+import</a>&nbsp;</div><div style="display: inline-block; color:#757575;">(<a href="/notes/10" target="_blank">?</a>)</div>
                 <form id="form_import_chat"  action="javascript:void(null);" method="post" enctype="multipart/form-data" style="display: none;">
                     <input type="file" id="chat_import_file" accept=".json, .jsonl" name="avatar">
@@ -47,7 +48,6 @@
             </div>
             
             <div id="select_chat_div">
-                
             </div>
             <div id="load_select_chat_div">
                 <img src="img/load.svg">
@@ -56,37 +56,43 @@
 
         </div>
     </div>
+    <!--bg selector-->
     <div id="bg_menu"class="not-active">
         <div id="logo_block"><div id="bg_menu_button"><img src="img/tri.png"></div></div>
         <div id="bg_menu_content"></div>
     </div>
     </div>
+    <!--right nav-->
     <div id="right_menu" class="hidden">
         <div class="right_menu_button" id="rm_button_characters"><h2>Characters</h2></div>
         <div class="right_menu_button" id="rm_button_settings"><h2>Settings</h2></div>
         <div class="right_menu_button" id="rm_button_selected_ch"><h2></h2></div>
-
+        <!--character details-->
         <div id="rm_ch_create_block" class="right_menu">
             <div id="rm_button_back" class="right_menu_button"><h2 style="color: rgb(188, 193, 200, 0.5);">&#8656;</h2></div>
-            
             <form id="form_create"  action="javascript:void(null);" method="post" enctype="multipart/form-data">
-                <div id="name_div">
-                    <h4>Name</h4><h5>Character name</h5>
-                <input id="character_name_pole" name="ch_name" class="text_pole" maxlength="120" size="35" value="" autocomplete="off">
-                </div>
-                <div id="avatar_div" class="avatar_div">
-                    <div id="avatar_div_div" class="avatar">
-                        <img id="avatar_load_preview" src="img/fluffy.png" alt="avatar">
+                <h4 id="name_butt">Name and Avatar</h4>
+                <div id="name_avatar_div"class="generic_hidden">
+                    <div id="name_div">
+                        <h5>Character name</h5>
+                        <input id="character_name_pole" name="ch_name" class="text_pole" maxlength="120" size="35" value="" autocomplete="off">
                     </div>
-                    <input type="file" id="add_avatar_button" name="avatar" accept="image/png, image/jpeg, image/jpg, image/gif, image/bmp">
-                    
+                    <div id="avatar_div" class="avatar_div">
+                        <div id="avatar_div_div" class="avatar">
+                            <img id="avatar_load_preview" src="img/fluffy.png" alt="avatar">
+                        </div>
+                        <input type="file" id="add_avatar_button" name="avatar" accept="image/png, image/jpeg, image/jpg, image/gif, image/bmp">
+                        
                 </div>
-                <div id="description_div">
-                    <h4>Description</h4><h5>Description of personality and other characteristics (<a href="/notes/1" target="_blank">?</a>)</h5>
+                </div>
+                <h4 id="desc_butt">Description</h4>
+                <div id="description_div"class="generic_hidden">
+                    <h5>Description of personality and other characteristics (<a href="/notes/1" target="_blank">?</a>)</h5>
                 <textarea id="description_textarea" name="description" placeholder=""></textarea>
                 </div>
-                <div id="first_message_div">
-                <h4>First message</h4><h5>First message from the character (<a href="/notes/3" target="_blank">?</a>)</h5>
+                <h4 id="first_mes_butt">First message</h4>
+                <div id="first_message_div"class="generic_hidden">
+                <h5>First message from the character (<a href="/notes/3" target="_blank">?</a>)</h5>
                 <textarea id="firstmessage_textarea" name="first_mes" placeholder=""></textarea>
                 </div>
                 
@@ -103,21 +109,26 @@
                 <div id="last_mes_div">
                 <input id="last_mes_pole" class = "generic_hidden"name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                 </div>
-                <div id="personality_div">
-                    <h4>Personality summary</h4><h5>A brief description of the personality (<a href="/notes/2" target="_blank">?</a>)</h5>
+                <!-- personality block-->
+                <h4 id ="pers_butt">Personality summary</h4>
+                <div id="personality_div"class="generic_hidden">
+                    <h5>A brief description of the personality (<a href="/notes/2" target="_blank">?</a>)</h5>
                     <textarea id="personality_textarea" name="personality" placeholder="" form="form_create" class="text_pole" autocomplete="off"></textarea>
                 </div>
-                <div id="scenario_div">
-                    <h4>Scenario</h4>
+                <!-- scenario block-->
+                <h4 id="scen_butt">Scenario</h4>
+                <div id="scenario_div"class="generic_hidden">
                     <h5>Circumstances and context of the dialogue (<a href="/notes/12" target="_blank">?</a>)</h5>
                     <textarea id="scenario_pole" name="scenario" class="text_pole" maxlength="9999" value="" autocomplete="off" form="form_create"></textarea>
                 </div>
-                <div id="mes_example_div">
-                    <h4>Examples of dialogue</h4>
+                <!-- example dialog block-->
+                <h4 id="ex_dialog_butt">Examples of dialogue</h4>
+                <div id="mes_example_div"class="generic_hidden">
                     <h5>Forms a personality more clearly (<a href="/notes/11" target="_blank">?</a>)</h5>
+                    <textarea id="mes_example_textarea" name="mes_example" placeholder="" form="form_create"></textarea>
                 </div>
-                <textarea id="mes_example_textarea" name="mes_example" placeholder="" form="form_create"></textarea>
                 <br>
+                <!-- export create delete-->
                 <div id="export_character_div" style="display: flex;">
                     <div id="result_info">&nbsp;</div>
                     </div>
@@ -144,10 +155,10 @@
                 <option value="openai">OpenAI</option>
 				<option value="scale">Scale</option>
             </select>
+            <!-- kobold api block-->
             <div id="kobold_api"style="position: relative;">
                 <div style="display:none; position: absolute; right:188px; top:-34px; opacity:0.20;"><a href="https://github.com/KoboldAI/KoboldAI-Client" target="_blank"><img src="img/kobold.png" style="width:40px;height:40px;"></a></div>
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
-
                 <h4>API url</h4><h5>Example: http://127.0.0.1:5000/api </h5>
                 <input id="api_url_text" name="api_url" class="text_pole" maxlength="500" value="" autocomplete="off">
                 <input id="api_button" type="submit" value="Connect">
@@ -171,9 +182,9 @@
                     <input type="range" id="rep_pen_size" name="volume" min="0" max="2048" step="1">
                 </div>
             </div>
+            <!-- novel api block-->
             <div id="novel_api" style="display: none;position: relative;">
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
-
                     <h4>API key</h4><h5>Where to get (<a href="/notes/6" target="_blank">?</a>)</h5>
                     <input id="api_key_novel" name="api_key_novel" class="text_pole" maxlength="500" size="35" value="" autocomplete="off">
                     <input id="api_button_novel" type="submit" value="Connect">
@@ -202,6 +213,7 @@
                     <input type="range" id="rep_pen_size_novel" name="volume" min="0" max="2048" step="1">
                 </div>
             </div>
+            <!-- OAI api block-->
             <div id="openai_api" style="display: none;position: relative;">
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                     <h4>API key </h4>
@@ -225,6 +237,7 @@
                     <input type="range" id="pres_pen_openai" name="volume" min="-2" max="2" step="0.01">
                 </div>
             </div>
+            <!-- scale api block-->
 			<div id="scale_api" style="display: none;position: relative;">
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                     <h4>API key</h4>
@@ -290,6 +303,7 @@
             <hr style="margin-bottom: 5px;">
 
             <hr>
+            <!-- OAI / scale settings block-->
             <div style="opacity:0.80">
                 <h3 style='margin-bottom: 10px;'>Pro Settings</h3>
                 <div id="amount_gen_block">
@@ -321,10 +335,12 @@
                 <div id="anchor_checkbox">
                     <label class="checkbox">
                         <input id="character_anchor" type="checkbox"/><span></span>
-                    </label><h4>Character Anchor</h4>
+                        <h4>Character Anchor</h4>
+                    </label>
                     <label class="checkbox" >
                         <input id="style_anchor" type="checkbox"/><span></span>
-                    </label><h4>Style Anchor</h4>
+                        <h4>Style Anchor</h4>
+                    </label>
                 </div>
             </div>
 			<!-- Tweaks -->
@@ -551,12 +567,14 @@
         </select>
         </div>
         </div>
+        <!--char import-->
         <div id="rm_charater_import" class="right_menu" style="display: none;">
             <form id="form_import"  action="javascript:void(null);" method="post" enctype="multipart/form-data">
             <input type="file" id="character_import_file" accept=".json, image/png" name="avatar">
             <input id="character_import_file_type" name="file_type" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
             </form>
         </div>
+        <!--char selection block-->
         <div id="rm_charaters_block" class="right_menu">
             <input id="char_search" name="char_search" class="text_pole" maxlength="500" value="" autocomplete="off" placeholder="search...">
             <div id="rm_button_create" class="right_menu_button"><h2>+ New Card</h2></div>
@@ -571,10 +589,11 @@
             </div>
         </div>
     </div>
+    <!--main / middle chat block-->
     <div id="main_chat">
         <div id="chat"></div>
         <div id="form_sheld">
-            
+            <!--no idea where this is  in normal tav, unused legacy?-->
             <div id="dialogue_del_mes">
                 <div id="dialogue_del_mes_text"><h3></h3></div>
                 <div id="dialogue_del_mes_ok" class="menu_button">Delete</div>
@@ -584,7 +603,7 @@
                 <div id="online_status_indicator"></div><div id="online_status_text">No connection...</div>
             </div>
             <form id="send_form">
-                
+                <!--options submenu-->
                 <div id="options_button">
                     <div id="options">
                         <div id="options-content">
@@ -599,7 +618,8 @@
                     </div>
                 </div>
                 <textarea id="send_textarea" placeholder="Type a message..." name="text"></textarea>
-                <div id="send_but_sheld"><div id="loading_mes"></div><input id="send_but" type="button"></div>
+                <div id="send_but_sheld"><div id="loading_mes"class="generic_hidden">
+                </div><input id="send_but" type="button"></div>
             </form>
         </div>
     </div>

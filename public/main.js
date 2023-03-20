@@ -512,7 +512,7 @@ async function isColab() {
     if (response.ok === true) {
         const getData = await response.json();
         if (getData.colaburl != false) {
-            $('#shadow_popup.colab').css('display', 'none');
+            $('#shadow_popup.colab').addClass('generic_hidden')
             is_colab = true;
             let url = String(getData.colaburl).split("flare.com")[0] + "flare.com";
             url = String(url).split("loca.lt")[0] + "loca.lt";
@@ -622,10 +622,10 @@ function addOneMessage(mes) {
                     <div title=Edit class=mes_edit>
                         <img src='img/scroll.png' style='width:20px;height:20px;'>
                     </div>
-                    <div class=mes_edit_cancel>
+                    <div class="mes_edit_cancel generic_hidden">
                         <img src='img/cancel.png'>
                     </div>
-                    <div class=mes_edit_done>
+                    <div class="mes_edit_done generic_hidden">
                         <img src='img/done.png'>
                     </div>
                 </div>
@@ -643,7 +643,6 @@ function addOneMessage(mes) {
     }
     count_view_mes++;
     if (!add_mes_without_animation) {
-        $('#chat').children().last().css("opacity", 1.0);
         $('#chat').children().last().transition({
             opacity: 1.0,
             duration: 700,
@@ -694,8 +693,8 @@ async function Generate(type) {
                 openai_msgs.pop();
             }
         }
-        $("#send_but").css("display", "none");
-        $("#loading_mes").css("display", "block");
+        $("#send_but").addClass('generic_hidden');
+        $("#loading_mes").removeClass('generic_hidden');
 
 
         var storyString = "";
@@ -966,8 +965,8 @@ async function Generate(type) {
                         var response = e.currentTarget.response;
                         if (response == "{\"error\":true}") {
                             is_send_press = false;
-                            $("#send_but").css("display", "block");
-                            $("#loading_mes").css("display", "none");
+                            $("#send_but").removeClass('generic_hidden');
+                            $("#loading_mes").addClass('generic_hidden');
                             return;
                         }
 
@@ -979,8 +978,8 @@ async function Generate(type) {
                             if (event == "data: [DONE]") {
                                 is_send_press = false;
                                 chat[chat.length - 1]['mes'] = getMessage;
-                                $("#send_but").css("display", "block");
-                                $("#loading_mes").css("display", "none");
+                                $("#send_but").removeClass('generic_hidden');
+                                $("#loading_mes").addClass('generic_hidden');
                                 saveChat();
                                 break;
                             }
@@ -1063,16 +1062,19 @@ async function Generate(type) {
                             getMessage = $.trim(getMessage);
                             chat[chat.length - 1]['mes'] = getMessage;
                             addOneMessage(chat[chat.length - 1]);
-                            $("#send_but").css("display", "block");
-                            $("#loading_mes").css("display", "none");
+                            $("#send_but").removeClass('generic_hidden');
+                            $("#loading_mes").addClass('generic_hidden');
                             saveChat();
                         } else {
                             //console.log('run force_name2 protocol');
                             Generate('force_name2');
                         }
                     } else {
-                        $("#send_but").css("display", "block");
-                        $("#loading_mes").css("display", "none");
+                        $("#send_but").removeClass('generic_hidden');
+                        $("#loading_mes").addClass('generic_hidden');
+
+                        //janky hack to resend mesages in scale
+                        $("#send_but").click()
                     }
                 },
                 error: function (jqXHR, exception) {
@@ -1083,8 +1085,8 @@ async function Generate(type) {
                     }
                     $("#send_textarea").removeAttr('disabled');
                     is_send_press = false;
-                    $("#send_but").css("display", "block");
-                    $("#loading_mes").css("display", "none");
+                    $("#send_but").removeClass('generic_hidden');
+                    $("#loading_mes").addClass('generic_hidden');
                     console.log(exception);
                     console.log(jqXHR);
                 }
@@ -1203,30 +1205,22 @@ $("#send_textarea").keypress(function (e) {
 //menu buttons
 var seleced_button_style = { color: "#bcc1c8" };
 var deselected_button_style = { color: "#565d66" };
-$("#rm_button_create").children("h2").css(seleced_button_style);
-$("#rm_button_characters").children("h2").css(seleced_button_style);
+$("#rm_button_create").children("h2").addClass('selected_button')
+$("#rm_button_characters").children("h2").addClass('selected_button')
 $("#rm_button_settings").click(function () {
     selected_button = 'settings';
     menu_type = 'settings';
-    $("#rm_charaters_block").css("display", "none");
-    $("#rm_api_block").css("display", "block");
+    $("#rm_charaters_block").addClass('generic_hidden');
+    $("#rm_api_block").removeClass('generic_hidden');
 
-    $('#rm_api_block').css('opacity', 0.0);
-    $('#rm_api_block').transition({
-        opacity: 1.0,
-        duration: animation_rm_duration,
-        easing: animation_rm_easing,
-        complete: function () { }
-    });
+    $("#rm_ch_create_block").addClass('generic_hidden');
+    $("#rm_info_block").addClass('generic_hidden');
 
-    $("#rm_ch_create_block").css("display", "none");
-    $("#rm_info_block").css("display", "none");
-
-    $("#rm_button_characters").children("h2").css(deselected_button_style);
-    $("#rm_button_settings").children("h2").css(seleced_button_style);
-    $("#rm_button_selected_ch").children("h2").css(deselected_button_style);
+    $("#rm_button_characters").children("h2").removeClass('selected_button')
+    $("#rm_button_settings").children("h2").addClass('selected_button')
+    $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
     //default selected option
-    $("#api_settings").children("h2").css(seleced_button_style);
+    $("#api_settings").children("h2").addClass('selected_button')
 });
 $("#rm_button_characters").click(function () {
         selected_button = 'characters';
@@ -1253,30 +1247,29 @@ function select_rm_create() {
         }
 
     }
-    $("#rm_charaters_block").css("display", "none");
-    $("#rm_api_block").css("display", "none");
-    $("#rm_ch_create_block").css("display", "block");
+    $("#rm_charaters_block").addClass('generic_hidden');
+    $("#rm_api_block").addClass('generic_hidden');
+    $("#rm_ch_create_block").removeClass('generic_hidden');
 
-    $('#rm_ch_create_block').css('opacity', 0.0);
     $('#rm_ch_create_block').transition({
         opacity: 1.0,
         duration: animation_rm_duration,
         easing: animation_rm_easing,
         complete: function () { }
     });
-    $("#rm_info_block").css("display", "none");
+    $("#rm_info_block").addClass('generic_hidden');
 
-    $("#delete_button_div").css("display", "none");
-    $("#create_button").css("display", "block");
+    $("#delete_button_div").addClass('generic_hidden');
+    $("#create_button").removeClass('generic_hidden');
     $("#create_button").attr("value", "Create");
     $('#result_info').html('&nbsp;');
-    $("#rm_button_characters").children("h2").css(deselected_button_style);
-    $("#rm_button_settings").children("h2").css(deselected_button_style);
-    $("#rm_button_selected_ch").children("h2").css(deselected_button_style);
+    $("#rm_button_characters").children("h2").removeClass('selected_button')
+    $("#rm_button_settings").children("h2").removeClass('selected_button')
+    $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
 
     //create text poles
-    $("#rm_button_back").css("display", "inline-block");
-    $("#character_import_button").css("display", "inline-block");
+    $("#rm_button_back").removeClass('selected_button')
+    $("#character_import_button").removeClass('selected_button')
     $("#character_popup_text_h3").text('Create character');
     $("#character_name_pole").val(create_save_name);
     $("#description_textarea").val(create_save_description);
@@ -1290,15 +1283,19 @@ function select_rm_create() {
     }
 
     $("#avatar_load_preview").attr('src', default_avatar);
-    $("#name_div").css("display", "block");
+    $("#name_div").removeClass('generic_hidden');
 
     $("#form_create").attr("actiontype", "createcharacter");
 }
 function select_rm_characters() {
+    //$("#rm_button_characters").children("h2").classList.add('de_selected_button');
+    //$("#rm_button_settings").children("h2").classList.add('selected_button');
+    //$("#rm_button_selected_ch").children("h2").classList.add('de_selected_button');
+
 
     menu_type = 'characters';
-    $("#rm_charaters_block").css("display", "block");
-    $('#rm_charaters_block').css('opacity', 0.0);
+    $("#rm_charaters_block").removeClass('generic_hidden');
+    //$('#rm_charaters_block').css('opacity', 0.0);
     $('#rm_charaters_block').transition({
         opacity: 1.0,
         duration: animation_rm_duration,
@@ -1306,42 +1303,42 @@ function select_rm_characters() {
         complete: function () { }
     });
 
-    $("#rm_api_block").css("display", "none");
-    $("#rm_ch_create_block").css("display", "none");
-    $("#rm_info_block").css("display", "none");
+    $("#rm_api_block").addClass('generic_hidden');
+    $("#rm_ch_create_block").addClass('generic_hidden');
+    $("#rm_info_block").addClass('generic_hidden');
 
-    $("#rm_button_characters").children("h2").css(seleced_button_style);
-    $("#rm_button_settings").children("h2").css(deselected_button_style);
-    $("#rm_button_selected_ch").children("h2").css(deselected_button_style);
+    $("#rm_button_characters").children("h2").addClass('selected_button')
+    $("#rm_button_settings").children("h2").removeClass('selected_button')
+    $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
 }
 function select_rm_info(text) {
-    $("#rm_charaters_block").css("display", "none");
-    $("#rm_api_block").css("display", "none");
-    $("#rm_ch_create_block").css("display", "none");
+    $("#rm_charaters_block").addClass('generic_hidden');
+    $("#rm_api_block").addClass('generic_hidden');
+    $("#rm_ch_create_block").addClass('generic_hidden');
     $("#rm_info_block").css("display", "flex");
 
     $("#rm_info_text").html('<h3>' + text + '</h3>');
 
-    $("#rm_button_characters").children("h2").css(deselected_button_style);
-    $("#rm_button_settings").children("h2").css(deselected_button_style);
-    $("#rm_button_selected_ch").children("h2").css(deselected_button_style);
+    $("#rm_button_characters").children("h2").removeClass('selected_button')
+    $("#rm_button_settings").children("h2").removeClass('selected_button')
+    $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
 }
 
 function select_selected_character(chid) { //character select
 
     select_rm_create();
     menu_type = 'character_edit';
-    $("#delete_button_div").css("display", "block");
-    $("#rm_button_selected_ch").children("h2").css(seleced_button_style);
+    $("#delete_button_div").removeClass('generic_hidden');
+    $("#rm_button_selected_ch").children("h2").addClass('selected_button')
     var display_name = characters_array[chid].name;
 
     $("#rm_button_selected_ch").children("h2").text(display_name);
 
     //create text poles
-    $("#rm_button_back").css("display", "none");
-    //$("#character_import_button").css("display", "none");
+    $("#rm_button_back").addClass('generic_hidden');
+    //$("#character_import_button").addClass('generic_hidden');
     $("#create_button").attr("value", "Save");
-    $("#create_button").css("display", "none");
+    $("#create_button").addClass('generic_hidden');
     var i = 0;
     while ($("#rm_button_selected_ch").width() > 170 && i < 100) {
         display_name = display_name.slice(0, display_name.length - 2);
@@ -1372,13 +1369,13 @@ function select_selected_character(chid) { //character select
     $("#avatar_url_pole").val(characters_array[chid].avatar);
     $("#chat_import_avatar_url").val(characters_array[chid].avatar);
     $("#chat_import_character_name").val(characters_array[chid].name);
-    //$("#avatar_div").css("display", "none");
+    //$("#avatar_div").addClass('generic_hidden');
     var this_avatar = default_avatar;
     if (characters_array[chid].avatar != 'none') {
         this_avatar = "characters/" + characters_array[chid].avatar;
     }
     $("#avatar_load_preview").attr('src', this_avatar + "#" + Date.now());
-    $("#name_div").css("display", "block");
+    $("#name_div").removeClass('generic_hidden');
 
     $("#form_create").attr("actiontype", "editcharacter");
 }
@@ -1509,8 +1506,7 @@ $("#character_cross").click(function () {
 });
 
 $("#dialogue_popup_ok").click(function () {
-    $("#shadow_popup").css('display', 'none');
-    $("#shadow_popup").css('opacity:', 0.0);
+    $("#shadow_popup").addClass('generic_hidden')
     if (popup_type == 'del_bg') {
         delBackground(bg_file_for_del.attr("bgfile"));
         bg_file_for_del.parent().remove();
@@ -1545,18 +1541,19 @@ $("#dialogue_popup_ok").click(function () {
     }
 });
 $("#dialogue_popup_cancel").click(function () {
-    $("#shadow_popup").css('display', 'none');
+    $("#shadow_popup").addClass('generic_hidden')
     $("#shadow_popup").css('opacity:', 0.0);
     popup_type = '';
 });
 function callPopup(text) {
-    $("#dialogue_popup_cancel").css("display", "inline-block");
+    $("#dialogue_popup_cancel").removeClass('generic_hidden')
+    $("#shadow_popup").removeClass('generic_hidden')
     switch (popup_type) {
 
         case 'char_not_selected':
             $("#dialogue_popup_ok").css("background-color", "#191b31CC");
             $("#dialogue_popup_ok").text("Ok");
-            $("#dialogue_popup_cancel").css("display", "none");
+            $("#dialogue_popup_cancel").addClass('generic_hidden');
             break;
 
         case 'new_chat':
@@ -1570,7 +1567,7 @@ function callPopup(text) {
 
     }
     $("#dialogue_popup_text").html(text);
-    $("#shadow_popup").css('display', 'block');
+    $("#shadow_popup").removeClass('generic_hidden')
     $('#shadow_popup').transition({ opacity: 1.0, duration: animation_rm_duration, easing: animation_rm_easing });
 }
 
@@ -1814,6 +1811,7 @@ $('#character_name_pole').on('change keyup paste', function () {
         timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
     }
 });
+//saveflag
 function flip_save_flag(){
     document.getElementById("save_indicator").innerHTML = "warning unsaved changes!"
 }
@@ -1893,7 +1891,7 @@ $("body").click(function () {
             duration: 100,//animation_rm_duration,
             easing: animation_rm_easing,
             complete: function () {
-                $("#options").css('display', 'none');
+                $("#options").addClass('generic_hidden')
             }
         });
     }
@@ -1917,9 +1915,7 @@ $("#options_button").click(function () {
 $("#option_select_chat").click(function () {
     if (this_chid != undefined && !is_send_press) {
         getAllCharaChats();
-        $('#shadow_select_chat_popup').css('display', 'block');
-        $('#shadow_select_chat_popup').css('opacity', 0.0);
-        $('#shadow_select_chat_popup').transition({ opacity: 1.0, duration: animation_rm_duration, easing: animation_rm_easing });
+        $('#shadow_select_chat_popup').removeClass('generic_hidden')
     }
 });
 $("#option_start_new_chat").click(function () {
@@ -1936,22 +1932,22 @@ $("#option_regenerate").click(function () {
 });
 $("#option_delete_mes").click(function () {
     if (this_chid != undefined && !is_send_press) {
-        $('#dialogue_del_mes').css('display', 'block');
-        $('#send_form').css('display', 'none');
+        $('#dialogue_del_mes').removeClass('generic_hidden')
+        $('#send_form').addClass('generic_hidden')
         $('.del_checkbox').each(function () {
             if ($(this).parent().attr('mesid') != 0) {
-                $(this).css("display", "block");
-                $(this).parent().children('.for_checkbox').css('display', 'none');
+                $(this).removeClass('generic_hidden');
+                $(this).parent().children('.for_checkbox').addClass('generic_hidden')
             }
         });
     }
 });
 $("#dialogue_del_mes_cancel").click(function () {
-    $('#dialogue_del_mes').css('display', 'none');
+    $('#dialogue_del_mes').addClass('generic_hidden')
     $('#send_form').css('display', css_send_form_display);
     $('.del_checkbox').each(function () {
-        $(this).css("display", "none");
-        $(this).parent().children('.for_checkbox').css('display', 'block');
+        $(this).addClass('generic_hidden');
+        $(this).parent().children('.for_checkbox').removeClass('generic_hidden')
         $(this).parent().css('background', css_mes_bg);
         $(this).prop("checked", false);
 
@@ -1960,11 +1956,11 @@ $("#dialogue_del_mes_cancel").click(function () {
 
 });
 $("#dialogue_del_mes_ok").click(function () {
-    $('#dialogue_del_mes').css('display', 'none');
+    $('#dialogue_del_mes').addClass('generic_hidden')
     $('#send_form').css('display', css_send_form_display);
     $('.del_checkbox').each(function () {
-        $(this).css("display", "none");
-        $(this).parent().children('.for_checkbox').css('display', 'block');
+        $(this).addClass('generic_hidden');
+        $(this).parent().children('.for_checkbox').removeClass('generic_hidden')
         $(this).parent().css('background', css_mes_bg);
         $(this).prop("checked", false);
 
@@ -2114,33 +2110,35 @@ function changeMainAPI() {
 	$('#scale_max_context_block').css("display", selectedApi == 'scale' ? "block" : "none");
     $('#tweak_hr').css("display", selectedApi == 'openai' ? "block" : "none");
 	$('#tweak_hr').css("display", selectedApi == 'scale' ? "block" : "none");
+    //doesnt work with scale
+    $('#openai_streaming').css("display", selectedApi == 'openai' ? "block" : "none");
     switch (selectedApi) {
     case 'kobold':
         main_api = 'kobold';
-        $('#max_context_block').css('display', 'block');
-        $('#amount_gen_block').css('display', 'block');
-        $('#openai_gen_block').css('display', 'block');
-        $('#tweak_container').css("display", "none");
+        $('#max_context_block').removeClass('generic_hidden')
+        $('#amount_gen_block').removeClass('generic_hidden')
+        $('#openai_gen_block').removeClass('generic_hidden')
+        $('#tweak_container').addClass('generic_hidden');
         break;
     case 'novel':
         main_api = 'novel';
-        $('#max_context_block').css('display', 'none');
-        $('#amount_gen_block').css('display', 'none');
-        $('#openai_gen_block').css('display', 'none');
-        $('#tweak_container').css("display", "none");
+        $('#max_context_block').addClass('generic_hidden')
+        $('#amount_gen_block').addClass('generic_hidden')
+        $('#openai_gen_block').addClass('generic_hidden')
+        $('#tweak_container').addClass('generic_hidden');
         break;
     case 'openai':
         main_api = 'openai';
-        $('#max_context_block').css('display', 'none');
-        $('#amount_gen_block').css('display', 'none');
-        $('#tweak_container').css("display", "block");
+        $('#max_context_block').addClass('generic_hidden')
+        $('#amount_gen_block').addClass('generic_hidden')
+        $('#tweak_container').removeClass('generic_hidden');
         break;
         case 'scale':
             main_api = 'scale';
-            $('#max_context_block').css('display', 'none');
-            $('#amount_gen_block').css('display', 'none');
-            $('#openai_gen_block').css('display', 'none');
-            $('#tweak_container').css("display", "block");
+            $('#max_context_block').addClass('generic_hidden')
+            $('#amount_gen_block').addClass('generic_hidden')
+            $('#openai_gen_block').addClass('generic_hidden')
+            $('#tweak_container').removeClass('generic_hidden');
         break;
         default:
     console.error(`Unknown API selected: ${selectedApi}`);
@@ -2839,32 +2837,9 @@ async function saveSettings(type) {
     });
 
 }
-$('#donation').click(function () {
-    $('#shadow_tips_popup').css('display', 'block');
-    $('#shadow_tips_popup').transition({
-        opacity: 1.0,
-        duration: 100,
-        easing: animation_rm_easing,
-        complete: function () {
-        }
-    });
-});
-$('#tips_cross').click(function () {
-
-    $('#shadow_tips_popup').transition({
-        opacity: 0.0,
-        duration: 100,
-        easing: animation_rm_easing,
-        complete: function () {
-            $('#shadow_tips_popup').css('display', 'none');
-        }
-    });
-});
 $('#select_chat_cross').click(function () {
-
-
-    $('#shadow_select_chat_popup').css('display', 'none');
-    $('#load_select_chat_div').css('display', 'block');
+    $('#shadow_select_chat_popup').addClass('generic_hidden')
+    $('#load_select_chat_div').removeClass('generic_hidden')
 });
 
 function isInt(value) {
@@ -2882,23 +2857,10 @@ $(document).on('click', '.mes_edit', function () {
             messageEditDone(mes_edited);
         }
         $(this).parent().parent().children('.mes_text').empty();
-        $(this).css('display', 'none');
-        $(this).parent().children('.mes_edit_done').css('display', 'inline-block');
-        $(this).parent().children('.mes_edit_done').css('opacity', 0.0);
-        $(this).parent().children('.mes_edit_cancel').css('display', 'inline-block');
-        $(this).parent().children('.mes_edit_cancel').css('opacity', 0.0);
-        $(this).parent().children('.mes_edit_done').transition({
-            opacity: 1.0,
-            duration: 600,
-            easing: "",
-            complete: function () { }
-        });
-        $(this).parent().children('.mes_edit_cancel').transition({
-            opacity: 1.0,
-            duration: 600,
-            easing: "",
-            complete: function () { }
-        });
+        $(this).addClass('generic_hidden')
+        $(this).parent().children('.mes_edit_done').removeClass('generic_hidden')
+        $(this).parent().children('.mes_edit_cancel').removeClass('generic_hidden')
+
         var edit_mes_id = $(this).parent().parent().parent().attr('mesid');
         this_edit_mes_id = edit_mes_id;
 
@@ -2932,9 +2894,9 @@ $(document).on('click', '.mes_edit_cancel', function () {
     var text = chat[this_edit_mes_id]['mes'];
 
     $(this).parent().parent().children('.mes_text').empty();
-    $(this).css('display', 'none');
-    $(this).parent().children('.mes_edit_done').css('display', 'none');
-    $(this).parent().children('.mes_edit').css('display', 'inline-block');
+    $(this).addClass('generic_hidden')
+    $(this).parent().children('.mes_edit_done').addClass('generic_hidden')
+    $(this).parent().children('.mes_edit').removeClass('generic_hidden')
     $(this).parent().parent().children('.mes_text').append(messageFormating(text, this_edit_mes_chname));
     this_edit_mes_id = undefined;
 });
@@ -2947,9 +2909,9 @@ function messageEditDone(div) {
     text = text.trim();
     chat[this_edit_mes_id]['mes'] = text;
     div.parent().parent().children('.mes_text').empty();
-    div.css('display', 'none');
-    div.parent().children('.mes_edit_cancel').css('display', 'none');
-    div.parent().children('.mes_edit').css('display', 'inline-block');
+    div.addClass('generic_hidden')
+    div.parent().children('.mes_edit_cancel').addClass('generic_hidden')
+    div.parent().children('.mes_edit').removeClass('generic_hidden')
     div.parent().parent().children('.mes_text').append(messageFormating(text, this_edit_mes_chname));
     this_edit_mes_id = undefined;
     saveChat();
@@ -2976,7 +2938,7 @@ async function getAllCharaChats() {
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
-            $('#load_select_chat_div').css('display', 'none');
+            $('#load_select_chat_div').addClass('generic_hidden')
             let dataArr = Object.values(data);
             //what is this here for?
             //characters.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase()) ? 1 : -1);
@@ -3306,7 +3268,7 @@ $("#chat_import_file").on("change", function (e) {
         data: formData,
         beforeSend: function () {
             $('#select_chat_div').html('');
-            $('#load_select_chat_div').css('display', 'block');
+            $('#load_select_chat_div').removeClass('generic_hidden')
         },
         cache: false,
         contentType: false,
@@ -3329,8 +3291,8 @@ $(document).on('click', '.select_chat_block', function () {
     getChat();
     $('#selected_chat_pole').val(file_name);
     $("#create_button").click();
-    $('#shadow_select_chat_popup').css('display', 'none');
-    $('#load_select_chat_div').css('display', 'block');
+    $('#shadow_select_chat_popup').addClass('generic_hidden')
+    $('#load_select_chat_div').removeClass('generic_hidden')
 
 });
 
@@ -3429,7 +3391,6 @@ async function BG_shuffle(){
 
 async function resize_sheld(){
     while (true) {
-        //const bg_sel = document.querySelector('#bg_menu_content').style.opacity
         const ch_sel = document.querySelector('#logo_block').checked
         var left_abs = (bg_menu_toggle) ? 'calc(max(5.3%, 125px))' : '0px';
         //var right_abs = (ch_sel === true) ? 'calc(max(16.6%, 400px))' : '0px';
@@ -3450,16 +3411,16 @@ $(document).ready(function() {
 $("#api_settings").click(function () {
         $("#API_sett_block").css("display", 'block');
         $("#sys_sett_block").css("display", 'none');
-        $("#api_settings").children("h2").css(seleced_button_style);
-        $("#system_settings").children("h2").css(deselected_button_style);
+        $("#api_settings").children("h2").addClass('selected_button')
+        $("#system_settings").children("h2").removeClass('selected_button')
         //assignments are handled elsewhere in legacy so theres none here
     }
 );
 $("#system_settings").click(function () {
     $("#sys_sett_block").css("display", 'block');
     $("#API_sett_block").css("display", 'none');
-    $("#system_settings").children("h2").css(seleced_button_style);
-    $("#api_settings").children("h2").css(deselected_button_style);
+    $("#system_settings").children("h2").addClass('selected_button')
+    $("#api_settings").children("h2").removeClass('selected_button')
         //default is system so we populate those fields
         var display_var =  msToTime(settings.bg_shuffle_delay)
         document.getElementById("bg_shuffle_val_display").textContent = `${display_var}`
@@ -3520,74 +3481,74 @@ $("#bg_shuffle_time").change(function () {
 $("#system_prompt_button").click(function () {
     if (document.getElementById("sys_prompt_block").style.display == "none"){
         $("#sys_prompt_block").css("display", 'block');
-        $("#system_prompt_button").children("h2").css(seleced_button_style);
+        $("#system_prompt_button").children("h2").addClass('selected_button')
     } 
     else{
         $("#sys_prompt_block").css("display", 'none');
-        $("#system_prompt_button").children("h2").css(deselected_button_style);
+        $("#system_prompt_button").children("h2").removeClass('selected_button')
     }});
 $("#NSFW_prompt_button").click(function () {
     if (document.getElementById("NSFW_prompt_block").style.display == "none"){
         $("#NSFW_prompt_block").css("display", 'block');
-        $("#NSFW_prompt_button").children("h2").css(seleced_button_style);
+        $("#NSFW_prompt_button").children("h2").addClass('selected_button')
     } 
     else{
         $("#NSFW_prompt_block").css("display", 'none');
-        $("#NSFW_prompt_button").children("h2").css(deselected_button_style);
+        $("#NSFW_prompt_button").children("h2").removeClass('selected_button')
     }});
 $("#CYOA_prompt_button").click(function () {
     if (document.getElementById("CYOA_prompt_block").style.display == "none"){
         $("#CYOA_prompt_block").css("display", 'block');
-        $("#CYOA_prompt_button").children("h2").css(seleced_button_style);
+        $("#CYOA_prompt_button").children("h2").addClass('selected_button')
     } 
     else{
         $("#CYOA_prompt_block").css("display", 'none');
-        $("#CYOA_prompt_button").children("h2").css(deselected_button_style);
+        $("#CYOA_prompt_button").children("h2").removeClass('selected_button')
     }});
 $("#CUST_1_prompt_button").click(function () {
         if (document.getElementById("CUST_1_block").style.display == "none"){
             $("#CUST_1_block").css("display", 'block');
-            $("#CUST_1_prompt_button").children("h2").css(seleced_button_style);
+            $("#CUST_1_prompt_button").children("h2").addClass('selected_button')
         } 
         else{
             $("#CUST_1_block").css("display", 'none');
-            $("#CUST_1_prompt_button").children("h2").css(deselected_button_style);
+            $("#CUST_1_prompt_button").children("h2").removeClass('selected_button')
         }});
 $("#CUST_2_prompt_button").click(function () {
     if (document.getElementById("CUST_2_block").style.display == "none"){
         $("#CUST_2_block").css("display", 'block');
-        $("#CUST_2_prompt_button").children("h2").css(seleced_button_style);
+        $("#CUST_2_prompt_button").children("h2").addClass('selected_button')
     } 
     else{
         $("#CUST_2_block").css("display", 'none');
-        $("#CUST_2_prompt_button").children("h2").css(deselected_button_style);
+        $("#CUST_2_prompt_button").children("h2").removeClass('selected_button')
     }});
 $("#CUST_3_prompt_button").click(function () {
     if (document.getElementById("CUST_3_block").style.display == "none"){
         $("#CUST_3_block").css("display", 'block');
-        $("#CUST_3_prompt_button").children("h2").css(seleced_button_style);
+        $("#CUST_3_prompt_button").children("h2").addClass('selected_button')
     } 
     else{
         $("#CUST_3_block").css("display", 'none');
-        $("#CUST_3_prompt_button").children("h2").css(deselected_button_style);
+        $("#CUST_3_prompt_button").children("h2").removeClass('selected_button')
     }});
 $("#CUST_4_prompt_button").click(function () {
     if (document.getElementById("CUST_4_block").style.display == "none"){
         $("#CUST_4_block").css("display", 'block');
-        $("#CUST_4_prompt_button").children("h2").css(seleced_button_style);
+        $("#CUST_4_prompt_button").children("h2").addClass('selected_button')
     } 
     else{
         $("#CUST_4_block").css("display", 'none');
-        $("#CUST_4_prompt_button").children("h2").css(deselected_button_style);
+        $("#CUST_4_prompt_button").children("h2").removeClass('selected_button')
     }});
 $("#CUST_5_prompt_button").click(function () {
     if (document.getElementById("CUST_5_block").style.display == "none"){
         $("#CUST_5_block").css("display", 'block');
-        $("#CUST_5_prompt_button").children("h2").css(seleced_button_style);
+        $("#CUST_5_prompt_button").children("h2").addClass('selected_button')
     } 
     else{
         $("#CUST_5_block").css("display", 'none');
-        $("#CUST_5_prompt_button").children("h2").css(deselected_button_style);
+        $("#CUST_5_prompt_button").children("h2").removeClass('selected_button')
     }});
 $('#system_prompt').on('keyup paste cut', function () {
         system_prompt = document.getElementById("system_prompt").value
@@ -3761,3 +3722,82 @@ $('#CUST_5_Prompt').on('keyup paste cut', function () {
         timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
     }
 );
+
+$("#desc_butt").click(function () {
+    let div = document.getElementById('description_div');
+    let button = document.getElementById('desc_butt');
+    let is_open = div.classList.contains('generic_hidden');
+    if (is_open){
+        div.classList.remove('generic_hidden');
+        button.classList.add('selected_button')
+    }
+    else{
+        div.classList.add('generic_hidden');
+        button.classList.remove('selected_button')
+    }
+});
+$("#first_mes_butt").click(function () {
+    let div = document.getElementById('first_message_div');
+    let button = document.getElementById('first_mes_butt');
+    let is_open = div.classList.contains('generic_hidden');
+    if (is_open){
+        div.classList.remove('generic_hidden');
+        button.classList.add('selected_button')
+    }
+    else{
+        div.classList.add('generic_hidden');
+        button.classList.remove('selected_button')
+    }
+});
+$("#pers_butt").click(function () {
+    let div = document.getElementById('personality_div');
+    let button = document.getElementById('pers_butt');
+    let is_open = div.classList.contains('generic_hidden');
+    if (is_open){
+        div.classList.remove('generic_hidden');
+        button.classList.add('selected_button')
+    }
+    else{
+        div.classList.add('generic_hidden');
+        button.classList.remove('selected_button')
+    }
+});
+$("#scen_butt").click(function () {
+    let div = document.getElementById('scenario_div');
+    let button = document.getElementById('scen_butt');
+    let is_open = div.classList.contains('generic_hidden');
+    if (is_open){
+        div.classList.remove('generic_hidden');
+        button.classList.add('selected_button')
+    }
+    else{
+        div.classList.add('generic_hidden');
+        button.classList.remove('selected_button')
+    }
+});
+$("#ex_dialog_butt").click(function () {
+    let div = document.getElementById('mes_example_div');
+    let button = document.getElementById('ex_dialog_butt');
+    let is_open = div.classList.contains('generic_hidden');
+    if (is_open){
+        div.classList.remove('generic_hidden');
+        button.classList.add('selected_button')
+    }
+    else{
+        div.classList.add('generic_hidden');
+        button.classList.remove('selected_button')
+    }
+});
+$("#name_butt").click(function () {
+    let div = document.getElementById('name_avatar_div');
+    let button = document.getElementById('name_butt');
+    let is_open = div.classList.contains('generic_hidden');
+    if (is_open){
+        div.classList.remove('generic_hidden');
+        button.classList.add('selected_button')
+    }
+    else{
+        div.classList.add('generic_hidden');
+        button.classList.remove('selected_button')
+    }
+});
