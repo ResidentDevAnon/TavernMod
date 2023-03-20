@@ -4,7 +4,6 @@
 
 const VERSION = '1.2.8-Tavmod';
 var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true, underline:true});
-var bg_menu_toggle = false;
 var default_user_name = "You";
 var name1 = default_user_name;
 var name2 = "Chloe";
@@ -479,22 +478,25 @@ async function getCharacters() {
 }
 async function getBackgrounds() {
     const response = await fetch("/getbackgrounds", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": token
-        },
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": token
+      },
     });
     if (response.ok === true) {
-        const getData = await response.json();
-        for (var i = 0; i < getData.length; i++) {
-        $("#bg_menu_content").append("<div class=bg_example><img bgfile='" +
-        getData[i] +
-        "' class=bg_example_img src='backgrounds/" +
-        getData[i] + "'></div>");
-        }
+      const getData = await response.json();
+      const bgMenuContent = $("#bg_menu_content");
+      for (var i = 0; i < getData.length; i++) {
+        const bgExample = $("<div>").addClass("bg_example");
+        const bgExampleImg = $("<img>").addClass("bg_example_img")
+            .attr("bgfile", getData[i])
+            .attr("src", "backgrounds/" + getData[i]);
+        bgExample.append(bgExampleImg);
+        bgMenuContent.append(bgExample);
+      }
     }
-}
+  }
 async function isColab() {
     is_checked_colab = true;
     const response = await fetch("/iscolab", {
@@ -510,7 +512,7 @@ async function isColab() {
     if (response.ok === true) {
         const getData = await response.json();
         if (getData.colaburl != false) {
-            $('#colab_shadow_popup').css('display', 'none');
+            $('#shadow_popup.colab').css('display', 'none');
             is_colab = true;
             let url = String(getData.colaburl).split("flare.com")[0] + "flare.com";
             url = String(url).split("loca.lt")[0] + "loca.lt";
@@ -1286,7 +1288,7 @@ function select_rm_create() {
     } else {
         $("#mes_example_textarea").val(create_save_mes_example);
     }
-    $("#avatar_div").css("display", "block");
+
     $("#avatar_load_preview").attr('src', default_avatar);
     $("#name_div").css("display", "block");
 
@@ -1442,33 +1444,30 @@ $(document).on('click', '#user_avatar_block .avatar', function () {
     saveSettings();
 
 });
-$('#logo_block').click(function (event) {
-    if (!bg_menu_toggle) {
-        $('#bg_menu_button').transition({ perspective: '100px', rotate3d: '1,1,0,180deg' });
-        //$('#bg_menu_content1').css('display', 'block');
-        //$('#bg_menu_content1').css('opticary', 0);marginTop: '10px'
-        $('#bg_menu_content').transition({
-            opacity: 1.0,
-            height: '97vh',
-            width : "122px",
-            duration: 340,
-            easing: 'in',
-            complete: function () { bg_menu_toggle = true; $('#bg_menu_content').css("overflow-y", "auto"); }
-        });
-    } else {
-        $('#bg_menu_button').transition({ perspective: '100px', rotate3d: '1,1,0,360deg' });
-        $('#bg_menu_content').css("overflow-y", "hidden");
-        $('#bg_menu_content').transition({
+var bg_menu_toggle = false;
+let Bg_menu = document.getElementById('bg_menu')
+let logo_block = document.getElementById('logo_block');
+let button = document.getElementById('bg_menu_button');
+let content = document.getElementById('bg_menu_content');
 
-            opacity: 0.0, 
-            height: '0px',
-            width : "20px",
-            duration: 340,
-            easing: 'in',
-            complete: function () { bg_menu_toggle = false; }
-        });
+logo_block.addEventListener('click', function(event) {
+    if (!bg_menu_toggle) {
+        Bg_menu.classList.add('active');
+        Bg_menu.classList.remove('not-active');
+        content.classList.add('active');
+        content.classList.remove('not-active');
+        bg_menu_toggle = true;
+    } else {
+        Bg_menu.classList.add('not-active');
+        Bg_menu.classList.remove('active');
+        content.classList.add('not-active');
+        content.classList.remove('active');
+        bg_menu_toggle = false;
+        };
     }
-});
+);
+
+
 $(document).on('click', '.bg_example_img', function () {
     var this_bgfile = $(this).attr("bgfile");
 
@@ -1486,40 +1485,27 @@ $(document).on('click', '.bg_example_img', function () {
         opacity: target_opacity,
         duration: 1300,//animation_rm_duration,
         easing: "linear",
-        complete: function () {
-            $("#options").css('display', 'none');
-        }
     });
     $('#bg' + number_bg).css('background-image', 'url("backgrounds/' + this_bgfile + '")');
     setBackground(this_bgfile);
 
 });
-$(document).on('click', '.bg_example_cross', function () {
-    bg_file_for_del = $(this);
-    //$(this).parent().remove();
-    //delBackground(this_bgfile);
-    popup_type = 'del_bg';
-    callPopup('<h3>Delete the background?</h3>');
-
-});
+let     adv_div = document.getElementById('character_popup')
 $("#advanced_div").click(function () {
     if (!is_advanced_char_open) {
         is_advanced_char_open = true;
-        $('#character_popup').css('display', 'grid');
-        $('#character_popup').css('opacity', 0.0);
-        $('#character_popup').transition({ opacity: 1.0, duration: animation_rm_duration, easing: animation_rm_easing });
+        adv_div.classList.add('active');
+        adv_div.classList.remove('not-active');
     } else {
         is_advanced_char_open = false;
-        $('#character_popup').css('display', 'none');
+        adv_div.classList.remove('active');
+        adv_div.classList.add('not-active');
     }
 });
 $("#character_cross").click(function () {
     is_advanced_char_open = false;
-    $('#character_popup').css('display', 'none');
-});
-$("#character_popup_ok").click(function () {
-    is_advanced_char_open = false;
-    $('#character_popup').css('display', 'none');
+    adv_div.classList.remove('active');
+    adv_div.classList.add('not-active');
 });
 
 $("#dialogue_popup_ok").click(function () {
@@ -1623,21 +1609,15 @@ function read_bg_load(input) {
                         opacity: target_opacity,
                         duration: 1300,//animation_rm_duration,
                         easing: "linear",
-                        complete: function () {
-                            $("#options").css('display', 'none');
-                        }
                     });
                     $('#bg' + number_bg).css('background-image', 'url(' + e.target.result + ')');
-                    $("#form_bg_download").after("<div class=bg_example><img bgfile='" + html + "' class=bg_example_img src='backgrounds/" + html + "'><img bgfile='" + html + "' class=bg_example_cross src=img/cross.png></div>");
                 },
                 error: function (jqXHR, exception) {
                     console.log(exception);
                     console.log(jqXHR);
                 }
             });
-
         };
-
         reader.readAsDataURL(input.files[0]);
     }
 }
@@ -1905,7 +1885,7 @@ $("#api_button").click(function () {
         getStatus();
     }
 });
-
+/*
 $("body").click(function () {
     if ($("#options").css('opacity') == 1.0) {
         $('#options').transition({
@@ -1917,20 +1897,23 @@ $("body").click(function () {
             }
         });
     }
-});
+});*/
+//bookmark
+let options_butt = document.getElementById('options-content')
+let optins_open = false
+Bg_menu.classList.add('active');
+Bg_menu.classList.remove('not-active');
 $("#options_button").click(function () {
-    if ($("#options").css('display') === 'none' && $("#options").css('opacity') == 0.0) {
-        $("#options").css('display', 'block');
-        $('#options').transition({
-            opacity: 1.0,
-            duration: 100,
-            easing: animation_rm_easing,
-            complete: function () {
 
-            }
-        });
+    if (!optins_open) {
+        options_butt.classList.add('active');
     }
-});
+    else{
+        options_butt.classList.remove('active');
+    }
+    optins_open = !optins_open
+        });
+;
 $("#option_select_chat").click(function () {
     if (this_chid != undefined && !is_send_press) {
         getAllCharaChats();
@@ -3068,7 +3051,7 @@ async function getStatusNovel() {
         });
     } else {
         if (!is_get_status && !is_get_status_openai && !is_get_status_scale) {
-            console.log("getStatusNovel else")
+            //console.log("getStatusNovel else")
             online_status = 'no_connection';
         }
     }
@@ -3384,7 +3367,7 @@ function auto_start(){
 function auto_open(){
     //pasted code
     if (open_nav_bar){
-        document.getElementById("nav-toggle").click()
+        document.getElementById("logo_block").click()
     }
     if (open_bg_bar){
         document.getElementById("bg_menu_button").click()
@@ -3446,13 +3429,13 @@ async function BG_shuffle(){
 
 async function resize_sheld(){
     while (true) {
-        const bg_sel = document.querySelector('#bg_menu_content').style.opacity
-        const ch_sel = document.querySelector('#nav-toggle').checked
-        var left_abs = (bg_sel == 1) ? 'calc(max(5.3%, 125px))' : '0px';
-        var right_abs = (ch_sel === true) ? 'calc(max(16.6%, 400px))' : '0px';
-        const sheld_mod = document.getElementById('sheld');
+        //const bg_sel = document.querySelector('#bg_menu_content').style.opacity
+        const ch_sel = document.querySelector('#logo_block').checked
+        var left_abs = (bg_menu_toggle) ? 'calc(max(5.3%, 125px))' : '0px';
+        //var right_abs = (ch_sel === true) ? 'calc(max(16.6%, 400px))' : '0px';
+        const sheld_mod = document.getElementById('main_chat');
         sheld_mod.style.marginLeft = left_abs;
-        sheld_mod.style.marginRight = right_abs;
+        //sheld_mod.style.marginRight = right_abs;
         await new Promise(resolve => setTimeout(resolve, 250));
     }
 }

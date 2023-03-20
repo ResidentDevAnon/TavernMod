@@ -5,79 +5,27 @@
     <script src="scripts/jquery.transit.min.js"></script>
     <script src="scripts/jquery-cookie-1.4.1.min.js"></script>
     <script src="scripts/showdown.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="new_style.css">
     <link rel="stylesheet" href="css/bg_load.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-    <script type=module>
-        //To DO:: 
-        //2) Count tokens print fix 
-        //6) Reload setting files when they was rewrite 
-        //7) Show an indicator that shows the message in context or not
-        //8) Сombine multiple messages into one if the text continues
-        //10) Design presets
-        //11) Fix sending propt with json additional symbols (kinda \\ and etc)
-        //import {encode, decode} from "../scripts/gpt-2-3-tokenizer/mod.js";
-        //let text = "hello world";
-        //console.log(encode("dsfs").length); // [258, 18798, 995]
-    </script>
-<title>Tavern.AI</title>
+<title>TavMod</title>
 </head>
 <body>
-    <div class="css_checker" style="z-index: 9001;background: black;height: 100vh;width: 100%;position:sticky;top:0;color: white;">if your seeing this you dont have the proper CSS file loaded<br>
-    alot of things are custom from normal tavern which have their own css rules
-    <br> dont blame me for broken / weird layouts <br>
-    to disable this message add 
-    <hr>
-    .css_checker{display: none;}
-    <hr>
-    to your css file and cross your fingers it just works
-    </div>
     <div id="bg1"></div>
     <div id="bg2"></div>
     
-    <div id="shadow_popup">
+    <div id="shadow_popup" id="dialog">
         <div id="dialogue_popup">
             <div id="dialogue_popup_text"><h3>text</h3></div>
             <div id="dialogue_popup_ok" class="menu_button">Delete</div>
             <div id="dialogue_popup_cancel" class="menu_button">Cancel</div>
         </div>
     </div>
-    <div id="colab_shadow_popup">
+    <div id="shadow_popup" id="colab" class="colab">
         <div id="colab_popup">
             <div id="colab_popup_text" style="float: left;margin-left: 88px;"><h3>Initialization</h3></div>
         </div>
-    </div>
-    <!--<div id="shadow_character_popup">
-        </div>-->
-        <div id="character_popup">
-            
-            <div id="character_popup_text">
-                <img id="character_cross" src="img/cross.png" style="position: absolute;right: 4%;top: 20%;width: 20px;height: 20px;cursor: pointer;opacity: 0.6;z-index: 1000;">
-                
-                <div><img src="img/book2.png" id="advanced_book_logo"><h3 id="character_popup_text_h3" style="margin-left: 38px;">Create character</h3></div>
-            
-            </div>
-            
-            <div id="personality_div">
-                <h4>Personality summary</h4><h5>A brief description of the personality (<a href="/notes/2" target="_blank">?</a>)</h5>
-                <input id="personality_textarea" name="personality" placeholder="" form="form_create" class="text_pole" autocomplete="off">
-            </div>
-            
-            <div id="scenario_div">
-                <h4>Scenario</h4>
-                <h5>Circumstances and context of the dialogue (<a href="/notes/12" target="_blank">?</a>)</h5>
-                <input id="scenario_pole" name="scenario" class="text_pole" maxlength="9999" size="40" value="" autocomplete="off" form="form_create">
-            </div>
-            
-            <div id="mes_example_div">
-                <h4>Examples of dialogue</h4>
-                <h5>Forms a personality more clearly (<a href="/notes/11" target="_blank">?</a>)</h5>
-            </div>
-            <textarea id="mes_example_textarea" name="mes_example" placeholder="" form="form_create"></textarea>
-            <div id="character_popup_ok" class="menu_button">Save</div>
-            <div></div>
-            
     </div>
     <div id="shadow_select_chat_popup">
         <div id="select_chat_popup">
@@ -108,39 +56,12 @@
 
         </div>
     </div>
-    <div id="shadow_tips_popup">
-        <div id="tips_popup" style="padding-top: 30px;">
-            <img id="tips_cross" src="img/cross.png" style="position: absolute; margin-left: 230px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6">
-            
-            <img src="img/love.png" style="width: 45px;height: 45px; margin-bottom: 0px; opacity: 0.6;">
-            <div style="margin-top:20px; margin-left: 20px; margin-right: 20px; margin-bottom: 15px;"><u>TavernAI</u> is being developed with love and care on a voluntary basis. If you like the project and want to support it, your donation would make a huge impact! <u>Thank you!</u></div>
-            <img src="img/eth_icon.png" style="width: 35px;height: 35px; margin-bottom: 0px; opacity: 0.6;">
-            <img src="img/usdt.png" style="width: 35px;height: 35px; margin-bottom: 0px; opacity: 0.6;">
-            <div id="tips_text"><h3 style="margin-top: 0px; opacity: 0.8">Ethereum or USDT</h3></div>
-            
-            <img src="img/eth.png" style="opacity: 0.4; margin-bottom: 4px;">
-            <div>0x975E5C91042ce8168B3d37b17F99949c5eFB3Dfe</div>
-            <!--<div style="margin-bottom:5px;">***</div><div>TRX: TCiBKCt6xEGrsjpgQA2jDXWJLyUh1KN2Sn</div><div>BTC: 1LASziomyYNkZ2zk8Sa4ZLTkvczBMrjyjP</div>-->
-        </div>
+    <div id="bg_menu"class="not-active">
+        <div id="logo_block"><div id="bg_menu_button"><img src="img/tri.png"></div></div>
+        <div id="bg_menu_content"></div>
     </div>
-    <div id="bg_menu">
-        <div id="logo_block"><div id="bg_menu_button"><img src="img/tri.png"></div>
-        <!--<img src="img/logo.png" id="site_logo">--></div>
-        <div id="bg_menu_content">
-            <form id="form_bg_download"  action="javascript:void(null);" method="post" enctype="multipart/form-data">
-                <label class="input-file">
-                <input type="file" id="add_bg_button" name="avatar" accept="image/png, image/jpeg, image/jpg, image/gif, image/bmp">
-                <span class="bg_example_but_load" ><img src='img/addbg3.png'></span>           
-                </label>
-            </form>
-            
-        </div>  
     </div>
-    <input type="checkbox" id="nav-toggle" hidden>
-
-    <nav class="nav">
-        <label for="nav-toggle" class="nav-toggle" onclick></label>
-
+    <div id="right_menu" class="hidden">
         <div class="right_menu_button" id="rm_button_characters"><h2>Characters</h2></div>
         <div class="right_menu_button" id="rm_button_settings"><h2>Settings</h2></div>
         <div class="right_menu_button" id="rm_button_selected_ch"><h2></h2></div>
@@ -169,19 +90,33 @@
                 <textarea id="firstmessage_textarea" name="first_mes" placeholder=""></textarea>
                 </div>
                 
+                <!-- bookmark -->
                 <div id="avatar_url_div">
-                <input id="avatar_url_pole" name="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                <input id="avatar_url_pole" class = "generic_hidden"name="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                 </div>
                 <div id="selected_chat_div">
-                <input id="selected_chat_pole" name="chat" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                <input id="selected_chat_pole" class = "generic_hidden"name="chat" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                 </div>
                 <div id="create_date_div">
-                <input id="create_date_pole" name="create_date" class="text_pole" maxlength="999" size= 40% value="" autocomplete="off">
+                <input id="create_date_pole" class = "generic_hidden"name="create_date" class="text_pole" maxlength="999" size= 40% value="" autocomplete="off">
                 </div>
                 <div id="last_mes_div">
-                <input id="last_mes_pole" name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                <input id="last_mes_pole" class = "generic_hidden"name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                 </div>
-                <input id="advanced_div" type="button" value="Advanced Edit">
+                <div id="personality_div">
+                    <h4>Personality summary</h4><h5>A brief description of the personality (<a href="/notes/2" target="_blank">?</a>)</h5>
+                    <textarea id="personality_textarea" name="personality" placeholder="" form="form_create" class="text_pole" autocomplete="off"></textarea>
+                </div>
+                <div id="scenario_div">
+                    <h4>Scenario</h4>
+                    <h5>Circumstances and context of the dialogue (<a href="/notes/12" target="_blank">?</a>)</h5>
+                    <textarea id="scenario_pole" name="scenario" class="text_pole" maxlength="9999" value="" autocomplete="off" form="form_create"></textarea>
+                </div>
+                <div id="mes_example_div">
+                    <h4>Examples of dialogue</h4>
+                    <h5>Forms a personality more clearly (<a href="/notes/11" target="_blank">?</a>)</h5>
+                </div>
+                <textarea id="mes_example_textarea" name="mes_example" placeholder="" form="form_create"></textarea>
                 <br>
                 <div id="export_character_div" style="display: flex;">
                     <div id="result_info">&nbsp;</div>
@@ -202,14 +137,14 @@
             <div class="submenu" id="api_settings"><h2>API Settings</h2></div>
             <div class="submenu" id="system_settings"><h2>system Settings</h2></div>
         <!-- Main API settings  -->
-        <div id="API_sett_block">
+        <div id="API_sett_block" class="API_block">
             <select id="main_api" style="color:#fff;background-color:#000000;" >
                 <option value="kobold">KoboldAI</option>
                 <option value="novel">NovelAI</option>
                 <option value="openai">OpenAI</option>
 				<option value="scale">Scale</option>
             </select>
-            <div id="kobold_api" style="position: relative;">
+            <div id="kobold_api"style="position: relative;">
                 <div style="display:none; position: absolute; right:188px; top:-34px; opacity:0.20;"><a href="https://github.com/KoboldAI/KoboldAI-Client" target="_blank"><img src="img/kobold.png" style="width:40px;height:40px;"></a></div>
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
 
@@ -237,7 +172,6 @@
                 </div>
             </div>
             <div id="novel_api" style="display: none;position: relative;">
-                <div style="position: absolute; right:152px; top:-25px; opacity:0.25;"><a href="https://novelai.net/" target="_blank"><img src="img/novelai.png" style="width:auto;height:22px;"></a></div>
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
 
                     <h4>API key</h4><h5>Where to get (<a href="/notes/6" target="_blank">?</a>)</h5>
@@ -354,13 +288,7 @@
                 </div>
             </div>
             <hr style="margin-bottom: 5px;">
-            <h4>Your Avatar</h4><h5></h5>
-            <div id="user_avatar_block"></div>
-            <form id='form_change_name' action="javascript:void(null);" method="post" enctype="multipart/form-data">
-                <h4>Name</h4>
-                <input id="your_name" name="your_name" class="text_pole" maxlength="35" size="16" value="" autocomplete="off">
-                <input id="your_name_button" type="submit" value="Change">
-            </form>
+
             <hr>
             <div style="opacity:0.80">
                 <h3 style='margin-bottom: 10px;'>Pro Settings</h3>
@@ -402,7 +330,7 @@
 			<!-- Tweaks -->
 			<div style='clear: both'></div>
 			<hr id = "tweak_hr">
-			<div style="opacity:0.80" id = "tweak_container">
+			<div id = "tweak_container">
 				<h3 style='margin-bottom: 10px;'>Tweaks and Reply Mods</h3>
                 <div id="tweaks_box">
                     <label class="checkbox">
@@ -494,6 +422,13 @@
                             <option value="sett">Settings</option>
                             <option value="last_char">selected char (if possible)</option>
                         </select>
+                        <h4>Your Avatar</h4><h5></h5>
+                        <div id="user_avatar_block"></div>
+                        <form id='form_change_name' action="javascript:void(null);" method="post" enctype="multipart/form-data">
+                            <h4>Name</h4>
+                            <input id="your_name" name="your_name" class="text_pole" maxlength="35" size="16" value="" autocomplete="off">
+                            <input id="your_name_button" type="submit" value="Change">
+                        </form>
                     </div>
                 </div>
                 <!--reply settings-->
@@ -624,7 +559,6 @@
         </div>
         <div id="rm_charaters_block" class="right_menu">
             <input id="char_search" name="char_search" class="text_pole" maxlength="500" value="" autocomplete="off" placeholder="search...">
-            <br>
             <div id="rm_button_create" class="right_menu_button"><h2>+ New Card</h2></div>
             <!--div id="character_import_button" class="right_menu_button"><h2>+Import</h2></div-->
             <div id="rm_print_charaters_block"></div>
@@ -636,8 +570,8 @@
             <div id="rm_info_button">Back</div>
             </div>
         </div>
-    </nav>
-    <div id="sheld">
+    </div>
+    <div id="main_chat">
         <div id="chat"></div>
         <div id="form_sheld">
             
@@ -653,7 +587,7 @@
                 
                 <div id="options_button">
                     <div id="options">
-                        <div class="options-content">
+                        <div id="options-content">
                         <a id="option_start_new_chat"><img src="img/save_and_start_new_chat.png" width="20" height="20">Start new chat</a>
                         <hr>
                         <a id="option_select_chat"><img src="img/book6.png" style="width: 21px;height: 21px;top: 59px;left: 15px; opacity: 0.5;">Select chats</a><!--<img src="img/book6.png" style="width: 21px;height: 21px;position: absolute;top: 14px;left: 16px; opacity: 0.5;">Select chat</a>-->

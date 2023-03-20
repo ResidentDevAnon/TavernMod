@@ -155,7 +155,6 @@ margin-top: 10px;
 #options_button{
     margin-top: 0px;
     cursor: pointer;
-
     position: block;
     width:40px;
     height: 40px;
@@ -1233,7 +1232,6 @@ label.checkbox :checked + span:after {
     height: 100%;
     position: absolute;
     z-index: 2065;
-
     margin-left: 6%;
     margin-right: 19%;
     text-align: center;
