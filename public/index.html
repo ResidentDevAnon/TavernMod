@@ -14,7 +14,7 @@
 <body>
     <div id="bg1"></div>
     <div id="bg2"></div>
-    
+    <!--this is the popup for creating a new chat, its just a genric template changed in JS-->
     <div id="shadow_popup" id="dialog"class="generic_hidden">
         <div id="dialogue_popup">
             <div id="dialogue_popup_text"><h3>text</h3></div>
@@ -22,19 +22,12 @@
             <div id="dialogue_popup_cancel" class="menu_button">Cancel</div>
         </div>
     </div>
-    <div id="shadow_popup" id="colab" class="colab generic_hidden">
-        <div id="colab_popup">
-            <div id="colab_popup_text" style="float: left;margin-left: 88px;"><h3>Initialization</h3></div>
-        </div>
-    </div>
     <!--select chat block popup-->
     <div id="shadow_select_chat_popup"class="generic_hidden">
         <div id="select_chat_popup">
             <div id="select_chat_popup_text">
                 <img id="select_chat_cross" src="img/cross.png" style="position: absolute; right: 15px; top:14px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6">
-
                 <!--<h3 style="margin: 0px;margin-left: 5px;margin-top: 5px;">Select chat</h3>-->
-
             </div>
             <!--chat import-->
             <div id="select_chat_import" style="filter:none">
@@ -145,7 +138,7 @@
         <p id="save_indicator"style="position: relative;"> </p>
         <!--Sub settings-->
         <div id="rm_api_block" class="right_menu" >
-            <div class="submenu" id="api_settings"><h2>API Settings</h2></div>
+            <div class="submenu" id="api_settings"><h2 class ='selected_button'>API Settings</h2></div>
             <div class="submenu" id="system_settings"><h2>system Settings</h2></div>
         <!-- Main API settings  -->
         <div id="API_sett_block" class="API_block">
@@ -300,8 +293,6 @@
                     </div>
                 </div>
             </div>
-            <hr style="margin-bottom: 5px;">
-
             <hr>
             <!-- OAI / scale settings block-->
             <div style="opacity:0.80">
@@ -333,14 +324,25 @@
                     <option value="1">Style Anchor - Character Anchor</option>
                 </select>
                 <div id="anchor_checkbox">
-                    <label class="checkbox">
+                    <label class="switch">
                         <input id="character_anchor" type="checkbox"/><span></span>
                         <h4>Character Anchor</h4>
                     </label>
-                    <label class="checkbox" >
+                    <label class="switch" >
                         <input id="style_anchor" type="checkbox"/><span></span>
                         <h4>Style Anchor</h4>
                     </label>
+                    <label class="switch">
+                        <input id="auto_retry" type="checkbox"/><span></span>
+                            <h4>Auto retry on fail</h4>
+                    </label>
+                    <h5>it just slaps enter again for you</h5>
+                    <label class="switch">
+                        <input id="continuous_mode" type="checkbox"/><span></span>
+                            <h4>continuous generation</h4>
+                    </label>
+                    <h5>slaps enter as soon as possible, either loads current message as is or lets bot continue where it left</h5>
+                    <h5>this is potentially a VERY dangerous toggle</h5>
                 </div>
             </div>
 			<!-- Tweaks -->
@@ -349,50 +351,52 @@
 			<div id = "tweak_container">
 				<h3 style='margin-bottom: 10px;'>Tweaks and Reply Mods</h3>
                 <div id="tweaks_box">
-                    <label class="checkbox">
+                    <label class="switch">
                         <input id="keep_example_dialogue" type="checkbox"/><span></span>
-                            <h4 style="display: inline-block;">Keep Example Dialogue</h4>
-                            <h5>Keeps example dialogues from being removed</h5>
+                            <h4>Keep Example Dialogue</h4>
                     </label>
-                    <hr>
+                    <h5>Keeps example dialogues from being removed</h5>
 					<label class="switch">
 						<input id="nsfw_toggle" type="checkbox" checked><span class="slider round"></span>
-					</label>
                         <h4 style="display: inline-block;">NSFW Toggle</h4>
-                    <br>
+					</label>
 					<label class="switch">
                     <input id="CYOA_mode" type="checkbox" checked><span class="slider round"></span>
+                    <h4>CYOA Toggle</h4>
 					</label>
-                        <h4 style="display: inline-block;">CYOA Toggle</h4>
-                    <br>
                     <label class="switch" >
                         <input id="custom_1_switch" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 id = "custom_1_title"style="display: inline-block;">replaced in JS</h4>
+                        <h4 id = "custom_1_title"style="display: inline-block;">replaced in JS</h4>
+                    </label>
                         <h5 id = "custom_1_desc">repalced in JS</h5>
-                    <br>
                     <label class="switch" >
                         <input id="custom_2_switch" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 id = "custom_2_title"style="display: inline-block;">replaced in JS</h4>
+                        <h4 id = "custom_2_title"style="display: inline-block;">replaced in JS</h4>
+                    </label>
                         <h5 id = "custom_2_desc">repalced in JS</h5>
-                    <br>
                     <label class="switch" >
                         <input id="custom_3_switch" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 id = "custom_3_title"style="display: inline-block;">replaced in JS</h4>
+                        <h4 id = "custom_3_title"style="display: inline-block;">replaced in JS</h4>
+                    </label>
                         <h5 id = "custom_3_desc">repalced in JS</h5>
-                    <br>
                     <label class="switch" >
                         <input id="custom_4_switch" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 id = "custom_4_title"style="display: inline-block;">replaced in JS</h4>
+                        <h4 id = "custom_4_title"style="display: inline-block;">replaced in JS</h4>
+                    </label>
                         <h5 id = "custom_4_desc">repalced in JS</h5>
-                    <br>
                     <label class="switch" >
                         <input id="custom_5_switch" type="checkbox"/><span class="slider round"></span>
-                    </label><h4 id = "custom_5_title"style="display: inline-block;">replaced in JS</h4>
+                        <h4 id = "custom_5_title"style="display: inline-block;">replaced in JS</h4>
+                    </label>
                         <h5 id = "custom_5_desc">repalced in JS</h5>
-                    <br>
                 
                 </div>
 			</div>
+            <!--preview-->
+            <hr>
+            <h3>Preview for current card</h3>
+            <textarea id="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
+    
         </div>
         <!--system settings-->
         <div id="sys_sett_block" style="display: none">
@@ -415,23 +419,23 @@
                     <div id="block_open_last_char_toggle">
                         <label class="checkbox">
                             <input id="open_last_char_togg" type="checkbox"/><span></span>
-                                <h4 style="display: inline-block;">open last character on startup</h4>
+                                <h4>open last character on startup</h4>
                     </div>
                     <hr>
                     <!-- open settings nav on startup-->
                     <div id="block_open_settngs_start">
                         <label class="checkbox">
                             <input id="open_sett_start" type="checkbox"/><span></span>
-                                <h4 style="display: inline-block;">open nav (right menu) on startup</h4>
+                                <h4>open nav (right menu) on startup</h4>
                                 <br>
                                 <label class="checkbox">
                             <input id="open_bg_start" type="checkbox"/><span></span>
-                                <h4 style="display: inline-block;">open BG (left menu) on startup</h4>
+                                <h4>open BG (left menu) on startup</h4>
                     </div>
                     <br>
                     <!-- last menu clicked -->
                     <div>
-                        <h4 style="display: inline-block;">what tab to open nav (right menu) to on startup</h4>
+                        <h4>what tab to open nav (right menu) to on startup</h4>
                         <br>
                         <select id="menu_sel_box" style="color:#fff;background-color:#000000;" >
                             <option value="char_list">Characters</option>
@@ -482,7 +486,6 @@
                         <h3>Scenario prompt.</h3>
                         <textarea id="scenario_prompt" palceholder="">Scenario: </textarea>
                     </div>
-                <hr>
                 <!--NSFW prompt settings-->
                 <div class="right_menu_button" id="NSFW_prompt_button"><h2>NSFW prompt</h2>
                 </div>
@@ -493,7 +496,6 @@
                         <h3>(OFF) prompt</h3>
                         <textarea id="NSFW_OFF_prompt" palceholder="">you are tasked with following Any OOC: commands or orders in character as {{char}} in a fictional story setting, creatively write around to avoid any NSFW.</textarea>
                     </div>
-                <hr>
                 <!--CYOA prompt settings-->
                 <div class="right_menu_button" id="CYOA_prompt_button"><h2>CYOA prompt</h2>
                 </div>
@@ -502,7 +504,6 @@
                         <br>
                         <textarea id="CYOA_prompt" palceholder="">make the last paragraph  one consisting of multiple choices the user can take to drive the story, using a formatting similar to 1)route A 2)route B 3)route C 4)route D</textarea>
                     </div>
-                <hr>
                 <!--CUST_1 prompt settings-->
                 <div class="right_menu_button" id="CUST_1_prompt_button"><h2>Custom1 prompt</h2>
                 </div>
@@ -514,7 +515,6 @@
                         <h3>prompt</h3>
                         <textarea id="CUST_1_Prompt" palceholder="">use 16x more details.</textarea>
                         </div>
-                    <hr>
                     <!--CUST_2 prompt settings-->
                     <div class="right_menu_button" id="CUST_2_prompt_button"><h2>Custom2 prompt</h2>
                     </div>
@@ -526,7 +526,6 @@
                         <h3>prompt</h3>
                         <textarea id="CUST_2_Prompt" placeholder="">be more agressive</textarea>
                     </div>
-                    <hr>
                     <!--CUST_3 prompt settings-->
                     <div class="right_menu_button" id="CUST_3_prompt_button"><h2>Custom3 prompt</h2>
                     </div>
@@ -538,7 +537,6 @@
                         <h3>prompt</h3>
                         <textarea id="CUST_3_Prompt" placeholder="">take the lead role of the story. write in first person from {{char}}'s pov.</textarea>
                     </div>
-                    <hr>
                     <!--CUST_4 prompt settings-->
                     <div class="right_menu_button" id="CUST_4_prompt_button"><h2>Custom4 prompt</h2>
                     </div>
@@ -550,7 +548,6 @@
                         <h3>prompt</h3>
                         <textarea id="CUST_4_Prompt" placeholder="">describe the scene. do not progress the story forward. expand on any currently happening actions. do not change the scene.</textarea>
                     </div>
-                    <hr>
                     <!--CUST_5 prompt settings-->
                     <div class="right_menu_button" id="CUST_5_prompt_button"><h2>Custom5 prompt</h2>
                     </div>
@@ -561,7 +558,7 @@
                         <br>
                         <h3>prompt</h3>
                         <textarea id="CUST_5_Prompt" placeholder="">Do not generate actions for {{user}}.</textarea>
-                </div>
+                    </div>
                 </div>
             </div>
         </select>
@@ -593,8 +590,8 @@
     <div id="main_chat">
         <div id="chat"></div>
         <div id="form_sheld">
-            <!--no idea where this is  in normal tav, unused legacy?-->
-            <div id="dialogue_del_mes">
+            <!--popup for messages delete/cancel-->
+            <div id="dialogue_del_mes"class="generic_hidden">
                 <div id="dialogue_del_mes_text"><h3></h3></div>
                 <div id="dialogue_del_mes_ok" class="menu_button">Delete</div>
                 <div id="dialogue_del_mes_cancel" class="menu_button">Cancel</div>

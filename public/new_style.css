@@ -11,8 +11,10 @@
     --rm_margin_lr: 10px;
     --rm_padding_lr:10px;
     --bg_center: linear-gradient(90deg, rgba(0,0,0,0.7) 20%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 80%);
-    --seleced_butt_color: #bcc1c8;
-    --deselected_butt_color: #565d66;
+    --seleced_butt_color: blue;
+    --h4_bg: linear-gradient(-90deg, rgba(0,0,0,0.1) 38%, rgba(0,0,0,1) 49%);
+--h2_bg: linear-gradient(-90deg, rgba(0,0,0,1) 0%, rgba(255,255,255,.2) 13%, rgba(0,0,0,1) 100%);
+--h5_bg: linear-gradient(-368deg, rgba(0,0,0,0.165703781512605) 38%, rgba(0,0,0,1) 49%);
 }
 
 .selected_button{
@@ -227,8 +229,7 @@ em {
     background: var(--bg_center);
     height: 100vh;
     overflow-x: hidden;
-    overflow-y: hidden;
-    margin-left:calc(max(5.3%,125px));
+    margin-left: calc(max(6.5%,133px));
     margin-right: calc(max(16.6%,400px));
     flex-direction: column;
     justify-content: space-between;
@@ -262,12 +263,9 @@ em {
     flex-direction: column;
 }
 .right_menu_button {
-    background: red;
+    background: var(--h4_bg);
 }
-.right_menu_button h2{
-    /* background: green; */
-    text-align: end;
-    color: blue;
+h2{
     cursor: pointer;
 }
 #rm_api_block{
@@ -277,6 +275,8 @@ em {
     overflow-y: scroll;
     height: -webkit-fill-available;
     height: 75vh;
+    padding-left: var(--rm_padding_lr);
+    padding-right: var(--rm_padding_lr);
 }
 #api_loading{
     height: 20px;
@@ -312,14 +312,18 @@ textarea{
     margin-right: var(--rm_margin_lr);
 }
 
+textarea#scenario_preview {
+    user-select: none;
+    color: grey;
+}
+
 textarea.edit_textarea {
-    min-width: 100%;
+    min-width: 10%;
+    max-width: 100%;
     min-height: 300px;
 }
 input{
     width: -webkit-fill-available;
-    margin-left: var(--rm_margin_lr);
-    margin-right: var(--rm_margin_lr);
     background: black;
 }
 
@@ -364,6 +368,29 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
+div#reply_sett {
+    background: rgba(0,0,0,0.1);
+}
+
+div#anchor_checkbox {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+}
+
+select#anchor_order {
+    width: -webkit-fill-available;
+    color: black;
+    background: aliceblue;
+}
+
+div#tweaks_box {background: rgba(0,0,0,0.1);}
+
+h5 {
+    margin: 0px;
+    /* background: rgba(0,0,0,0.1); */
+}
+
 div#sys_sett_block {
     overflow-y: scroll;
     height: 75vh;
@@ -374,14 +401,24 @@ hr {
     width: -webkit-fill-available;
 }
 
-#API_sett_block  h4 {
+h4 {
     display: inline-block;
-    background: blue;
+    background: var(--h4_bg);
+    margin: 0px;
+    margin-top: 5px;
+    width: -webkit-fill-available;
+}
+
+.switch h4 {
+    color: aquamarine;
+    display: flex;
+    width: -webkit-fill-available;
+    cursor: pointer;
 }
 
 #rm_ch_create_block h4 {
-    background: olive;
-    color: black;
+    background-image: var(--bg_right);
+    /* color: blue; */
     cursor: pointer;
 }
 
@@ -422,8 +459,7 @@ div#chat {
     height: 0px;
 }
 .mes {
-    display: grid;
-    grid-template-columns: fit-content(100px) 93% auto;
+    display: flex;
     border-radius: 10px;
     padding: 4px;
     background: linear-gradient(90deg, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 80%);
@@ -446,6 +482,14 @@ div#chat {
 .for_checkbox{
     display: none;
 }
+.del_checkbox{
+    opacity: 0.5;
+    accent-color: #ffffff;
+
+    width: 20px;
+    height: 20px;
+}
+
 #options_button{
     margin-top: 0px;
     cursor: pointer;
@@ -472,15 +516,13 @@ div#chat {
 }
 .mes_block{
     padding-left: 35px;
+    width: -webkit-fill-available;
 }
 #dialogue_del_mes{
-    display: none;
+    /* display: none; */
 }
 .del_checkbox{
-    display: none;
-    opacity: 0.5;
     accent-color: #ffffff;
-
     width: 20px;
     height: 20px;
 }
@@ -567,7 +609,7 @@ blockquote {
     margin: 0px;
     margin-left: -0.4em;
     padding-bottom: 1px;
-    margin-top: -35px;
+    margin-top: -15px;
 }
 /*blockquote*/
 blockquote p{
@@ -588,27 +630,25 @@ del {
 }
 .switch {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
     margin-top: 10px;
-    margin-bottom: 10px;
-    width: 50px;
-    height: 25px;
+    width: -webkit-fill-available;
+    /* background: rgba(0,0,0,0.1); */
 }
 
-.switch input { 
-    opacity: 0;
-    width: 0;
-    height: 0;
+.switch input {
+    width: 30px;
+    height: 20px;
 }
 
 .slider {
-    position: absolute;
+    /* position: absolute; */
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border:1px solid #BBBBBB33;
+    /* top: 0; */
+    /* left: 0; */
+    /* right: 0; */
+    /* bottom: 0; */
+    /* border:1px solid #BBBBBB33; */
     background:#6b0500;
     -webkit-transition: .4s;
     transition: .4s;
@@ -621,7 +661,7 @@ del {
     width: 18px;
     left: 4px;
     bottom: 3px;
-    /*background-color: white;*/
+    /* background-color: white; */
     -webkit-transition: .4s;
     transition: .4s;
 }
@@ -704,7 +744,8 @@ margin-top: 10px;
     height: 23px;
 }
 .checkbox{
-    display: block;
+    display: inline-flex;
+    width: -webkit-fill-available;
 }
 
 #select_chat_popup{
@@ -723,4 +764,42 @@ margin-top: 10px;
     padding: 4px;
     background-color: #222222ff;
     border-radius: 5px;
+}
+
+#dialogue_del_mes{
+    width:300px;
+    height: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    padding: 4px;
+}
+
+#dialogue_del_mes_ok{
+    display: inline-block;
+    margin-right: 20px;
+    background-color: #791b31;
+    cursor: pointer;
+}
+
+#dialogue_del_mes_cancel{
+    display: inline-block;
+    margin-left: 20px;
+    cursor: pointer;
+}
+
+.menu_button{
+    font-weight: bold;
+    color: #fff;
+    padding: 0.5em;
+    border: thin solid rgba(200,200,200,0.2);
+    border-radius: 3px;
+    background-color: #191b31;
+}
+
+#dialogue_del_mes.menu_button{
+    font-weight: bold;
+    font-size: 20px;
+    min-width: 100px;
+    min-height: 40px;
 }

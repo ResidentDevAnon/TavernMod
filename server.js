@@ -973,14 +973,15 @@ app.post("/getstatus_scale", jsonParser, function(request, response_getstatus_sc
     api_key_scale = request.body.key;
     api_url_scale = request.body.url;
     var args = {
-        headers: {"Authorization": "Basic "+ api_key_scale,}
+        headers: { "Authorization": "Basic "+ api_key_scale}, // notice extra comma here
+        requestConfig: { timeout: 1000000 }, responseConfig: { timeout: 1000000 },
     };
     client.post(api_url_scale,args, function (data, response) {
-        console.log("authing with "+ `${api_url_scale}/${api_key_scale}`);
-        console.log("getstatus_scale response code: ", response.statusCode);
-        console.log("getstatus_scale response data:", data);
-        console.log("you may see response an 'invalid_type' error, that's probably okay");
-        console.log("if you see another error, that's probably not okay");
+        //console.log("authing with "+ `${api_url_scale}/${api_key_scale}`);
+        console.log("scale response code: ", response.statusCode);
+        //console.log("getstatus_scale response data:", data);
+        console.log("one 400, good. more 400, bad.");
+        //console.log("if you see another error, that's probably not okay");
 
         // Scale doesn't really have any way to check status so if this doesn't 
         // emit an error, we can only assume it's authed
@@ -1064,7 +1065,7 @@ app.post("/generate_scale", jsonParser, function(request, response_generate_scal
        }
      });
     
-     console.log("sending request to", api_url_scale);
+    //console.log("sending request to", api_url_scale);
     var config = {
       method: "post",
       url: api_url_scale,
@@ -1113,8 +1114,8 @@ app.post("/generate_scale", jsonParser, function(request, response_generate_scal
                      url: error.config.url,
                      headers: error.config.headers,
                  })
-                 console.log("response headers:", JSON.stringify(error.response.headers, null, 2));
-                 console.log("response data:", error.response.data);
+                 //console.log("response headers:", JSON.stringify(error.response.headers, null, 2));
+                 //console.log("response data:", error.response.data);
             }
         }
         response_generate_scale.send({ error: true });
