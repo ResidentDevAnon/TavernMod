@@ -55,8 +55,11 @@
         <div id="bg_menu_content"></div>
     </div>
     </div>
+    <!--hidden checkbox that keeps track if right menu is open-->
+    <input type="checkbox" id="right_menu-toggle" hidden>
     <!--right nav-->
-    <div id="right_menu" class="hidden">
+    <div id="right_menu" class="rm_hidden">
+        <label for="right_menu-toggle" class="nav-toggle" onclick></label>
         <div class="right_menu_button" id="rm_button_characters"><h2>Characters</h2></div>
         <div class="right_menu_button" id="rm_button_settings"><h2>Settings</h2></div>
         <div class="right_menu_button" id="rm_button_selected_ch"><h2></h2></div>
@@ -155,7 +158,7 @@
                 <h4>API url</h4><h5>Example: http://127.0.0.1:5000/api </h5>
                 <input id="api_url_text" name="api_url" class="text_pole" maxlength="500" value="" autocomplete="off">
                 <input id="api_button" type="submit" value="Connect">
-                <img id="api_loading" src="img/load.svg" >
+                <img id="api_loading" src="img/load.svg" class="generic_hidden" >
                 </form>
                 <div id="online_status2">
                     <div id="online_status_indicator2"></div><div id="online_status_text2">No connection...</div>
@@ -181,7 +184,7 @@
                     <h4>API key</h4><h5>Where to get (<a href="/notes/6" target="_blank">?</a>)</h5>
                     <input id="api_key_novel" name="api_key_novel" class="text_pole" maxlength="500" size="35" value="" autocomplete="off">
                     <input id="api_button_novel" type="submit" value="Connect">
-                    <img id="api_loading_novel" src="img/load.svg" >
+                    <img id="api_loading_novel" src="img/load.svg" class="generic_hidden" >
                 </form>
                 <div id="online_status3">
                     <div id="online_status_indicator3"></div><div id="online_status_text3">No connection...</div>
@@ -323,6 +326,7 @@
                     <option value="0">Character Anchor - Style Anchor</option>
                     <option value="1">Style Anchor - Character Anchor</option>
                 </select>
+                <!--anchors and retry checks-->
                 <div id="anchor_checkbox">
                     <label class="switch">
                         <input id="character_anchor" type="checkbox"/><span></span>
@@ -401,8 +405,8 @@
         <!--system settings-->
         <div id="sys_sett_block" style="display: none">
             <select id="sys_sel_box" style="color:#fff;background-color:#000000;" >
-                <option value="startup_sett">Startup Settings</option>
-                <option value="reply_sett">Reply Mod settings</option>
+                <option value="startup_sett">System Settings</option>
+                <option value="reply_sett">Prompt Settings</option>
             </select>
             <div id="system_sett_options">
                 <!--startup settings-->
@@ -575,7 +579,7 @@
         <div id="rm_charaters_block" class="right_menu">
             <input id="char_search" name="char_search" class="text_pole" maxlength="500" value="" autocomplete="off" placeholder="search...">
             <div id="rm_button_create" class="right_menu_button"><h2>+ New Card</h2></div>
-            <!--div id="character_import_button" class="right_menu_button"><h2>+Import</h2></div-->
+            <div id="character_import_button" class="right_menu_button"><h2>+Import</h2></div>
             <div id="rm_print_charaters_block"></div>
         </div>
         <div id="rm_info_block" class="right_menu">

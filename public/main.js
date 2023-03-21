@@ -212,7 +212,6 @@ function parseExampleIntoIndividual(messageExampleString) {
     var cur_msg_lines = [];
     let in_user = false;
     let in_bot = false;
-    // DRY my cock and balls
     function add_msg(name, role) {
         // join different newlines (we split them by \n and join by \n)
         // remove char name
@@ -544,20 +543,25 @@ function clearChat() {
 
 //used multiple times, streamlined for simplicity
 //does replacements on a message when its displayed to user
-function format_raw(payload){
+//check is because OAI/scale formats their response properly and we dont need extra BR tags
+//first (bot) message needs the force format flag or else it doesnt break its sentences up properly
+function format_raw(payload,user_flag='',force_format=false){
     payload = payload.replace(/\n>| >|" >|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
+    if (user_flag == name1 || force_format){
+        payload = payload.replace(/\n/g, '<br/>')
+    }
     payload = converter.makeHtml(payload);
-    payload = payload.replace(/\n/g, '<br/>');
+    //payload = payload.replace(/\n/g, '<br/>');
     return payload
 }
 //message modifications
-function messageFormating(mes, ch_name) {
+function messageFormating(mes, ch_name,force_format = false) {
     //for Chloe
     if (active_character_index === undefined) {
         mes = mes.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>')
         //TD add option
     } else {
-        mes = format_raw(mes)
+        mes = format_raw(mes,ch_name,force_format)
     }
     if (ch_name !== name1) {
         mes = mes.replaceAll(name2 + ":", "");
@@ -585,10 +589,11 @@ function addOneMessage(mes) {
         }
         characterName = name2;
     }
+    //bookmark
     if (count_view_mes == 0) {
         messageText = replacePlaceholders(messageText);
     }
-    messageText = messageFormating(messageText, characterName);
+    messageText = messageFormating(messageText, characterName,true);
 
         const chatTemplate = `
         <div class='mes' mesid=${count_view_mes} ch_name=${characterName}>
@@ -601,7 +606,7 @@ function addOneMessage(mes) {
                 <div class=ch_name>
                     ${characterName}
                     <div title=Edit class=mes_edit>
-                        <img src='img/scroll.png' style='width:20px;height:20px;'>
+                        <img src='img/scroll.png' style='width:30px;height:30px;'>
                     </div>
                     <div class="mes_edit_cancel generic_hidden">
                         <img src='img/cancel.png'>
@@ -1446,25 +1451,20 @@ $(document).on('click', '#user_avatar_block .avatar', function () {
     saveSettings();
 
 });
-var bg_menu_toggle = false;
-let Bg_menu = document.getElementById('bg_menu')
-let logo_block = document.getElementById('logo_block');
-let button = document.getElementById('bg_menu_button');
-let content = document.getElementById('bg_menu_content');
-
-logo_block.addEventListener('click', function(event) {
-    if (!bg_menu_toggle) {
+$("#logo_block").click(function () {
+    let Bg_menu = document.getElementById('bg_menu')
+    let is_hidden = Bg_menu.classList.contains('not-active');
+    let content = document.getElementById('bg_menu_content');
+    if (!is_hidden == false) {
         Bg_menu.classList.add('active');
         Bg_menu.classList.remove('not-active');
         content.classList.add('active');
         content.classList.remove('not-active');
-        bg_menu_toggle = true;
     } else {
         Bg_menu.classList.add('not-active');
         Bg_menu.classList.remove('active');
         content.classList.add('not-active');
         content.classList.remove('active');
-        bg_menu_toggle = false;
         };
     }
 );
@@ -1904,8 +1904,6 @@ $("body").click(function () {
 //bookmark
 let options_butt = document.getElementById('options-content')
 let optins_open = false
-Bg_menu.classList.add('active');
-Bg_menu.classList.remove('not-active');
 $("#options_button").click(function () {
 
     if (!optins_open) {
@@ -3349,7 +3347,7 @@ function auto_open(){
         document.getElementById("logo_block").click()
     }
     if (open_bg_bar){
-        document.getElementById("bg_menu_button").click()
+    document.getElementById('right_menu').classList.remove('rm_hidden')
     }
 };
 function auto_last_menu(){
@@ -3406,14 +3404,19 @@ async function BG_shuffle(){
     }
 }
 
+//resizeme
 async function resize_sheld(){
     while (true) {
-        const ch_sel = document.querySelector('#logo_block').checked
-        var left_abs = (bg_menu_toggle) ? 'calc(max(6.5%, 133px))' : '0px';
-        //var right_abs = (ch_sel === true) ? 'calc(max(16.6%, 400px))' : '0px';
+        const ch_sel = document.getElementById('right_menu').classList.contains('rm_hidden');
+        let Bg_menu = document.getElementById('bg_menu')
+        let is_hidden = Bg_menu.classList.contains('not-active');
+        //im lazy so this is a invert
+        //future me problem
+        var left_abs = (!is_hidden) ? 'calc(max(6.5%, 133px))' : '0px';
+        var right_abs = (ch_sel === false) ? 'calc(max(16.6%, 400px))' : '0px';
         const sheld_mod = document.getElementById('main_chat');
         sheld_mod.style.marginLeft = left_abs;
-        //sheld_mod.style.marginRight = right_abs;
+        sheld_mod.style.marginRight = right_abs;
         await new Promise(resolve => setTimeout(resolve, 250));
     }
 }
@@ -3826,3 +3829,14 @@ $('#continuous_mode').change(function () {
     continuous_mode = !!$('#continuous_mode').prop('checked');
     saveSettings();
 });
+$('#right_menu-toggle').change(function () {
+    let target = document.getElementById('right_menu')
+    var is_open = target.classList.contains('rm_hidden');
+    if (is_open){
+        target.classList.remove('rm_hidden')
+    }
+    else{
+        target.classList.add('rm_hidden');
+    }
+    
+})

@@ -11,7 +11,7 @@
     --rm_margin_lr: 10px;
     --rm_padding_lr:10px;
     --bg_center: linear-gradient(90deg, rgba(0,0,0,0.7) 20%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 80%);
-    --seleced_butt_color: blue;
+    --seleced_butt_color: red;
     --h4_bg: linear-gradient(-90deg, rgba(0,0,0,0.1) 38%, rgba(0,0,0,1) 49%);
 --h2_bg: linear-gradient(-90deg, rgba(0,0,0,1) 0%, rgba(255,255,255,.2) 13%, rgba(0,0,0,1) 100%);
 --h5_bg: linear-gradient(-368deg, rgba(0,0,0,0.165703781512605) 38%, rgba(0,0,0,1) 49%);
@@ -163,8 +163,8 @@ em {
     height: 97vh;
 }
 #bg_menu .not-active{
-    opacity: 0;
-    height: 0;
+    opacity: 0 !important;
+    height: 0 !important;
     width: 20px;
     overflow-y: hidden;
 }
@@ -191,14 +191,13 @@ em {
     object-position: center center;
 }
 #bg_menu{
-    width: 6.5%;
+    /* width: 6.5%; */
     max-width: 133px;
     background: var(--bg_left);
     display: block;
     overflow-y: hidden;
     max-height: 900vh;
     margin-right: 0%;
-    flex-direction: column;
     padding-top: 5px;
     padding-left: 2px;
     cursor:pointer;
@@ -213,11 +212,9 @@ em {
     height: 100vh;
     position: fixed;
     right: 0px;
-    /* text-align: end; */
     padding-bottom: 20vh;
     z-index: 2000;
     white-space: normal;
-    /* background: linear-gradient(90deg, rgba(0,0,0,0.8) 25%, rgba(0,0,0,0.2) 70%,rgba(0,0,0,0.8) 100%); */
 }
 
 #right_menu .hidden{
@@ -245,7 +242,8 @@ em {
 }
 #char_search{
     position: sticky;
-    top : 0px
+    top : 0px;
+    height: 34px;
 }
 
 .character_select{
@@ -325,6 +323,7 @@ textarea.edit_textarea {
 input{
     width: -webkit-fill-available;
     background: black;
+    height: 30px;
 }
 
 input[type="checkbox"] {width: 20px;}
@@ -366,6 +365,13 @@ input[type="checkbox"] {width: 20px;}
 }
 * {
     color:aliceblue;
+}
+
+select {
+    height: 30px;
+    width: -webkit-fill-available;
+    border-width: thick;
+    color: black;
 }
 
 div#reply_sett {
@@ -420,6 +426,7 @@ h4 {
     background-image: var(--bg_right);
     /* color: blue; */
     cursor: pointer;
+    font-size: x-large;
 }
 
 div#rm_ch_create_block {
@@ -443,15 +450,33 @@ div#chat {
     overflow-y: scroll;
 }
 
-.ch_name {
-    /* min-width: 95%; */
-    
+.nav-toggle {
+    border-radius: 5px;
+    position: relative;
+    right: 39px;
+    top: 2em;
+    padding: 0.5em;
+    background: inherit;
+    color: aliceblue;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    z-index: 2001;
+}
+/*weird name = button icon*/
+.nav-toggle:after {
+     content: '\2630'; 
+    text-decoration: none;
 }
 
 .mes .ch_name {
     /* background: red; */
     font-size: 1.3em;
     padding-bottom: 6px;
+}
+.rm_hidden{
+    min-width: 0px !important;
+    max-width: 0px !important;
 }
 .generic_hidden{
     display:none !important;
@@ -472,6 +497,7 @@ div#chat {
     padding:6px;
     display: inline-block;
 }
+
 .avatar img {
     width: 100%;
     height: 100%;
@@ -673,9 +699,6 @@ input:checked + .slider {
 input:focus + .slider {
     box-shadow: 0 0 1px #99a1a7;
 }
-#form_sheld {
-}
-
 #send_form {
     display: grid;
     grid-template-columns: 25px auto 60px;
@@ -727,8 +750,8 @@ margin-top: 10px;
 }
 
 .mes_edit_done img{
-    width: 23px;
-    height: 23px;
+    width: 30px;
+    height: 30px;
 }
 
 .mes_edit_cancel{
@@ -740,8 +763,8 @@ margin-top: 10px;
 }
 
 .mes_edit_cancel img{
-    width: 23px;
-    height: 23px;
+    width: 30px;
+    height: 30px;
 }
 .checkbox{
     display: inline-flex;
