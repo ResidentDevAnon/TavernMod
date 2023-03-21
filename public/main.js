@@ -663,7 +663,7 @@ $("#send_but").click(function () {
 function build_main_system_message(){
     //global needs to be updated at this point
     //dont want to jump though updating it on char click right now
-    name2 = characters_array[active_character_index].name;
+    //name2 = characters_array[active_character_index].name;
     if (active_character_index == undefined){
         return ''
     }

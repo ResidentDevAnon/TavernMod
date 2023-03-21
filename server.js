@@ -15,6 +15,7 @@ const PNGtext = require('png-chunk-text');
 
 const jimp = require('jimp');
 const path = require('path');
+const JPEG = require('jpeg-js')
 
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
@@ -566,23 +567,28 @@ app.post("/getbackgrounds", jsonParser, async function(request, response) {
     try {
             const dirPath = path.join('public', 'backgrounds');
             var images = fs.readdirSync(dirPath);
-            
             if(is_colab === true){
                 images = ['tavern.png'];
             }
-            
         // Generate and return thumbnails for speed
         let thumbnails = [];
         for (let image of images) {
-        const imgPath = path.join(dirPath, image);
-        const thumbPath = path.join('public', 'BG_thumbs', image);
-        // Check if thumbnail already exists, if not create it
-        if (!fs.existsSync(thumbPath)) {
-            let img = await jimp.read(imgPath);
-            let resizedImg = img.resize(133, 83);
-            await resizedImg.writeAsync(thumbPath);
-        }
-        thumbnails.push(image);
+            try{
+                const imgPath = path.join(dirPath, image);
+                const thumbPath = path.join('public', 'BG_thumbs', image);
+                // Check if thumbnail already exists, if not create it
+                if (!fs.existsSync(thumbPath)) {
+                    jimp.decoders
+                    jimp.decoders['image/jpeg'] = (data) => JPEG.decode(data, { maxMemoryUsageInMB: 1024 })
+                    let img = await jimp.read(imgPath);
+                    let resizedImg = img.resize(133, 83);
+                    await resizedImg.writeAsync(thumbPath);
+                }
+                thumbnails.push(image);
+            }
+            catch(err){
+                console.log(`error ${err} at image ${image}`)
+             }   
         }
         response.send(JSON.stringify(thumbnails));
     } 
@@ -591,6 +597,8 @@ app.post("/getbackgrounds", jsonParser, async function(request, response) {
         response.status(500).send('Error generating thumbnails');
     }
 });
+
+
 app.post("/iscolab", jsonParser, function(request, response){
     let send_data = false;
     if(process.env.colaburl !== undefined){
