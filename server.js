@@ -150,7 +150,6 @@ app.use('/backgrounds', (req, res) => {
       res.status(404).send('File not found');
       return;
     }
-    //res.contentType('image/jpeg');
     res.send(data);
   });
 });
@@ -270,12 +269,6 @@ app.post("/generate", jsonParser, function(request, response_generate = response
     });
 });
 app.post("/savechat", jsonParser, function(request, response){
-    //console.log(request.data);
-    //console.log(request.body.bg);
-     //const data = request.body;
-    //console.log(request);
-    //console.log(request.body.chat);
-    //var bg = "body {background-image: linear-gradient(rgba(19,21,44,0.75), rgba(19,21,44,0.75)), url(../backgrounds/"+request.body.bg+");}";
     var dir_name = String(request.body.avatar_url).replace('.png','');
     let chat_data = request.body.chat;
     let jsonlData = chat_data.map(JSON.stringify).join('\n');
@@ -283,21 +276,13 @@ app.post("/savechat", jsonParser, function(request, response){
         if(err) {
             response.send(err);
             return console.log(err);
-            //response.send(err);
         }else{
-            //response.redirect("/");
             response.send({result: "ok"});
         }
     });
     
 });
 app.post("/getchat", jsonParser, function(request, response){
-    //console.log(request.data);
-    //console.log(request.body.bg);
-     //const data = request.body;
-    //console.log(request);
-    //console.log(request.body.chat);
-    //var bg = "body {background-image: linear-gradient(rgba(19,21,44,0.75), rgba(19,21,44,0.75)), url(../backgrounds/"+request.body.bg+");}";
     var dir_name = String(request.body.avatar_url).replace('.png','');
 
     fs.stat(chatsPath+dir_name, function(err, stat) {
@@ -576,13 +561,35 @@ app.post("/getcharacters", jsonParser, function(request, response){
         response.send(JSON.stringify(characters_obj));
     });
 });
-app.post("/getbackgrounds", jsonParser, function(request, response){
-    var images = getImages("public/backgrounds");
-    if(is_colab === true){
-        images = ['tavern.png'];
+//collects BGs
+app.post("/getbackgrounds", jsonParser, async function(request, response) {
+    try {
+            const dirPath = path.join('public', 'backgrounds');
+            var images = fs.readdirSync(dirPath);
+            
+            if(is_colab === true){
+                images = ['tavern.png'];
+            }
+            
+        // Generate and return thumbnails for speed
+        let thumbnails = [];
+        for (let image of images) {
+        const imgPath = path.join(dirPath, image);
+        const thumbPath = path.join('public', 'BG_thumbs', image);
+        // Check if thumbnail already exists, if not create it
+        if (!fs.existsSync(thumbPath)) {
+            let img = await jimp.read(imgPath);
+            let resizedImg = img.resize(133, 83);
+            await resizedImg.writeAsync(thumbPath);
+        }
+        thumbnails.push(image);
+        }
+        response.send(JSON.stringify(thumbnails));
+    } 
+    catch (err) {
+        console.error(err);
+        response.status(500).send('Error generating thumbnails');
     }
-    response.send(JSON.stringify(images));
-    
 });
 app.post("/iscolab", jsonParser, function(request, response){
     let send_data = false;
@@ -598,18 +605,12 @@ app.post("/getuseravatars", jsonParser, function(request, response){
     
 });
 app.post("/setbackground", jsonParser, function(request, response){
-    //console.log(request.data);
-    //console.log(request.body.bg);
-     //const data = request.body;
-    //console.log(request);
-    //console.log(1);
-    var bg = "#bg1 {background-image: linear-gradient(rgba(19,21,44,0), rgba(19,21,44,0)), url(../backgrounds/"+request.body.bg+");}";
+    var bg = "#bg1 {background-image: url(../backgrounds/"+request.body.bg+");}";
     fs.writeFile('public/css/bg_load.css', bg, 'utf8', function(err) {
         if(err) {
             response.send(err);
             return console.log(err);
         }else{
-            //response.redirect("/");
             response.send({result:'ok'});
         }
     });
@@ -622,7 +623,6 @@ app.post("/delbackground", jsonParser, function(request, response){
             response.send(err);
             return console.log(err);
         }else{
-            //response.redirect("/");
             response.send('ok');
         }
     });
@@ -649,13 +649,9 @@ app.post("/downloadbackground", urlencodedParser, function(request, response){
             
             return console.log(err);
         }else{
-            //console.log(img_file+fileType);
             response_dw_bg.send(img_file+fileType);
         }
-        //console.log('The image was copied from temp directory.');
     });
-
-
 });
 
 app.post("/savesettings", jsonParser, function(request, response){
@@ -1105,7 +1101,7 @@ app.post("/generate_scale", jsonParser, function(request, response_generate_scal
                     console.log(chunk.toString());
                 });                  
             } else {
-                 console.log("generate_scale promise rejected");
+                 //console.log("generate_scale promise rejected");
                  console.log({
                      message: error.message,
                      method: error.config.method,

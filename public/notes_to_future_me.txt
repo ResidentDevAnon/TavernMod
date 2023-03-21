@@ -1,5 +1,5 @@
 need
-    greentext bork both ways
+    greentext formatting
     pop up chat select menu overflows and missing css
     new chat popup missing css
     red placeholder active color
@@ -32,3 +32,6 @@ big maybe:
 
 for the love of god:
     optimize those custom prompt stuff in main.js to use a loop instead of borderlands tier amounts of click/change handlers
+
+fixed:
+    bad default file path for you.png

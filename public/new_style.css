@@ -10,7 +10,7 @@
     --bg_left: linear-gradient(-90deg, rgba(0,0,0,0.8) 25%, rgba(0,0,0,0.5) 70%,rgba(0,0,0,0.8) 100%);
     --rm_margin_lr: 10px;
     --rm_padding_lr:10px;
-    --bg_center: linear-gradient(90deg, rgba(0,0,0,0.7) 20%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 80%);
+    --bg_center: linear-gradient(90deg, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0.7) 80%);
     --seleced_butt_color: red;
     --h4_bg: linear-gradient(-90deg, rgba(0,0,0,0.1) 38%, rgba(0,0,0,1) 49%);
 --h2_bg: linear-gradient(-90deg, rgba(0,0,0,1) 0%, rgba(255,255,255,.2) 13%, rgba(0,0,0,1) 100%);
@@ -66,7 +66,7 @@ em {
 
 .mes_text p {
     margin-top: 0px;
-    margin-bottom: 16px;
+    margin-bottom: 0px;
     width: -webkit-fill-available;
 }
 
@@ -236,8 +236,8 @@ em {
      height: 83vh;
      overflow-x: hidden;
 }
-.character_select .avatar img{
-    height: 100px;
+.character_select .avatar{
+    height: 30px;
     width: 63px;
 }
 #char_search{
@@ -367,6 +367,11 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
+div#select_chat_div {
+    overflow-y: scroll;
+    height: 100%;
+}
+
 select {
     height: 30px;
     width: -webkit-fill-available;
@@ -471,7 +476,7 @@ div#chat {
 
 .mes .ch_name {
     /* background: red; */
-    font-size: 1.3em;
+    /* font-size: 1.3em; */
     padding-bottom: 6px;
 }
 .rm_hidden{
@@ -487,8 +492,9 @@ div#chat {
     display: flex;
     border-radius: 10px;
     padding: 4px;
-    background: linear-gradient(90deg, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 80%);
+    background: var(--bg_center);
     margin-bottom: 2px;
+    overflow-wrap: anywhere;
 }
 .avatar{
     width: 67px;
@@ -543,9 +549,6 @@ div#chat {
 .mes_block{
     padding-left: 35px;
     width: -webkit-fill-available;
-}
-#dialogue_del_mes{
-    /* display: none; */
 }
 .del_checkbox{
     accent-color: #ffffff;

@@ -80,7 +80,7 @@ var settings;
 var koboldai_settings;
 var koboldai_setting_names;
 var preset_settings = 'gui';
-var user_avatar = 'you.png';
+var user_avatar = 'you1.png';
 var temp_kobold = 0.5;
 var kobold_amount_gen = 80;
 var Kobold_max_context = 2048;//2048;
@@ -471,7 +471,7 @@ async function getBackgrounds() {
         const bgExample = $("<div>").addClass("bg_example");
         const bgExampleImg = $("<img>").addClass("bg_example_img")
             .attr("bgfile", getData[i])
-            .attr("src", "backgrounds/" + getData[i]);
+            .attr("src", "BG_thumbs/" + getData[i]);
         bgExample.append(bgExampleImg);
         bgMenuContent.append(bgExample);
       }
@@ -547,10 +547,10 @@ function clearChat() {
 //first (bot) message needs the force format flag or else it doesnt break its sentences up properly
 function format_raw(payload,user_flag='',force_format=false){
     payload = payload.replace(/\n>| >|" >|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
-    if (user_flag == name1 || force_format){
-        payload = payload.replace(/\n/g, '<br/>')
-    }
     payload = converter.makeHtml(payload);
+    if (user_flag == name1 || force_format){
+        payload = payload.replace(/\n/g, '<br>')
+    }
     //payload = payload.replace(/\n/g, '<br/>');
     return payload
 }
