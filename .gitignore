@@ -3,3 +3,4 @@ node_modules/*
 .vscode/launch.json
 public/chats/*
 public/characters/*
+public/backgrounds/*

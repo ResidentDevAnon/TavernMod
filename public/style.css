@@ -223,6 +223,7 @@ margin-top: 10px;
     width: 100%;
     color: rgb(229, 224, 216);
     margin-bottom: 2px;
+    overflow-wrap: anywhere;
 }
 
 .avatar {
