@@ -662,53 +662,71 @@ $("#send_but").click(function () {
     }
 });
 
+
 function build_main_system_message(){
     //global needs to be updated at this point
     //dont want to jump though updating it on char click right now
-    //throws error for chloe but whatever
-    try {
-        name2 = characters_array[active_character_index].name;
-    } catch (error) {
-        //
-    }
+    //name2 = characters_array[active_character_index].name;
     if (active_character_index == undefined){
         return ''
     }
-    let sys_prompt_compiler = "";
-
-    const promptSettings = [
-    { condition: true, content: system_prompt },
-    { condition: nsfw_toggle, content: NSFW_on_prompt },
-    { condition: !nsfw_toggle, content: NSFW_off_prompt },
-    { condition: CYOA_mode, content: CYOA_prompt },
-    { condition: custom_1_switch, content: custom_1_prompt },
-    { condition: custom_2_switch, content: custom_2_prompt },
-    { condition: custom_3_switch, content: custom_3_prompt },
-    { condition: custom_4_switch, content: custom_4_prompt },
-    { condition: custom_5_switch, content: custom_5_prompt },
-    ];
-    for (const setting of promptSettings) {
-    if (setting.condition) {
-    sys_prompt_compiler += `${replacePlaceholders(setting.content)}\n`;
+    let sys_prompt_compiler = `${replacePlaceholders(system_prompt)}\n`
+    if (nsfw_toggle) {
+        sys_prompt_compiler += `${replacePlaceholders(NSFW_on_prompt)}\n`;
     }
-    const charAttributes = [
-    { content: characters_array[active_character_index].description, prompt: description_prompt },
-    { content: characters_array[active_character_index].personality, prompt: personality_prompt },
-    { content: characters_array[active_character_index].scenario, prompt: scenario_prompt },
-    ];
-    let built = '';
-    for (const attribute of charAttributes) {
-    const trimmedContent = $.trim(attribute.content);
-    if (trimmedContent !== undefined && trimmedContent.length > 0) {
-        const replacedContent = replacePlaceholders(trimmedContent);
-        built += replacePlaceholders(attribute.prompt) + replacedContent;
+    else{
+        sys_prompt_compiler += `${replacePlaceholders(NSFW_off_prompt)}\n`;
+        }
+    if (CYOA_mode) {
+        sys_prompt_compiler += `${replacePlaceholders(CYOA_prompt)}\n`;
     }
+    if (custom_1_switch) {
+        sys_prompt_compiler += `${replacePlaceholders(custom_1_prompt)}\n`;
+    }
+    if (custom_2_switch) {
+        sys_prompt_compiler += `${replacePlaceholders(custom_2_prompt)}\n`;
+    }
+    if (custom_3_switch) {
+        sys_prompt_compiler += `${replacePlaceholders(custom_3_prompt)}\n`;
+    }
+    if (custom_4_switch) {
+        sys_prompt_compiler += `${replacePlaceholders(custom_4_prompt)}\n`;
+    }
+    if (custom_5_switch) {
+        sys_prompt_compiler += `${replacePlaceholders(custom_5_prompt)}\n`;
+    }
+    var charDescription = $.trim(characters_array[active_character_index].description);
+    var charPersonality = $.trim(characters_array[active_character_index].personality);
+    var Scenario = $.trim(characters_array[active_character_index].scenario);
+    var built = ''
+    if (charDescription !== undefined) {
+        if (charDescription.length > 0) {
+            charDescription = replacePlaceholders(charDescription);
+        }
+    }
+    if (charPersonality !== undefined) {
+        if (charPersonality.length > 0) {
+            charPersonality = replacePlaceholders(charPersonality);
+        }
+    }
+    if (Scenario !== undefined) {
+        if (Scenario.length > 0) {
+            Scenario = replacePlaceholders(Scenario);
+        }
+    }
+    if (charDescription.length > 0) {
+        built = replacePlaceholders(description_prompt) + charDescription;
+    }
+    if (charPersonality.length > 0) {
+        built += replacePlaceholders(personality_prompt) + charPersonality;
+    }
+    if (Scenario.length > 0) {
+        built += replacePlaceholders(scenario_prompt) + Scenario;
     }
     built = `${sys_prompt_compiler}${built}`
     document.getElementById('scenario_preview').value = built
     console.log(`${countTokens(sys_prompt_compiler)} tokens dedicated for SYS commands`)
     return built
-}
 }
 
 
