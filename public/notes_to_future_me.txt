@@ -1,14 +1,15 @@
 need
-    greentext formatting
-    pop up chat select menu overflows and missing css
-    new chat popup missing css
+    greentext formatting still weird
     check how borked pyg goog collab is 
         deyeeted some things i shouldnt have
-    placeholder elements need to go
-        red active
-        pink HR
-        toggles ugly as sin
-        submenu for chat options ugly
+
+
+placeholder elements that need to go:
+    red active
+    pink HR
+    toggles ugly as sin
+    submenu for chat options ugly
+    new chat submenu buttons need new look
 
 want:
     improve soft refresh messages
@@ -16,9 +17,6 @@ want:
     toggle for (text) being hidden
         in API menu, thats important enough
     toggle greentext / quote behavior in system
-    make save indicator not jump around the place
-        maybe replace connection indicator in main_chat?
-        maybe pin to bottom?
 
 maybe:
     expand 'description' in character by default?
@@ -32,4 +30,3 @@ for the love of god:
     optimize those custom prompt stuff in main.js to use a loop instead of borderlands tier amounts of click/change handlers
 
 fixed:
-    bad default file path for you.png

@@ -15,7 +15,9 @@
     --h4_bg: linear-gradient(-90deg, rgba(0,0,0,0.1) 38%, rgba(0,0,0,1) 49%);
     --h2_bg: linear-gradient(-90deg, rgba(0,0,0,1) 0%, rgba(255,255,255,.2) 13%, rgba(0,0,0,1) 100%);
     --h5_bg: linear-gradient(-368deg, rgba(0,0,0,0.165703781512605) 38%, rgba(0,0,0,1) 49%);
-    --deselected_butt_color: gray
+    --deselected_butt_color: gray;
+    --confirm_green: #00FF00;
+    --warning_red:#FF0000;
 }
 
 
@@ -89,10 +91,9 @@ em {
     z-index: 2298;
 }
 #online_status{
-    opacity: 0.3;
-    left: 4px;
-    bottom: 0px;
-    margin-left: 9px;
+    opacity: 0.5;
+    margin-left: 36px;
+    display: flex;
 }
 #character_popup{
     max-width: -webkit-fill-available;
@@ -378,6 +379,20 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
+div#save_indicator.saved {
+    color: var(--confirm_green);
+}
+div#save_indicator.warning {
+    color: var(--warning_red);
+}
+
+div#online_status_text.connected {
+    color: var(--confirm_green);
+}
+div#online_status_text.disconnected {
+    color: var(--warning_red);
+}
+
 div#dialogue_popup {
     width: 650px;
     position: absolute;
@@ -505,7 +520,7 @@ div#chat {
     border-radius: 5px;
     position: relative;
     right: 39px;
-    top: 2em;
+    top: 3em;
     padding: 0.5em;
     background: inherit;
     color: aliceblue;
@@ -521,8 +536,6 @@ div#chat {
 }
 
 .mes .ch_name {
-    /* background: red; */
-    /* font-size: 1.3em; */
     padding-bottom: 6px;
 }
 .rm_hidden{
@@ -758,6 +771,7 @@ input:focus + .slider {
     height: 89px;
     background: linear-gradient(90deg, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 80%);
     color: #e6e6e6;
+    margin-bottom: 10px;
     }
 
 #send_but{

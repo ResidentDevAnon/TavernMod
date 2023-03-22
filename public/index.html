@@ -139,8 +139,6 @@
                 <input id="export_button" type="submit" value="Export">
             </div>
         </div>
-        <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->
-        <p id="save_indicator"style="position: relative;"> </p>
         <!--Sub settings-->
         <div id="rm_api_block" class="right_menu" >
             <div class="submenu" id="api_settings"><h2 class ='selected_button'>API Settings</h2></div>
@@ -160,11 +158,7 @@
                 <h4>API url</h4><h5>Example: http://127.0.0.1:5000/api </h5>
                 <input id="api_url_text" name="api_url" class="text_pole" maxlength="500" value="" autocomplete="off">
                 <input id="api_button" type="submit" value="Connect">
-                <img id="api_loading" src="img/load.svg" class="generic_hidden" >
                 </form>
-                <div id="online_status2">
-                    <div id="online_status_indicator2"></div><div id="online_status_text2">No connection...</div>
-                </div>
                 <h4>Preset settings</h4><h5>Selecting settings (<a href="/notes/4" target="_blank">?</a>)</h5>
                 <select id="settings_perset">
                     <option value="gui">GUI KoboldAI Settings</option>
@@ -186,11 +180,7 @@
                     <h4>API key</h4><h5>Where to get (<a href="/notes/6" target="_blank">?</a>)</h5>
                     <input id="api_key_novel" name="api_key_novel" class="text_pole" maxlength="500" size="35" value="" autocomplete="off">
                     <input id="api_button_novel" type="submit" value="Connect">
-                    <img id="api_loading_novel" src="img/load.svg" class="generic_hidden" >
                 </form>
-                <div id="online_status3">
-                    <div id="online_status_indicator3"></div><div id="online_status_text3">No connection...</div>
-                </div>
                 <h4>Model</h4><h5>Selecting NovelAI model (<a href="/notes/8" target="_blank">?</a>)</h5>
                 <select id="model_novel_select" class="option_select_right_menu" style='margin-bottom: 16px;'>
                     <option value="euterpe-v2">Euterpe</option>
@@ -217,11 +207,7 @@
                     <h4>API key </h4>
                     <input id="api_key_openai" name="api_key_openai" class="text_pole" maxlength="500" value="" autocomplete="off">
                     <input id="api_button_openai" type="submit" value="Connect">
-                    <img id="api_loading_openai" src="img/load.svg" >
                 </form>
-                <div id="online_status4">
-                    <div id="online_status_indicator4"></div><div id="online_status_text4">No connection...</div>
-                </div>
                 <h4>Preset settings</h4><h5>Selecting settings</h5>
                 <select id="settings_perset_openai" class="option_select_right_menu">
                     <option value="gui">Default</option>
@@ -250,11 +236,7 @@
                         if it gets rate limited, just get your own
                      -->
                     <input id="api_button_scale" type="submit" value="Connect">
-                    <img id="api_loading_scale" src="img/load.svg" style="display:none" >
                 </form>
-                <div id="online_status5">
-                    <div id="online_status_indicator5"></div><div id="online_status_text5">No connection...</div>
-                </div>
                 <p style="white-space: normal;"><strong>IMPORTANT:&nbsp;</strong>
                     Scale offers no way to check whether your key is correct. If you see "Valid" here but you still can't send prompts,
                     confirm your key/url.</p>
@@ -603,7 +585,12 @@
                 <div id="dialogue_del_mes_cancel" class="menu_button">Cancel</div>
             </div>
             <div id="online_status">
-                <div id="online_status_indicator"></div><div id="online_status_text">No connection...</div>
+                <!--cheat to keep the div 'open in html'-->
+                <div > </div>
+                <!--cheat space at end for dynamic spacing-->
+                <div id="online_status_indicator"></div><div id="online_status_text"class="disconnected">No connection... </div>
+                <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->
+                <div id="save_indicator"style="position: relative;"> </div>
             </div>
             <form id="send_form">
                 <!--options submenu-->

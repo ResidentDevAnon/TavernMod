@@ -42,6 +42,8 @@ var create_save_mes_example = '';
 
 var timerSaveEdit;
 var durationSaveEdit = 2000;
+var connection_text_clear
+var save_text_clear
 //animation right menu
 var animation_rm_duration = 200;
 var animation_rm_easing = "";
@@ -187,6 +189,11 @@ var custom_5_switch = false
 var auto_retry = false
 var continuous_mode = false
 
+//swipe stuff
+var newest_mes_index = 0
+var swipe_index = 0
+var swipe_array = []
+
 //css
 var bg1_toggle = true;
 var css_mes_bg = $('<div class="mes"></div>').css('background');
@@ -270,6 +277,7 @@ $('#characloud_url').click(function () {
     window.open('https://boosty.to/tavernai', '_blank');
 });
 function checkOnlineStatus() {
+    console.log(`fired`)
     console.trace("checkOnlineStatus",{
         is_get_status,
         is_get_status_novel,
@@ -277,35 +285,26 @@ function checkOnlineStatus() {
         is_get_status_scale,
         online_status
     });
+    //keep the spaces in the HTML
+    //cheating on dynamic spacing
     if (online_status == 'no_connection') {
         $("#online_status_indicator").css("background-color", "red");
-        $("#online_status").css("opacity", 0.3);
-        $("#online_status_text").html("No connection...");
-        $("#online_status_indicator2").css("background-color", "red");
-        $("#online_status_text2").html("No connection...");
-        $("#online_status_indicator3").css("background-color", "red");
-        $("#online_status_text3").html("No connection...");
-        $("#online_status_indicator4").css("background-color", "red");
-        $("#online_status_text4").html("No connection...");
-		$("#online_status_indicator5").css("background-color", "red");
-        $("#online_status_text5").html("No connection...");
+        $("#online_status_text").html("No connection... ");
+        document.getElementById('online_status_text').classList.remove('connected')
+        document.getElementById('online_status_text').classList.add('disconnected')
         is_get_status = false;
         is_get_status_novel = false;
         is_get_status_openai = false;
 		is_get_status_scale = false;
         should_use_scale = false;
     } else {
-        $("#online_status_indicator").css("background-color", "black");
-        $("#online_status").css("opacity", 0.0);
-        $("#online_status_text").html("");
-        $("#online_status_indicator2").css("background-color", "green");
+        $("#online_status_text").html("connected! ");
+        $("#online_status_indicator").css("background-color", "green");
         $("#online_status_text2").html(online_status);
-        $("#online_status_indicator3").css("background-color", "green");
-        $("#online_status_text3").html(online_status);
-        $("#online_status_indicator4").css("background-color", "green");
-        $("#online_status_text4").html(online_status);
-		$("#online_status_indicator5").css("background-color", "green");
-        $("#online_status_text5").html(online_status);
+        document.getElementById('online_status_text').classList.add('connected')
+        document.getElementById('online_status_text').classList.remove('disconnected')
+        clearTimeout(connection_text_clear)
+        connection_text_clear = setTimeout(() => { $("#online_status_text").html(""); }, durationSaveEdit);
         if (is_get_status_scale) {
             should_use_scale = true;
         }
@@ -410,7 +409,6 @@ function countTokens(messages, full = false) {
 function resultCheckStatus() {
     is_api_button_press = false;
     checkOnlineStatus();
-    $("#api_loading").css("display", 'none');
     $("#api_button").css("display", 'inline-block');
 }
 
@@ -540,6 +538,8 @@ function soft_refresh(){
 
 //add new messages
 function printMessages() {
+    //0 index
+    newest_mes_index = chat.length -1
     chat.forEach(function (item, i, arr) {
         addOneMessage(item);
     });
@@ -576,9 +576,14 @@ function messageFormating(mes, ch_name,force_format = false) {
     }
     return mes;
 }
-var swipe_left = 0
-var swipe_right = 1
+//yes i am throwing this in a function
+function clear_swipe(){
+    swipe_array = []
+    swipe_index = 0
+}
+
 function addOneMessage(mes) {
+    clear_swipe()
     var messageText = mes['mes'];
     var characterName = name1;
     generatedPromtCache = '';
@@ -607,7 +612,7 @@ function addOneMessage(mes) {
             <div class='for_checkbox generic_hidden'></div>
             <input type='checkbox' class='del_checkbox generic_hidden'>
     `;
-    if (count_view_mes > 0 && characterName != name1) {
+    if (count_view_mes == newest_mes_index && count_view_mes != 0 && characterName != name1 && swipe_index > 0) {
         chatTemplate += `<div id='swipe_left' class="swipe_left"><img src="img/tri.png"></div>`;
     }
     chatTemplate += `<div class=avatar>
@@ -628,7 +633,7 @@ function addOneMessage(mes) {
             </div>
             <div class=mes_text></div>
             </div>`
-    if (count_view_mes > 0 && characterName != name1) {
+    if (count_view_mes == newest_mes_index && count_view_mes != 0 && characterName != name1) {
         chatTemplate += `<div id='swipe_right' class="swipe_right"><img src="img/tri.png"></div>`;
     }
     chatTemplate += `</div>`;
@@ -785,8 +790,8 @@ async function Generate(type) {
             chat[chat.length - 1]['is_user'] = true;
             chat[chat.length - 1]['is_name'] = true;
             chat[chat.length - 1]['send_date'] = Date.now();
-            chat[chat.length - 1]['swipe_right'] ='none';
-            chat[chat.length - 1]['swipe_left'] ='none';
+            chat[chat.length - 1]['swipe_index'] =swipe_index;
+            chat[chat.length - 1]['swipe_array'] =swipe_array;
             chat[chat.length - 1]['mes'] = textareaText;
             addOneMessage(chat[chat.length - 1]);
         }
@@ -996,8 +1001,8 @@ async function Generate(type) {
                             chat[chat.length - 1]['is_user'] = false;
                             chat[chat.length - 1]['is_name'] = false;
                             chat[chat.length - 1]['send_date'] = Date.now();
-                            chat[chat.length - 1]['swipe_right'] ='none';
-                            chat[chat.length - 1]['swipe_left'] ='none';
+                            chat[chat.length - 1]['swipe_index'] = swipe_index;
+                            chat[chat.length - 1]['swipe_array'] =swipe_array;
                             chat[chat.length - 1]['mes'] = "";
                             addOneMessage(chat[chat.length - 1]);
                         }
@@ -1063,10 +1068,11 @@ async function Generate(type) {
                             chat[chat.length - 1]['is_user'] = false;
                             chat[chat.length - 1]['is_name'] = this_mes_is_name;
                             chat[chat.length - 1]['send_date'] = Date.now();
-                            chat[chat.length - 1]['swipe_right'] ='none';
-                            chat[chat.length - 1]['swipe_left'] ='none';
+                            chat[chat.length - 1]['swipe_index'] = swipe_index;
+                            chat[chat.length - 1]['swipe_array'] =swipe_array;
                             getMessage = $.trim(getMessage);
                             chat[chat.length - 1]['mes'] = getMessage;
+                            //hook here for swipe right
                             addOneMessage(chat[chat.length - 1]);
                             $("#send_but").removeClass('generic_hidden');
                             $("#loading_mes").addClass('generic_hidden');
@@ -1193,8 +1199,8 @@ function getChatResult() {
         chat[0]['is_user'] = false;
         chat[0]['is_name'] = true;
         chat[0]['send_date'] = Date.now();
-        chat[0]['swipe_right'] ='none';
-        chat[0]['swipe_left'] ='none';
+        chat[0]['swipe_index'] = swipe_index;
+        chat[0]['swipe_array'] =swipe_array;
         if (characters_array[active_character_index].first_mes != "") {
             chat[0]['mes'] = characters_array[active_character_index].first_mes;
         } else {
@@ -1768,9 +1774,7 @@ $("#form_create").submit(function(type) {
                 } else {
                     $('#result_info').html("<font color=red>" + res_str + " Tokens (Too many tokens, consider reducing character definition)</font>");
                 }
-                document.getElementById("save_indicator").innerHTML = "saved!"
-                clearTimeout(timerSaveEdit);
-                timerSaveEdit = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "" }, durationSaveEdit);
+                lower_save_flag()
             },
             error: function (jqXHR, exception) {
                 $('#create_button').removeAttr("disabled");
@@ -1790,7 +1794,7 @@ $("#rm_info_button").click(function () {
 });
 
 function common_click_save() {
-    flip_save_flag()
+    raise_save_flag()
     clearTimeout(timerSaveEdit);
     timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
 }
@@ -1801,7 +1805,7 @@ $('#character_name_pole').on('change keyup paste', function () {
         create_save_name = $('#character_name_pole').val();
     }
     else {
-        flip_save_flag()
+        raise_save_flag()
         clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click();
         name2 = $("#character_name_pole")[0].value
@@ -1810,8 +1814,17 @@ $('#character_name_pole').on('change keyup paste', function () {
     }
 });
 //saveflag
-function flip_save_flag(){
+function raise_save_flag(){
     document.getElementById("save_indicator").innerHTML = "warning unsaved changes!"
+    document.getElementById('save_indicator').classList.add('warning')
+    document.getElementById('save_indicator').classList.remove('saved')
+}
+function lower_save_flag(){
+    document.getElementById("save_indicator").innerHTML = "saved!"
+    document.getElementById('save_indicator').classList.remove('warning')
+    document.getElementById('save_indicator').classList.add('saved')
+    clearTimeout(save_text_clear);
+    save_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "" }, durationSaveEdit);
 }
 $('#description_textarea').on('keyup paste cut', function () {//change keyup paste cut
     if (menu_type == 'create') {
@@ -1853,7 +1866,6 @@ $('#firstmessage_textarea').on('keyup paste cut', function () {
 });
 $("#api_button").click(function () {
     if ($('#api_url_text').val() != '') {
-        $("#api_loading").css("display", 'inline-block');
         $("#api_button").css("display", 'none');
         api_server = $('#api_url_text').val();
         api_server = $.trim(api_server);
@@ -2817,12 +2829,11 @@ async function saveSettings(type) {
         contentType: "application/json",
         //processData: false, 
         success: function (data) {
-            document.getElementById("save_indicator").innerHTML = "saved!"
+            lower_save_flag()
             clearTimeout(timerSaveEdit);
             //bookmark refresh system prompt preview
             //dump value because it returns a value
             let dump = build_main_system_message()
-            timerSaveEdit = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "" }, durationSaveEdit);
             //online_status = data.result;
             if (type === 'change_name') {
                 location.reload();
@@ -2950,10 +2961,7 @@ async function getAllCharaChats() {
                     mes = '...' + mes.substring(mes.length - strlen);
                 }
                 mes = format_raw(mes)
-                var pre_date = Number(sortedSet[key]['file_name'].replace('.jsonl',''))
-                var date = new Date(pre_date).toLocaleDateString('en-US');
-                console.log(date)
-                //let date = data[key]['file_name'].replace('.jsonl','')
+                var date = new Date(Number(sortedSet[key]['file_name'].replace('.jsonl',''))).toLocaleDateString('en-US');
                 $('#select_chat_div').append('<div class="select_chat_block" file_name="' +
                 sortedSet[key]['file_name'] + '"><div class=avatar><img src="characters/' +
                 characters_array[active_character_index]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' +
@@ -3025,7 +3033,6 @@ async function getStatusNovel() {
 }
 $("#api_button_novel").click(function () {
     if ($('#api_key_novel').val() != '') {
-        $("#api_loading_novel").css("display", 'inline-block');
         $("#api_button_novel").css("display", 'none');
         api_key_novel = $('#api_key_novel').val();
         api_key_novel = $.trim(api_key_novel);
@@ -3038,7 +3045,6 @@ $("#api_button_novel").click(function () {
 function resultCheckStatusNovel() {
     is_api_button_press_novel = false;
     checkOnlineStatus();
-    $("#api_loading_novel").css("display", 'none');
     $("#api_button_novel").css("display", 'inline-block');
 }
 $("#model_novel_select").change(function () {
@@ -3109,7 +3115,6 @@ async function getStatusOpen() {
 }
 $("#api_button_openai").click(function () {
     if ($('#api_key_openai').val() != '') {
-        $("#api_loading_openai").css("display", 'inline-block');
         $("#api_button_openai").css("display", 'none');
         api_key_openai = $('#api_key_openai').val();
         api_key_openai = $.trim(api_key_openai);
@@ -3122,7 +3127,6 @@ $("#api_button_openai").click(function () {
 function resultCheckStatusOpen() {
     is_api_button_press_openai = false;
     checkOnlineStatus();
-    $("#api_loading_openai").css("display", 'none');
     $("#api_button_openai").css("display", 'inline-block');
 }
 
@@ -3131,7 +3135,6 @@ function resultCheckStatusOpen() {
 //************************************************************
 $("#api_button_scale").click(function () {
     if ($('#api_key_scale').val() != '') {
-        $("#api_loading_scale").css("display", 'inline-block');
         $("#api_button_scale").css("display", 'none');
         api_key_scale = $('#api_key_scale').val();
         api_key_scale = $.trim(api_key_scale);
@@ -3147,7 +3150,6 @@ $("#api_button_scale").click(function () {
 async function resultCheckStatusScale() {
     is_api_button_press_scale = false;
     checkOnlineStatus();
-    $("#api_loading_scale").css("display", 'none');
     $("#api_button_scale").css("display", 'inline-block');
 }
 
@@ -3470,7 +3472,7 @@ $("#bg_shuffle_time").change(function () {
 )
 
 function common_flag_save(){
-    flip_save_flag()
+    raise_save_flag()
     clearTimeout(timerSaveEdit);
     timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
 }
