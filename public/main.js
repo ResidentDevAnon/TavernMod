@@ -465,6 +465,7 @@ async function getBackgrounds() {
       },
     });
     if (response.ok === true) {
+      $("#generating_thumbs").addClass("generic_hidden");
       const getData = await response.json();
       const bgMenuContent = $("#bg_menu_content");
       for (var i = 0; i < getData.length; i++) {

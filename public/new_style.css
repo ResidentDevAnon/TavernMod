@@ -223,7 +223,7 @@ em {
 
 #main_chat {
     display: flex;
-    background: var(--bg_center);
+
     height: 100vh;
     overflow-x: hidden;
     margin-left: calc(max(6.5%,133px));
@@ -294,6 +294,9 @@ h2{
 }
 #avatar_load_preview{
     height:100%;
+}
+div#form_sheld {
+    background: var(--bg_center);
 }
 textarea{
     width: -webkit-fill-available;
