@@ -572,13 +572,23 @@ app.post("/getbackgrounds", jsonParser, async function(request, response) {
             }
         // Generate and return thumbnails for speed
         let thumbnails = [];
+        let togen = 0
+        let togen_tracker = 0
+        //first pass to track what needs to be gen'd
+        for (let image of images) {
+            const thumbPath = path.join('public', 'BG_thumbs', image);
+            if (!fs.existsSync(thumbPath)) {
+                togen++
+            }
+        }
         for (let image of images) {
             try{
                 const imgPath = path.join(dirPath, image);
                 const thumbPath = path.join('public', 'BG_thumbs', image);
                 // Check if thumbnail already exists, if not create it
                 if (!fs.existsSync(thumbPath)) {
-                    jimp.decoders
+                    togen_tracker ++
+                    console.log(`generating ${togen_tracker} of ${togen} new thumbnails`)
                     jimp.decoders['image/jpeg'] = (data) => JPEG.decode(data, { maxMemoryUsageInMB: 1024 })
                     let img = await jimp.read(imgPath);
                     let resizedImg = img.resize(133, 83);
@@ -588,8 +598,9 @@ app.post("/getbackgrounds", jsonParser, async function(request, response) {
             }
             catch(err){
                 console.log(`error ${err} at image ${image}`)
-             }   
+            }   
         }
+        console.log(`finished generating thumbnails!`)
         response.send(JSON.stringify(thumbnails));
     } 
     catch (err) {
