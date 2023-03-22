@@ -2,19 +2,17 @@ need
     greentext formatting
     pop up chat select menu overflows and missing css
     new chat popup missing css
-    red placeholder active color
-    scale max response value is applied, but slider isnt updating on startup
     check how borked pyg goog collab is 
         deyeeted some things i shouldnt have
     placeholder elements need to go
         red active
         pink HR
         toggles ugly as sin
-    submenu for chat options misaligned
-        slightly
+        submenu for chat options ugly
 
 want:
-    find way to soft refresh messages / character name in sidebar for below and bot name changes
+    improve soft refresh messages
+        buggy and replaces user avatar
     toggle for (text) being hidden
         in API menu, thats important enough
     toggle greentext / quote behavior in system
@@ -24,11 +22,11 @@ want:
 
 maybe:
     expand 'description' in character by default?
+    second /third prompt previews in character and prompt submenu
 
 
 big maybe:
     export / import just for prompt files
-    second /third prompt previews in character and prompt submenu
 
 for the love of god:
     optimize those custom prompt stuff in main.js to use a loop instead of borderlands tier amounts of click/change handlers
