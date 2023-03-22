@@ -3,7 +3,7 @@
 // remove document ready function wrapper and just move the script to the bottom of index.html so it still waits for DOM
 
 const VERSION = '1.2.8-Tavmod';
-var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true, underline:true});
+var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true, underline:true,splitAdjacentBlockquotes:true});
 var default_user_name = "You";
 var name1 = default_user_name;
 var name2 = "Chloe";
@@ -600,33 +600,39 @@ function addOneMessage(mes) {
         messageText = replacePlaceholders(messageText);
     }
     messageText = messageFormating(messageText, characterName,true);
-        const chatTemplate = `
+
+    //ugly way to build a template
+    let chatTemplate = `
         <div class='mes' mesid=${count_view_mes} ch_name=${characterName}>
             <div class='for_checkbox generic_hidden'></div>
             <input type='checkbox' class='del_checkbox generic_hidden'>
-            <div id='swipe_left' class="swipe_left"><img src="img/tri.png"></div>
-            <div class=avatar>
-            <img src='${avatarImg}'>
-            </div>
-            <div class=mes_block>
-            <div class=ch_name>
-            ${characterName}
-            <div title=Edit class=mes_edit>
-            <img src='img/scroll.png' style='width:30px;height:30px;'>
-            </div>
-            <div class="mes_edit_cancel generic_hidden">
-            <img src='img/cancel.png'>
-            </div>
-            <div class="mes_edit_done generic_hidden">
-            <img src='img/done.png'>
-                    </div>
-                    </div>
-                    <div class=mes_text></div>
-                    </div>
-            <div id='swipe_right' class="swipe_right"><img src="img/tri.png"></div>
-        </div>
     `;
-
+    if (count_view_mes > 0 && characterName != name1) {
+        chatTemplate += `<div id='swipe_left' class="swipe_left"><img src="img/tri.png"></div>`;
+    }
+    chatTemplate += `<div class=avatar>
+    <img src='${avatarImg}'>
+    </div>
+    <div class=mes_block>
+    <div class=ch_name>
+    ${characterName}
+    <div title=Edit class=mes_edit>
+    <img src='img/scroll.png' style='width:30px;height:30px;'>
+    </div>
+    <div class="mes_edit_cancel generic_hidden">
+    <img src='img/cancel.png'>
+    </div>
+    <div class="mes_edit_done generic_hidden">
+    <img src='img/done.png'>
+            </div>
+            </div>
+            <div class=mes_text></div>
+            </div>`
+    if (count_view_mes > 0 && characterName != name1) {
+        chatTemplate += `<div id='swipe_right' class="swipe_right"><img src="img/tri.png"></div>`;
+    }
+    chatTemplate += `</div>`;
+    
     $("#chat").append(chatTemplate);
 
     if (!if_typing_text) {
@@ -2935,21 +2941,26 @@ async function getAllCharaChats() {
             $('#load_select_chat_div').addClass('generic_hidden')
             let dataArr = Object.values(data);
             //what is this here for?
-            //characters.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase()) ? 1 : -1);
-            for (const key in data) {
+            //sorts by timestamp dumbass
+            const sortedSet = Object.values(data).sort((a, b) => b['file_name'].localeCompare(a['file_name']));
+            for (const key in sortedSet) {
                 let strlen = 200;
-                let mes = data[key]['mes'];
+                let mes = sortedSet[key]['mes'];
                 if (mes.length > strlen) {
                     mes = '...' + mes.substring(mes.length - strlen);
                 }
                 mes = format_raw(mes)
+                var pre_date = Number(sortedSet[key]['file_name'].replace('.jsonl',''))
+                var date = new Date(pre_date).toLocaleDateString('en-US');
+                console.log(date)
+                //let date = data[key]['file_name'].replace('.jsonl','')
                 $('#select_chat_div').append('<div class="select_chat_block" file_name="' +
-                data[key]['file_name'] + '"><div class=avatar><img src="characters/' +
+                sortedSet[key]['file_name'] + '"><div class=avatar><img src="characters/' +
                 characters_array[active_character_index]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' +
-                data[key]['file_name'] + '</div><div class="select_chat_block_mes">' +
-                mes + '</div></div>');
+                date + '</div><div class="select_chat_block_mes">' +
+                mes + '</div></div><hr>');
                 //highlights last chat
-                if (characters_array[active_character_index]['chat'] == data[key]['file_name'].replace('.jsonl', '')) {
+                if (characters_array[active_character_index]['chat'] == sortedSet[key]['file_name'].replace('.jsonl', '')) {
                     $('#select_chat_div').children(':nth-last-child(1)').attr('highlight', true);
                 }
             }

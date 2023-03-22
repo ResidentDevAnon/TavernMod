@@ -265,6 +265,7 @@ em {
 }
 h2{
     cursor: pointer;
+    margin-top: 0px;
     color: var(--deselected_butt_color);
 }
 #rm_api_block{
@@ -371,13 +372,31 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
+.select_chat_block_mes {
+    position: relative;
+    width: 100%;
+    left: -10%;
+}
+
+.select_chat_block_filename {
+    height: 30px;
+    position: relative;
+    top: -10px;
+}
+
+.select_chat_block {
+    display: inline-flex;
+    width: -webkit-fill-available;
+}
+
 div.swipe_rhgt img {
     background: red;
 }
 
 div#select_chat_div {
     overflow-y: scroll;
-    height: 100%;
+    height: 90%;
+    padding-top: 15px;
 }
 
 select {
@@ -786,19 +805,17 @@ margin-top: 10px;
 #select_chat_popup{
     display: block;
     grid-template-rows: 50px 100px 100px auto 45px;
-    max-width:450px;
-    height: 440px;
+    max-width: 650px;
+    height: 650px;
     position: absolute;
     z-index: 2066;
     margin-left: auto;
     margin-right: auto;
     left: 0;
     right: 0;
-    margin-top: 21vh;
-    box-shadow: 0 0 2px rgba(200,200,200,0.1);
+    margin-top: 15vh;
     padding: 4px;
-    background-color: #222222ff;
-    border-radius: 5px;
+    background: var(--bg_center);
 }
 
 #dialogue_del_mes{
