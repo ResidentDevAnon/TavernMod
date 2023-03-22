@@ -3413,8 +3413,10 @@ async function resize_sheld(){
         let is_hidden = Bg_menu.classList.contains('not-active');
         //im lazy so this is a invert
         //future me problem
-        var left_abs = (!is_hidden) ? 'calc(max(6.5%, 133px))' : '0px';
-        var right_abs = (ch_sel === false) ? 'calc(max(16.6%, 400px))' : '0px';
+        //var left_abs = (!is_hidden) ? 'calc(max(6.8%, 133px))' : '0px';
+        var left_abs = (!is_hidden) ? '135.5px' : '0px';
+        //var right_abs = (ch_sel === false) ? 'calc(max(16.6%, 400px))' : '0px';
+        var right_abs = (ch_sel === false) ? '400px' : '0px';
         const sheld_mod = document.getElementById('main_chat');
         sheld_mod.style.marginLeft = left_abs;
         sheld_mod.style.marginRight = right_abs;

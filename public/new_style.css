@@ -32,11 +32,9 @@ body {
 
 #bg1{
     background-image: url(backgrounds/tavern.png);
-    background-size: auto 100%;
     background-repeat: no-repeat;
-    background-attachment: fixed;
     background-size: cover;
-    filter: blur(2px);
+    background-position: center;
     position: absolute;
     width: 100%;
     height: 100%;
@@ -44,15 +42,10 @@ body {
 }
 
 #bg2{
-    background: url(backgrounds/tavern.png);
-    background-size: auto 100%;
+    background-image: url(backgrounds/tavern.png);
     background-repeat: no-repeat;
-    background-attachment: fixed;
-    filter: blur(2px);
     background-size: cover;
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
-    opacity: 0.0;
+    background-position: center;
     position: absolute;
     width: 100%;
     height: 100%;
@@ -191,8 +184,7 @@ em {
     object-position: center center;
 }
 #bg_menu{
-    /* width: 6.5%; */
-    max-width: 133px;
+    width: 133px;
     background: var(--bg_left);
     display: block;
     overflow-y: hidden;
@@ -831,4 +823,19 @@ margin-top: 10px;
     font-size: 20px;
     min-width: 100px;
     min-height: 40px;
+}
+::-webkit-scrollbar {
+    width:.60em;
+    /*background-color: blue;*/
+}
+
+::-webkit-scrollbar-track {
+    background-color: rgb(26, 26, 26);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgb(165, 165, 165);
+    border-radius: 6px;
+    box-shadow: inset 0.05em 0.05em 0 rgba(0, 0, 0, 0.1), inset 0 -0.05em 0 rgba(0, 0, 0, 0.07);
 }
