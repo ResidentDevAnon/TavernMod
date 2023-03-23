@@ -179,7 +179,7 @@
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                     <h4>API key</h4><h5>Where to get (<a href="/notes/6" target="_blank">?</a>)</h5>
                     <input id="api_key_novel" name="api_key_novel" class="text_pole" maxlength="500" size="35" value="" autocomplete="off">
-                    <input id="api_button_novel" type="submit" value="Connect">
+                    <input id="api_button" type="submit" value="Connect">
                 </form>
                 <h4>Model</h4><h5>Selecting NovelAI model (<a href="/notes/8" target="_blank">?</a>)</h5>
                 <select id="model_novel_select" class="option_select_right_menu" style='margin-bottom: 16px;'>
@@ -206,7 +206,7 @@
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                     <h4>API key </h4>
                     <input id="api_key_openai" name="api_key_openai" class="text_pole" maxlength="500" value="" autocomplete="off">
-                    <input id="api_button_openai" type="submit" value="Connect">
+                    <input id="api_button" type="submit" value="Connect">
                 </form>
                 <h4>Preset settings</h4><h5>Selecting settings</h5>
                 <select id="settings_perset_openai" class="option_select_right_menu">
@@ -235,7 +235,7 @@
                         yeah that's a hardcoded api key
                         if it gets rate limited, just get your own
                      -->
-                    <input id="api_button_scale" type="submit" value="Connect">
+                    <input id="api_button" type="submit" value="Connect">
                 </form>
                 <p style="white-space: normal;"><strong>IMPORTANT:&nbsp;</strong>
                     Scale offers no way to check whether your key is correct. If you see "Valid" here but you still can't send prompts,
@@ -380,10 +380,15 @@
                 
                 </div>
 			</div>
-            <!--preview-->
+            <!--prompt preview-->
             <hr>
             <h3>Preview for current card</h3>
             <textarea id="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
+            <hr>
+            <h3>rough expected cost per message</h3>
+            <h3>OAI can stop sending 'early' so its UP TO</h3>
+            <h3>3.5T only for now</h3>
+            <textarea id="cost_preview" palceholder="" disabled>replaced in JS</textarea>
     
         </div>
         <!--system settings-->

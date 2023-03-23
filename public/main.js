@@ -384,14 +384,14 @@ async function getStatus() {
                             break;
                     }
                 }
-                resultCheckStatusNovel();
+                resultCheckStatus();
             },
             error: function (jqXHR, exception) {
 				console.log("getStatusNovel error");
                 online_status = 'no_connection';
                 console.log(exception);
                 console.log(jqXHR);
-                resultCheckStatusNovel();
+                resultCheckStatus();
             }
         });
     } else if (main_api == 'openai') {
@@ -406,18 +406,17 @@ async function getStatus() {
             contentType: "application/json",
             success: function (data) {
                 if (!('error' in data)) online_status = 'Valid';
-                resultCheckStatusOpen();
+                resultCheckStatus();
             },
             error: function (jqXHR, exception) {
 				console.log("getStatusOpen error");
                 online_status = 'no_connection';
                 console.log(exception);
                 console.log(jqXHR);
-                resultCheckStatusOpen();
+                resultCheckStatus();
             }
         });
-    }
-    else if (main_api =='scale') {
+    } else if (main_api =='scale') {
         console.log(`trying to connect to scale`)
         var data = { key: api_key_scale, url: api_url_scale };
         jQuery.ajax({
@@ -431,18 +430,17 @@ async function getStatus() {
                 console.log("getstatus_scale success", data);
                 if (!('error' in data)) online_status = 'Valid (see disclaimer below)';
                 console.log("online_status", online_status);
-                resultCheckStatusScale();
+                resultCheckStatus();
             },
             error: function (jqXHR, exception) {
                 console.log("getstatus_scale error", jqXHR, exception);
                 online_status = 'no_connection';
                 console.log(exception);
                 console.log(jqXHR);
-                resultCheckStatusScale();
+                resultCheckStatus();
             }
         });
-    }
-    else {console.log(`unknown API`)}
+    } else {console.log(`unknown API`)}
 }
 
 function countTokens(messages, full = false) {
@@ -733,10 +731,10 @@ $("#send_but").click(function () {
 function build_main_system_message(){
     //global needs to be updated at this point
     //dont want to jump though updating it on char click right now
-    //name2 = characters_array[active_character_index].name;
     if (active_character_index == undefined){
         return ''
     }
+    name2 = characters_array[active_character_index].name;
     let sys_prompt_compiler = `${replacePlaceholders(system_prompt)}\n`
     if (nsfw_toggle) {
         sys_prompt_compiler += `${replacePlaceholders(NSFW_on_prompt)}\n`;
@@ -795,7 +793,13 @@ function build_main_system_message(){
     console.log(`${countTokens(sys_prompt_compiler)} tokens dedicated for SYS commands`)
     return built
 }
-
+function token_cost_converter(){
+    var prompt_price_per1k = 0.002
+    var reply_price_per1k = 0.002
+    prompt_price_per1k /= 1000
+    reply_price_per1k /= 1000
+    document.getElementById('cost_preview').value = `Min $${(openai_max_context*prompt_price_per1k)} (${openai_max_context} context tokens with 0 reply tokens)\nMax $${((openai_max_gen*prompt_price_per1k)+(openai_max_context*reply_price_per1k))}(${openai_max_context} context tokens with ${openai_max_gen} reply tokens)`
+}
 
 async function Generate(type) {
     tokens_already_generated = 0;
@@ -1918,22 +1922,32 @@ $('#firstmessage_textarea').on('keyup paste cut', function () {
     }
 });
 $("#api_button").click(function () {
-    if ($('#api_url_text').val() != '') {
+    if (main_api == 'kobold'){
         $("#api_button").css("display", 'none');
         kobold_API_key = $('#api_url_text').val();
         kobold_API_key = $.trim(kobold_API_key);
-        //console.log("1: "+api_server);
         if (kobold_API_key.substr(kobold_API_key.length - 1, 1) == "/") {
             kobold_API_key = kobold_API_key.substr(0, kobold_API_key.length - 1);
         }
         if (!(kobold_API_key.substr(kobold_API_key.length - 3, 3) == "api" || kobold_API_key.substr(kobold_API_key.length - 4, 4) == "api/")) {
             kobold_API_key = kobold_API_key + "/api";
         }
-        //console.log("2: "+api_server);
-        saveSettings();
-        getStatus();
+    }else if (main_api == 'novel'){
+        api_key_novel = $('#api_key_novel').val();
+        api_key_novel = $.trim(api_key_novel);
+    }else if (main_api == "openai"){
+        api_key_openai = $('#api_key_openai').val();
+        api_key_openai = $.trim(api_key_openai);
+    }else if (main_api == 'scale'){
+        api_key_scale = $('#api_key_scale').val();
+        api_key_scale = $.trim(api_key_scale);
+        api_url_scale = $('#api_url_scale').val();
+        api_url_scale = $.trim(api_url_scale);
     }
-});
+    saveSettings();
+    getStatus();
+    }
+);
 
 //bookmark
 let options_butt = document.getElementById('options-content')
@@ -2040,6 +2054,7 @@ $("#settings_perset").change(function () {
         $('#OAI_context_display').html(openai_max_context + " Tokens");
         $('#OAI_gen_slider').val(openai_max_gen);
         $('#OAI_gen_display').html(openai_max_gen + " Tokens");
+        token_cost_converter()
 		
 		$('#scale_max_context').val(scale_max_context);
         $('#scale_max_context_counter').html(scale_max_context + " Tokens");
@@ -2305,6 +2320,7 @@ $(document).on('input', '#pres_pen_openai', function () {
 $(document).on('input', '#OAI_context_slider', function () {
     openai_max_context = parseInt($(this).val());
     $('#OAI_context_display').html($(this).val() + ' Tokens');
+    token_cost_converter()
     var max_contextTimer = setTimeout(saveSettings, 500);
 });
 $(document).on('input', '#scale_max_context', function () {
@@ -2320,6 +2336,7 @@ $(document).on('input', '#scale_max_gen', function () {
 $(document).on('input', '#OAI_gen_slider', function () {
     openai_max_gen = parseInt($(this).val());
     $('#OAI_gen_display').html($(this).val() + ' Tokens');
+    token_cost_converter()
     var max_contextTimer = setTimeout(saveSettings, 500);
 });
 
@@ -2582,26 +2599,15 @@ async function getSettings(type) {//timer
                 if (settings.auto_retry !== undefined) auto_retry = !!settings.auto_retry;
                 if (settings.continuous_mode !== undefined) continuous_mode = !!settings.continuous_mode;
 
-                if (settings.custom_1_title == undefined) custom_1_title = document.getElementById("CUST_1_title").defaultValue
-                else{
-                    custom_1_title = settings.custom_1_title
-                }
-                if (settings.custom_2_title == undefined) custom_2_title = document.getElementById("CUST_2_title").defaultValue
-                else{
-                    custom_2_title = settings.custom_2_title
-                }
-                if (settings.custom_3_title == undefined) custom_3_title = document.getElementById("CUST_3_title").defaultValue
-                else{
-                    custom_3_title = settings.custom_3_title
-                }
-                if (settings.custom_4_title == undefined) custom_4_title = document.getElementById("CUST_4_title").defaultValue
-                else{
-                    custom_4_title = settings.custom_4_title
-                }
-                if (settings.custom_5_title == undefined) custom_5_title = document.getElementById("CUST_5_title").defaultValue
-                else{
-                    custom_5_title = settings.custom_5_title
-                }
+                for (let i = 1; i <= 5; i++) {
+                    const settingTitle = `custom_${i}_title`;
+                    const defaultTitle = document.getElementById(`CUST_${i}_title`).defaultValue;
+                    if (settings[settingTitle] == undefined) {
+                      eval(`custom_${i}_title = defaultTitle`);
+                    } else {
+                      eval(`custom_${i}_title = settings.${settingTitle}`);
+                    }
+                  }
                 
 
                 if (settings.custom_1_desc == undefined) custom_1_desc = document.getElementById("CUST_1_description").defaultValue
@@ -2653,6 +2659,7 @@ async function getSettings(type) {//timer
                 $('#OAI_context_display').html(openai_max_context + ' Tokens');
                 $('#OAI_gen_slider').val(openai_max_gen);
                 $('#OAI_gen_display').html(openai_max_gen + ' Tokens');
+                token_cost_converter()
 				
 				// Scale max context (supposedly 8k, but 7.5k max because we're using the wrong tokenizer)
                 scale_max_context = settings.scale_max_context ?? 7750;
@@ -3015,19 +3022,6 @@ async function getAllCharaChats() {
     });
 }
 
-$("#api_button_novel").click(function () {
-    if ($('#api_key_novel').val() != '') {
-        $("#api_button_novel").css("display", 'none');
-        api_key_novel = $('#api_key_novel').val();
-        api_key_novel = $.trim(api_key_novel);
-        saveSettings();
-        getStatus();
-    }
-});
-function resultCheckStatusNovel() {
-    checkOnlineStatus();
-    $("#api_button_novel").css("display", 'inline-block');
-}
 $("#model_novel_select").change(function () {
     model_novel = $('#model_novel_select').find(":selected").val();
     saveSettings();
@@ -3059,41 +3053,6 @@ function compareVersions(v1, v2) {
         return -1;
     }
     return 0;
-}
-
-
-$("#api_button_openai").click(function () {
-    if ($('#api_key_openai').val() != '') {
-        $("#api_button_openai").css("display", 'none');
-        api_key_openai = $('#api_key_openai').val();
-        api_key_openai = $.trim(api_key_openai);
-        saveSettings();
-        getStatus();
-    }
-});
-function resultCheckStatusOpen() {
-    checkOnlineStatus();
-    $("#api_button_openai").css("display", 'inline-block');
-}
-
-$("#api_button_scale").click(function () {
-    if ($('#api_key_scale').val() != '') {
-        $("#api_button_scale").css("display", 'none');
-        api_key_scale = $('#api_key_scale').val();
-        api_key_scale = $.trim(api_key_scale);
-        api_url_scale = $('#api_url_scale').val();
-        api_url_scale = $.trim(api_url_scale);
-        saveSettings();
-        getStatus();
-    }
-});
-
-async function resultCheckStatusScale() {
-    checkOnlineStatus();
-    $("#api_button_scale").css("display", 'inline-block');
-}
-
-async function getStatusScale() {
 }
 
 $("#anchor_order").change(function () {
@@ -3224,20 +3183,7 @@ function trim_chars(){
 }
 
 function auto_start(){
-    switch (main_api) {
-        case "openai":
-            document.getElementById("api_button_openai").click();
-            break;
-        case "novel":
-            document.getElementById("api_button_novel").click();
-            break;
-        case "kobold":
-            document.getElementById("api_button").click();
-            break;
-        case "scale":
-            document.getElementById("api_button_scale").click();
-            break;
-    }
+    document.getElementById("api_button").click();
 }
 
 function auto_open(){
