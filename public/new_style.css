@@ -144,9 +144,7 @@ em {
     display: block;
     overflow-y: hidden;
     overflow-y: scroll;
-    transition: all 0.34s ease-in;
-}
-.not-active #bg_menu_content{
+    /* transition: all 0.34s ease-in; */
     height: 0px;
     width: 0px;
 }
@@ -155,20 +153,15 @@ em {
 .active #bg_menu_button {
     transform: rotate3d(1, 1, 0, 180deg);
 }
-.not-active #bg_menu_button {
-    transform: rotate3d(1, 1, 0, 360deg);
-}
 
     
-#bg_menu .active{
+.active#bg_menu{
+    opacity: 1;
+    height: 100vh;
+}.active #bg_menu_content{
     opacity: 1;
     height: 97vh;
-}
-#bg_menu .not-active{
-    opacity: 0 !important;
-    height: 0 !important;
-    width: 20px;
-    overflow-y: hidden;
+    width: 100%;
 }
 
 

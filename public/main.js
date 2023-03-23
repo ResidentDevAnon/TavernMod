@@ -27,7 +27,6 @@ var backgrounds = [];
 var default_avatar = 'img/fluffy.png';
 var is_colab = false;
 var is_checked_colab = false;
-var is_advanced_char_open = false;
 var menu_type = '';//basically used to kepe track of a  flag for if its a new character
 var selected_button = '';//actually used as the flag
 
@@ -61,8 +60,9 @@ var this_edit_mes_chname = '';
 var this_edit_mes_id;
 
 var main_api = 'kobold';
-//kobold settings
 var settings;
+
+//kobold settings
 var kobold_API_key = "";
 var koboldai_settings;
 var koboldai_setting_names;
@@ -1520,20 +1520,13 @@ $(document).on('click', '#user_avatar_block .avatar', function () {
 });
 $("#logo_block").click(function () {
     let Bg_menu = document.getElementById('bg_menu')
-    let is_hidden = Bg_menu.classList.contains('not-active');
-    let content = document.getElementById('bg_menu_content');
+    let is_hidden = Bg_menu.classList.contains('active');
     let main_chat = document.getElementById('main_chat')
-    if (!is_hidden == false) {
+    if (is_hidden == false) {
         Bg_menu.classList.add('active');
-        Bg_menu.classList.remove('not-active');
-        content.classList.add('active');
-        content.classList.remove('not-active');
         main_chat.classList.add('left_open');
     } else {
-        Bg_menu.classList.add('not-active');
         Bg_menu.classList.remove('active');
-        content.classList.add('not-active');
-        content.classList.remove('active');
         main_chat.classList.remove('left_open');
         };
     }
@@ -1542,7 +1535,6 @@ $("#logo_block").click(function () {
 
 $(document).on('click', '.bg_example_img', function () {
     var this_bgfile = $(this).attr("bgfile");
-
     if (bg1_toggle == true) {
         bg1_toggle = false;
         var number_bg = 2;
@@ -1560,24 +1552,6 @@ $(document).on('click', '.bg_example_img', function () {
     });
     $('#bg' + number_bg).css('background-image', 'url("backgrounds/' + this_bgfile + '")');
     setBackground(this_bgfile);
-
-});
-let adv_div = document.getElementById('character_popup')
-$("#advanced_div").click(function () {
-    if (!is_advanced_char_open) {
-        is_advanced_char_open = true;
-        adv_div.classList.add('active');
-        adv_div.classList.remove('not-active');
-    } else {
-        is_advanced_char_open = false;
-        adv_div.classList.remove('active');
-        adv_div.classList.add('not-active');
-    }
-});
-$("#character_cross").click(function () {
-    is_advanced_char_open = false;
-    adv_div.classList.remove('active');
-    adv_div.classList.add('not-active');
 });
 
 $("#dialogue_popup_ok").click(function () {
