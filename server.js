@@ -1047,7 +1047,10 @@ app.post("/getstatus_openai", jsonParser, function(request, response_getstatus_o
     };
     client.get(api_openai+"/models",args, function (data, response) {
         if(response.statusCode == 200){
-            console.log(data);
+            data.data = data.data.sort((a, b) => (a.created < b.created) ? 1 : -1)
+            //console.log(data.data.sort((a, b) => (a.created < b.created) ? 1 : -1));
+            console.log(`OAI API's`);
+            console.log(data.data);
             response_getstatus_openai.send(data);//data);
         }
         if(response.statusCode == 401){

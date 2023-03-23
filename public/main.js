@@ -3192,9 +3192,8 @@ $(document).on('click', '.select_chat_block', function () {
 
 });
 
-/* event listener */
+//**************************CHAR SEARCH BAR*************************//
 document.getElementsByName("char_search")[0].addEventListener('keyup', trim_chars);
-/* function */
 function trim_chars(){
     var check =  document.getElementById('char_search').value
         const character_list = document.querySelector('#rm_print_charaters_block').querySelectorAll('div.character_select');

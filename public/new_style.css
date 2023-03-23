@@ -76,11 +76,7 @@ em {
     position: absolute;
     min-height: -webkit-fill-available;
     z-index: 2066;
-    /* margin-left: auto; */
-    /* margin-right: auto; */
-    /* left: 0; */
-    /* right: 0; */
-    /* margin-top: 20%; */
+
     padding: 4px;
     background: var(--bg_center);
 }
@@ -135,7 +131,6 @@ em {
     width: 20px;
     height: 20px;
     margin-bottom: 6px;
-
 }
 
 #bg_menu_content{
@@ -148,10 +143,20 @@ em {
     height: 0px;
     width: 0px;
 }
-
-
-.active #bg_menu_button {
-    transform: rotate3d(1, 1, 0, 180deg);
+/*animation to make it flip
+todo, make it flop*/ 
+@keyframes bg_open{
+    from {transform: rotate3d(1, 1, 0, 0deg);}
+    to {transform: rotate3d(1, 1, 0, 180deg);}
+}
+@keyframes bg_close {
+    from {transform: rotate3d(1, 1, 0, 180deg);}
+    to {transform: rotate3d(1, 1, 0, 0deg);}
+}
+.active #bg_menu_button img {
+    animation-name: bg_open;
+    animation-duration: 0.5s;
+    animation-fill-mode: normal;
 }
 
     
@@ -186,7 +191,6 @@ em {
     object-position: center center;
 }
 #bg_menu{
-    width: 133px;
     background: var(--bg_left);
     display: block;
     overflow-y: hidden;
@@ -225,7 +229,7 @@ em {
     justify-content: space-between;
 }
 #main_chat.left_open{
-    margin-left: 133px !important;
+    margin-left: 147px !important;
 }
 #main_chat.right_open{
     margin-right: 400px !important;
@@ -375,6 +379,18 @@ input[type="checkbox"] {width: 20px;}
 }
 * {
     color:aliceblue;
+}
+
+.bg_menu_button-toggle img {
+    height: 20px;
+}
+
+.rm_hidden .nav-toggle img {
+    transform: rotate3d(0, 1, 0, 180deg);
+}
+
+.nav-toggle img {
+    height: 20px;
 }
 
 .buton_block {display: flex;}
@@ -528,11 +544,6 @@ div#chat {
     font-size: 1.2em;
     line-height: 1;
     z-index: 2001;
-}
-/*weird name = button icon*/
-.nav-toggle:after {
-     content: '\2630'; 
-    text-decoration: none;
 }
 
 .mes .ch_name {
@@ -689,12 +700,7 @@ pre code {
 }
 /*blockquote*/
 blockquote {
-    /*border: 1px solid black;
-    padding: 5px;
-    padding-bottom: 5px;
-    background-color: #222222ff;
-    color: mintcream;
-    filter: drop-shadow(0px 0px 1px #006b05);*/
+
     margin: 0px;
     margin-left: -0.4em;
     padding-bottom: 1px;
@@ -722,7 +728,6 @@ del {
     display: inline-flex;
     margin-top: 10px;
     width: -webkit-fill-available;
-    /* background: rgba(0,0,0,0.1); */
 }
 
 .switch input {
@@ -731,13 +736,8 @@ del {
 }
 
 .slider {
-    /* position: absolute; */
+
     cursor: pointer;
-    /* top: 0; */
-    /* left: 0; */
-    /* right: 0; */
-    /* bottom: 0; */
-    /* border:1px solid #BBBBBB33; */
     background:#6b0500;
     -webkit-transition: .4s;
     transition: .4s;
@@ -750,7 +750,6 @@ del {
     width: 18px;
     left: 4px;
     bottom: 3px;
-    /* background-color: white; */
     -webkit-transition: .4s;
     transition: .4s;
 }
@@ -805,7 +804,6 @@ margin-top: 10px;
 
 }
 .mes_edit_done{
-    /* display: none; */
     float:right;
     right:8px;
     cursor:pointer;
@@ -819,7 +817,6 @@ margin-top: 10px;
 }
 
 .mes_edit_cancel{
-    /* display: none; */
     float:right;
     margin-right: 4px;
     cursor:pointer;
