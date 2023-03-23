@@ -41,7 +41,8 @@ var create_save_scenario = '';
 var create_save_mes_example = '';
 
 var timerSaveEdit; //flag for preventing redundant save calls
-var durationSaveEdit = 2000; //TO for saves
+var durationSaveEdit = 2000; //TO for edit saves
+var durationSaveContext = 2000; //TO for context saves
 var connection_text_clear//flag for purging connected text
 var save_text_clear //flag for preventing redundant save calls
 
@@ -60,7 +61,7 @@ var this_edit_mes_chname = '';
 var this_edit_mes_id;
 
 var main_api = 'kobold';
-//settings
+//kobold settings
 var settings;
 var kobold_API_key = "";
 var koboldai_settings;
@@ -107,8 +108,10 @@ var openai_settings;
 var openai_setting_names;
 var preset_settings_openai = 'Default';
 
-var openai_max_gen = 300;
-var openai_max_context = 4095;
+var openai_selected_gen = 300;
+var openai_min_gen = 300;
+var openai_max_gen = 4095;
+var openai_selected_context = 4095;
 var scale_max_context = 7750;
 var scale_max_gen = 400;
 
@@ -798,7 +801,7 @@ function token_cost_converter(){
     var reply_price_per1k = 0.002
     prompt_price_per1k /= 1000
     reply_price_per1k /= 1000
-    document.getElementById('cost_preview').value = `Min $${(openai_max_context*prompt_price_per1k)} (${openai_max_context} context tokens with 0 reply tokens)\nMax $${((openai_max_gen*prompt_price_per1k)+(openai_max_context*reply_price_per1k))}(${openai_max_context} context tokens with ${openai_max_gen} reply tokens)`
+    document.getElementById('cost_preview').value = `Min $${(openai_selected_context*prompt_price_per1k)}\n(${openai_selected_context} context tokens with 0 reply tokens)\nMax $${((openai_selected_gen*prompt_price_per1k)+(openai_selected_context*reply_price_per1k))}\n(${openai_selected_context} context tokens with ${openai_selected_gen} reply tokens)`
 }
 
 async function Generate(type) {
@@ -889,8 +892,8 @@ async function Generate(type) {
             j++;
         }
 
-        let this_max_context = openai_max_context;
-		let this_max_tokens = openai_max_gen;
+        let this_max_context = openai_selected_context;
+		let this_max_tokens = openai_selected_gen;
 
         // If we're using Scale, the user (presumably) is using GPT4 so we want
         // to be able to use a larger context. We're still using the GPT3
@@ -961,7 +964,7 @@ async function Generate(type) {
             for (let j = openai_msgs.length - 1; j >= 0; j--) {
                 let item = openai_msgs[j];
                 let item_count = countTokens(item);
-                if ((total_count + item_count) >= (openai_max_context - openai_max_gen)) {break;}
+                if ((total_count + item_count) >= (openai_selected_context - openai_selected_gen)) {break;}
                 if (j == openai_msgs.length - 1){item.content = item.content}
                 openai_msgs_tosend.push(item);
                 total_count += item_count;
@@ -972,7 +975,7 @@ async function Generate(type) {
                     for (let k = 0; k < example_block.length; k++) {
                         if (example_block.length == 0) { continue; }
                         let example_count = countTokens(example_block[k]);
-                        if ((total_count + example_count + start_chat_count) >= (openai_max_context - openai_max_gen)) {break;}
+                        if ((total_count + example_count + start_chat_count) >= (openai_selected_context - openai_selected_gen)) {break;}
                         if (k == 0) {
                             examples_tosend.push(new_chat_msg);
                             total_count += start_chat_count;
@@ -1001,7 +1004,7 @@ async function Generate(type) {
                 "temperature": parseFloat(temp_openai),
                 "frequency_penalty": parseFloat(freq_pen_openai),
                 "presence_penalty": parseFloat(pres_pen_openai),
-                "max_tokens": openai_max_gen,
+                "max_tokens": openai_selected_gen,
                 "stream": stream_openai
             };
 
@@ -2040,7 +2043,6 @@ $("#settings_perset").change(function () {
         rep_pen = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen;
         rep_pen_size = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen_range;
         Kobold_max_context = koboldai_settings[koboldai_setting_names[preset_settings]].max_length;
-        openai_max_context = koboldai_settings[koboldai_setting_names[preset_settings]].max_length;
         $('#temp').val(temp_kobold);
         $('#temp_counter').html(temp_kobold);
 
@@ -2050,10 +2052,12 @@ $("#settings_perset").change(function () {
         $('#max_context').val(Kobold_max_context);
         $('#max_context_counter').html(Kobold_max_context + " Tokens");
 
-        $('#OAI_context_slider').val(openai_max_context);
-        $('#OAI_context_display').html(openai_max_context + " Tokens");
-        $('#OAI_gen_slider').val(openai_max_gen);
-        $('#OAI_gen_display').html(openai_max_gen + " Tokens");
+        $('#OAI_context_input').val(openai_selected_context);
+        $('#OAI_context_slider').val(openai_selected_context);
+        $('#OAI_context_display').html(openai_selected_context + " Tokens");
+        $('#OAI_gen_input').val(openai_selected_gen);
+        $('#OAI_gen_slider').val(openai_selected_gen);
+        $('#OAI_gen_display').html(openai_selected_gen + " Tokens");
         token_cost_converter()
 		
 		$('#scale_max_context').val(scale_max_context);
@@ -2227,17 +2231,17 @@ $(document).on('input', '#temp', function () {
     } else {
         $('#temp_counter').html($(this).val());
     }
-    var tempTimer = setTimeout(saveSettings, 500);
+    var tempTimer = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#amount_gen', function () {
     kobold_amount_gen = $(this).val();
     $('#amount_gen_counter').html($(this).val());
-    var amountTimer = setTimeout(saveSettings, 500);
+    var amountTimer = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#max_context', function () {
     Kobold_max_context = parseInt($(this).val());
     $('#max_context_counter').html($(this).val() + ' Tokens');
-    var max_contextTimer = setTimeout(saveSettings, 500);
+    var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
 });
 $('#style_anchor').change(function () {
     style_anchor = !!$('#style_anchor').prop('checked');
@@ -2254,12 +2258,12 @@ $(document).on('input', '#rep_pen', function () {
     } else {
         $('#rep_pen_counter').html($(this).val());
     }
-    var repPenTimer = setTimeout(saveSettings, 500);
+    var repPenTimer = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#rep_pen_size', function () {
     rep_pen_size = $(this).val();
     $('#rep_pen_size_counter').html($(this).val() + " Tokens");
-    var repPenSizeTimer = setTimeout(saveSettings, 500);
+    var repPenSizeTimer = setTimeout(saveSettings, durationSaveContext);
 });
 
 //Novel
@@ -2271,7 +2275,7 @@ $(document).on('input', '#temp_novel', function () {
     } else {
         $('#temp_counter_novel').html($(this).val());
     }
-    var tempTimer_novel = setTimeout(saveSettings, 500);
+    var tempTimer_novel = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#rep_pen_novel', function () {
     rep_pen_novel = $(this).val();
@@ -2280,12 +2284,12 @@ $(document).on('input', '#rep_pen_novel', function () {
     } else {
         $('#rep_pen_counter_novel').html($(this).val());
     }
-    var repPenTimer_novel = setTimeout(saveSettings, 500);
+    var repPenTimer_novel = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#rep_pen_size_novel', function () {
     rep_pen_size_novel = $(this).val();
     $('#rep_pen_size_counter_novel').html($(this).val() + " Tokens");
-    var repPenSizeTimer_novel = setTimeout(saveSettings, 500);
+    var repPenSizeTimer_novel = setTimeout(saveSettings, durationSaveContext);
 });
 
 //OpenAi
@@ -2297,7 +2301,7 @@ $(document).on('input', '#temp_openai', function () {
     } else {
         $('#temp_counter_openai').html($(this).val());
     }
-    var tempTimer_openai = setTimeout(saveSettings, 500);
+    var tempTimer_openai = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#freq_pen_openai', function () {
     freq_pen_openai = $(this).val();
@@ -2306,7 +2310,7 @@ $(document).on('input', '#freq_pen_openai', function () {
     } else {
         $('#freq_pen_counter_openai').html($(this).val());
     }
-    var freqPenTimer_openai = setTimeout(saveSettings, 500);
+    var freqPenTimer_openai = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#pres_pen_openai', function () {
     pres_pen_openai = $(this).val();
@@ -2315,29 +2319,72 @@ $(document).on('input', '#pres_pen_openai', function () {
     } else {
         $('#pres_pen_counter_openai').html($(this).val());
     }
-    var presPenTimer_openai = setTimeout(saveSettings, 500);
+    var presPenTimer_openai = setTimeout(saveSettings, durationSaveContext);
 });
-$(document).on('input', '#OAI_context_slider', function () {
-    openai_max_context = parseInt($(this).val());
-    $('#OAI_context_display').html($(this).val() + ' Tokens');
+
+function update_OAI_contx(){
+    let text = ' Tokens'
+    if (openai_selected_context < openai_min_gen){openai_selected_context = openai_min_gen; text +=` (${openai_min_gen} minimum)`}
+    if (openai_selected_context > openai_max_gen){openai_selected_context = openai_max_gen; text +=` (${openai_max_gen} maximum)`}
+    $('#OAI_context_display').html(openai_selected_context + text);
+    $('#OAI_context_input').val(openai_selected_context);
+    $('#OAI_context_slider').val(openai_selected_context);
+    console.log(openai_selected_context)
     token_cost_converter()
-    var max_contextTimer = setTimeout(saveSettings, 500);
+    clearTimeout(max_contextTimer)
+    var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
+}
+
+$(document).on('input', '#OAI_context_input', function () {
+    openai_selected_context = parseInt($(this).val());
+    update_OAI_contx()
 });
+
+$(document).on('input', '#OAI_context_slider', function () {
+    openai_selected_context = parseInt($(this).val());
+    update_OAI_contx()
+});
+
+$(document).on('click', '#OAI_contx_button', function () {
+    openai_selected_context = parseInt($(this).val());
+    update_OAI_contx()
+});
+
 $(document).on('input', '#scale_max_context', function () {
     scale_max_context = parseInt($(this).val());
     $('#scale_max_context_counter').html($(this).val() + ' Tokens');
-    var max_contextTimer = setTimeout(saveSettings, 500);
+    var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#scale_max_gen', function () {
     scale_max_gen = parseInt($(this).val());
     $('#scale_max_tokens_counter').html($(this).val() + ' Tokens');
-    var max_tokensTimer = setTimeout(saveSettings, 500);
+    var max_tokensTimer = setTimeout(saveSettings, durationSaveContext);
+});
+
+function update_OAI_gen(){
+    let text = ' Tokens'
+    if (openai_selected_gen < openai_min_gen){openai_selected_gen = openai_min_gen; text +=` (${openai_min_gen} minimum)`}
+    if (openai_selected_gen > openai_max_gen){openai_selected_gen = openai_max_gen; text +=` (${openai_max_gen} maximum)`}
+    $('#OAI_gen_display').html(openai_selected_gen + text);
+    $('#OAI_gen_input').val(openai_selected_gen);
+    $('#OAI_gen_slider').val(openai_selected_gen);
+    console.log(openai_selected_gen)
+    token_cost_converter()
+    clearTimeout(max_contextTimer)
+    var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
+}
+
+$(document).on('input', '#OAI_gen_input', function () {
+    openai_selected_gen = parseInt($(this).val());
+    update_OAI_gen()
 });
 $(document).on('input', '#OAI_gen_slider', function () {
-    openai_max_gen = parseInt($(this).val());
-    $('#OAI_gen_display').html($(this).val() + ' Tokens');
-    token_cost_converter()
-    var max_contextTimer = setTimeout(saveSettings, 500);
+    openai_selected_gen = parseInt($(this).val());
+    update_OAI_gen()
+});
+$(document).on('click', '#OAI_gen_button', function () {
+    openai_selected_gen = parseInt($(this).val());
+    update_OAI_gen()
 });
 
 //absolutely could compress these to be loop implementation
@@ -2566,8 +2613,8 @@ async function getSettings(type) {//timer
                 freq_pen_openai = settings.freq_pen_openai ?? 0.7;
                 pres_pen_openai = settings.pres_pen_openai ?? 0.7;
                 stream_openai = settings.stream_openai ?? true;
-                openai_max_context = settings.openai_max_context ?? 4095;
-                openai_max_gen = settings.openai_max_gen ?? 300;
+                openai_selected_context = settings.openai_selected_context ?? 4095;
+                openai_selected_gen = settings.openai_selected_gen ?? 300;
                 //future me remember !! converts to bool, ?? is a null check
                 if (settings.nsfw_toggle !== undefined) nsfw_toggle = !!settings.nsfw_toggle;
                 if (settings.CYOA_mode !== undefined) CYOA_mode = !!settings.CYOA_mode;
@@ -2655,10 +2702,12 @@ async function getSettings(type) {//timer
                 
                 $('#stream_toggle').prop('checked', stream_openai);
 
-                $('#OAI_context_slider').val(openai_max_context);
-                $('#OAI_context_display').html(openai_max_context + ' Tokens');
-                $('#OAI_gen_slider').val(openai_max_gen);
-                $('#OAI_gen_display').html(openai_max_gen + ' Tokens');
+                $('#OAI_context_input').val(openai_selected_gen);
+                $('#OAI_context_slider').val(openai_selected_context);
+                $('#OAI_context_display').html(openai_selected_context + ' Tokens');
+                $('#OAI_gen_input').val(openai_selected_gen);
+                $('#OAI_gen_slider').val(openai_selected_gen);
+                $('#OAI_gen_display').html(openai_selected_gen + ' Tokens');
                 token_cost_converter()
 				
 				// Scale max context (supposedly 8k, but 7.5k max because we're using the wrong tokenizer)
@@ -2811,8 +2860,8 @@ async function saveSettings(type) {
             main_api: main_api,
             model_novel: model_novel,
             nsfw_toggle: nsfw_toggle,
-            openai_max_context: openai_max_context,
-            openai_max_gen: openai_max_gen,
+            openai_selected_context: openai_selected_context,
+            openai_selected_gen: openai_selected_gen,
             open_bg_bar: open_bg_bar,
             open_nav_bar: open_nav_bar,
             open_last_char: open_last_char,
@@ -3173,12 +3222,15 @@ $(document).on('click', '.select_chat_block', function () {
 document.getElementsByName("char_search")[0].addEventListener('keyup', trim_chars);
 /* function */
 function trim_chars(){
-    const character_list = document.querySelector('#rm_print_charaters_block').querySelectorAll('div.character_select');
-    for (let i = 0; i < character_list.length; i++) {
-        character_list[i].style.display = "";
-        if (character_list[i].textContent.toLowerCase().indexOf(this.value)<0){
-            character_list[i].style.display = "none";
-        }
+    var check =  document.getElementById('char_search').value
+        const character_list = document.querySelector('#rm_print_charaters_block').querySelectorAll('div.character_select');
+        for (let i = 0; i < character_list.length; i++) {
+            if (character_list[i].textContent.toLowerCase().indexOf(this.value)<0){
+                character_list[i].classList.add('generic_hidden');
+            }
+            else{
+                character_list[i].classList.remove('generic_hidden');
+            }
     }
 }
 

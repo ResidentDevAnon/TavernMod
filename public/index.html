@@ -140,7 +140,7 @@
             </div>
         </div>
         <!--Sub settings-->
-        <div id="rm_api_block" class="right_menu" >
+        <div id="rm_api_block" class="right_menu generic_hidden" >
             <div class="submenu" id="api_settings"><h2 class ='selected_button'>API Settings</h2></div>
             <div class="submenu" id="system_settings"><h2>system Settings</h2></div>
         <!-- Main API settings  -->
@@ -299,11 +299,25 @@
                 </div>
                 <div id="openai_gen_block">
                     <h4>Tokens to Generate</h4><h5 id="OAI_gen_display">select</h5>
-                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="4095" step="1">
+                    <input type="number" id="OAI_gen_input" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
+                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
+                    <div class="buton_block">
+                        <input type="button" id="OAI_gen_button" value='300'>
+                        <input type="button" id="OAI_gen_button" value='1000'>
+                        <input type="button" id="OAI_gen_button" value='2048'>
+                        <input type="button" id="OAI_gen_button" value='4095'>
+                    </div>
                 </div>
 				<div id="openai_context_block">
                     <h4>OpenAI Context Size</h4><h5 id="OAI_context_display">select</h5>
+                    <input type="number" id="OAI_context_input" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
                     <input type="range" id="OAI_context_slider" name="volume" min="300" max="4095" step="1">
+                    <div class="buton_block">
+                        <input type="button" id="OAI_contx_button" value='300'>
+                        <input type="button" id="OAI_contx_button" value='1000'>
+                        <input type="button" id="OAI_contx_button" value='2048'>
+                        <input type="button" id="OAI_contx_button" value='4095'>
+                    </div>
                 </div>
                 <h4>Anchors Order</h4><h5>Helps to increase the length of messages (<a href="/notes/9" target="_blank">?</a>)</h5>
                 <select id="anchor_order">
@@ -565,7 +579,7 @@
             </form>
         </div>
         <!--char selection block-->
-        <div id="rm_charaters_block" class="right_menu">
+        <div id="rm_charaters_block" class="right_menu generic_hidden">
             <input id="char_search" name="char_search" class="text_pole" maxlength="500" value="" autocomplete="off" placeholder="search...">
             <div id="rm_button_create" class="right_menu_button"><h2>+ New Card</h2></div>
             <div id="character_import_button" class="right_menu_button"><h2>+Import</h2></div>
@@ -591,7 +605,7 @@
             </div>
             <div id="online_status">
                 <!--cheat to keep the div 'open in html'-->
-                <div > </div>
+                <div > </div>
                 <!--cheat space at end for dynamic spacing-->
                 <div id="online_status_indicator"></div><div id="online_status_text"class="disconnected">No connection... </div>
                 <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->

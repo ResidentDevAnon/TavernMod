@@ -322,6 +322,11 @@ textarea{
     margin-right: var(--rm_margin_lr);
 }
 
+textarea#cost_preview {
+    user-select: none;
+    color: gray;
+}
+
 textarea#scenario_preview {
     user-select: none;
     color: grey;
@@ -378,6 +383,8 @@ input[type="checkbox"] {width: 20px;}
 * {
     color:aliceblue;
 }
+
+.buton_block {display: flex;}
 
 div#save_indicator.saved {
     color: var(--confirm_green);
