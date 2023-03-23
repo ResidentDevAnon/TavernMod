@@ -17,10 +17,9 @@ var chat = [{
         '<img src="img/tavern.png" width=50% style="opacity:1; display:block;border-radius:5px;margin-top:25px;margin-bottom:23px; margin-left: 45px;margin-right: auto;">\n<a id="verson" style="color:rgb(229, 224, 216,0.8);" href="https://github.com/TavernAI/TavernAI" target="_blank">TavernAI v' + VERSION + '</a><div id="characloud_url" style="margin-right:10px;margin-top:0px;float:right; height:25px;cursor: pointer;opacity: 0.99;display:inline-block;"><img src="img/cloud_logo.png" style="width: 25px;height: auto;display:inline-block; opacity:0.7;"><div style="vertical-align: top;display:inline-block;">Cloud</div></div><br><br><br><br>'
 }];
 
-var chat_create_date = 0;
 var default_ch_mes = "Hello";
+var curr_message_id = 0;
 var count_view_mes = 0;
-var mesStr = '';
 var generatedPromtCache = '';
 var characters_array = [];
 var active_character_index;
@@ -29,9 +28,10 @@ var default_avatar = 'img/fluffy.png';
 var is_colab = false;
 var is_checked_colab = false;
 var is_advanced_char_open = false;
-var menu_type = '';//what is selected in the menu
-var selected_button = '';//which button pressed
-//create pole save
+var menu_type = '';//basically used to kepe track of a  flag for if its a new character
+var selected_button = '';//actually used as the flag
+
+//might be able to rip these out
 var create_save_name = '';
 var create_save_description = '';
 var create_save_personality = '';
@@ -40,10 +40,11 @@ var create_save_avatar = '';
 var create_save_scenario = '';
 var create_save_mes_example = '';
 
-var timerSaveEdit;
-var durationSaveEdit = 2000;
-var connection_text_clear
-var save_text_clear
+var timerSaveEdit; //flag for preventing redundant save calls
+var durationSaveEdit = 2000; //TO for saves
+var connection_text_clear//flag for purging connected text
+var save_text_clear //flag for preventing redundant save calls
+
 //animation right menu
 var animation_rm_duration = 200;
 var animation_rm_easing = "";
@@ -51,31 +52,17 @@ var animation_rm_easing = "";
 var popup_type = "";
 var bg_file_for_del = '';
 var online_status = 'no_connection';
-
-var api_server = "";
-var is_get_status = false;
-var is_get_status_novel = false;
-var is_get_status_openai = false;
-var is_get_status_scale = false;
-var is_api_button_press = false;
-var is_api_button_press_novel = false;
-var is_api_button_press_openai = false;
-var is_api_button_press_scale = false;
-
-var should_use_scale = false;
-
 var is_send_press = false;//Send generation
 var add_mes_without_animation = false;
-
 var this_del_mes = 0;
-
 var this_edit_mes_text = '';
 var this_edit_mes_chname = '';
 var this_edit_mes_id;
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
+var main_api = 'kobold';
 //settings
 var settings;
+var kobold_API_key = "";
 var koboldai_settings;
 var koboldai_setting_names;
 var preset_settings = 'gui';
@@ -97,7 +84,6 @@ var anchor_order = 0;
 var style_anchor = true;
 var character_anchor = true;
 
-var main_api = 'kobold';
 //novel settings
 var temp_novel = 0.5;
 var rep_pen_novel = 1;
@@ -111,9 +97,9 @@ var novelai_setting_names;
 var preset_settings_novel = 'Classic-Krake';
 
 //openai settings
-var temp_openai = 1.0;
-var pres_pen_openai = 0;
-var freq_pen_openai = 0;
+var temp_openai = 0.8;
+var pres_pen_openai = 0.7;
+var freq_pen_openai = 0.7;
 var stream_openai = true;
 
 var api_key_openai = "";
@@ -277,12 +263,8 @@ $('#characloud_url').click(function () {
     window.open('https://boosty.to/tavernai', '_blank');
 });
 function checkOnlineStatus() {
-    console.log(`fired`)
     console.trace("checkOnlineStatus",{
-        is_get_status,
-        is_get_status_novel,
-        is_get_status_openai,
-        is_get_status_scale,
+        main_api,
         online_status
     });
     //keep the spaces in the HTML
@@ -292,11 +274,6 @@ function checkOnlineStatus() {
         $("#online_status_text").html("No connection... ");
         document.getElementById('online_status_text').classList.remove('connected')
         document.getElementById('online_status_text').classList.add('disconnected')
-        is_get_status = false;
-        is_get_status_novel = false;
-        is_get_status_openai = false;
-		is_get_status_scale = false;
-        should_use_scale = false;
     } else {
         $("#online_status_text").html("connected! ");
         $("#online_status_indicator").css("background-color", "green");
@@ -305,9 +282,6 @@ function checkOnlineStatus() {
         document.getElementById('online_status_text').classList.remove('disconnected')
         clearTimeout(connection_text_clear)
         connection_text_clear = setTimeout(() => { $("#online_status_text").html(""); }, durationSaveEdit);
-        if (is_get_status_scale) {
-            should_use_scale = true;
-        }
     }
 }
 async function getLastVersion() {
@@ -339,12 +313,13 @@ async function getLastVersion() {
 
 }
 async function getStatus() {
-    if (is_get_status) {
+    if (main_api == 'kobold') {
+        console.log(`trying to connect to kobold`)
         jQuery.ajax({
             type: 'POST', // 
             url: '/getstatus', // 
             data: JSON.stringify({
-                api_server: api_server
+                api_server: kobold_API_key
             }),
             cache: false,
             dataType: "json",
@@ -363,7 +338,6 @@ async function getStatus() {
                 } else {
                     is_pygmalion = false;
                 }
-
                 //console.log(online_status);
                 resultCheckStatus();
                 if (online_status !== 'no_connection') {
@@ -378,12 +352,97 @@ async function getStatus() {
                 resultCheckStatus();
             }
         });
-    } else {
-        if (is_get_status_novel != true && is_get_status_openai != true) {
-			console.log("getStatus else")
-            online_status = 'no_connection';
-        }
+    } else if (main_api == "novel") {
+        console.log(`trying to connect to novel`)
+        var data = { key: api_key_novel };
+        jQuery.ajax({
+            type: 'POST', // 
+            url: '/getstatus_novelai', // 
+            data: JSON.stringify(data),
+            cache: false,
+            dataType: "json",
+            contentType: "application/json",
+            success: function (data) {
+				console.log("getStatusNovel success");
+                if (data.error != true) {
+                    novel_tier = data.tier;
+                    switch (novel_tier) {
+                        case undefined:
+                            online_status = 'no_connection';
+                            break;
+                        case 0:
+                            online_status = "Paper";
+                            break;
+                        case 1:
+                            online_status = "Tablet";
+                            break;
+                        case 2:
+                            online_status = "Scroll";
+                            break;
+                        case 3:
+                            online_status = "Opus";
+                            break;
+                    }
+                }
+                resultCheckStatusNovel();
+            },
+            error: function (jqXHR, exception) {
+				console.log("getStatusNovel error");
+                online_status = 'no_connection';
+                console.log(exception);
+                console.log(jqXHR);
+                resultCheckStatusNovel();
+            }
+        });
+    } else if (main_api == 'openai') {
+        console.log(`trying to connect to OAI`)
+        var data = { key: api_key_openai };
+        jQuery.ajax({
+            type: 'POST', // 
+            url: '/getstatus_openai', // 
+            data: JSON.stringify(data),
+            cache: false,
+            dataType: "json",
+            contentType: "application/json",
+            success: function (data) {
+                if (!('error' in data)) online_status = 'Valid';
+                resultCheckStatusOpen();
+            },
+            error: function (jqXHR, exception) {
+				console.log("getStatusOpen error");
+                online_status = 'no_connection';
+                console.log(exception);
+                console.log(jqXHR);
+                resultCheckStatusOpen();
+            }
+        });
     }
+    else if (main_api =='scale') {
+        console.log(`trying to connect to scale`)
+        var data = { key: api_key_scale, url: api_url_scale };
+        jQuery.ajax({
+            type: 'POST', // 
+            url: '/getstatus_scale', // 
+            data: JSON.stringify(data),
+            cache: false,
+            dataType: "json",
+            contentType: "application/json",
+            success: function (data) {
+                console.log("getstatus_scale success", data);
+                if (!('error' in data)) online_status = 'Valid (see disclaimer below)';
+                console.log("online_status", online_status);
+                resultCheckStatusScale();
+            },
+            error: function (jqXHR, exception) {
+                console.log("getstatus_scale error", jqXHR, exception);
+                online_status = 'no_connection';
+                console.log(exception);
+                console.log(jqXHR);
+                resultCheckStatusScale();
+            }
+        });
+    }
+    else {console.log(`unknown API`)}
 }
 
 function countTokens(messages, full = false) {
@@ -407,7 +466,6 @@ function countTokens(messages, full = false) {
 }
 
 function resultCheckStatus() {
-    is_api_button_press = false;
     checkOnlineStatus();
     $("#api_button").css("display", 'inline-block');
 }
@@ -419,7 +477,6 @@ function printCharaters() {
         var this_avatar = default_avatar;
         if (item.avatar != 'none') {
             this_avatar = "characters/" + item.avatar;
-
         }
         $("#rm_print_charaters_block").prepend('<div class=character_select chid=' + i + '><div class=avatar><img src="' + this_avatar + '"></div><div class=ch_name>' + item.name + '</div></div>');
         //console.log(item.name);
@@ -428,7 +485,6 @@ function printCharaters() {
 
 }
 async function getCharacters() {
-
     const response = await fetch("/getcharacters", {
         method: "POST",
         headers: {
@@ -835,7 +891,7 @@ async function Generate(type) {
         // If we're using Scale, the user (presumably) is using GPT4 so we want
         // to be able to use a larger context. We're still using the GPT3
         // tokenization API so we can't go too close to the full 8192 limit.
-        if (should_use_scale) {
+        if (main_api == 'scale') {
             console.log(`Using Scale; increasing max context to ${scale_max_context} and max repsonse tokens to ${scale_max_gen}`);
             this_max_context = scale_max_context;
             this_max_tokens = scale_max_gen;
@@ -948,7 +1004,7 @@ async function Generate(type) {
             var generate_url = '/generate_openai';
             var streaming = stream_openai;
 			
-			if (should_use_scale) {
+			if (main_api == 'scale') {
                 //console.log("Using scale spellbook backend instead of OpenAI");
                 generate_url = '/generate_scale';
                 streaming = false;
@@ -1128,7 +1184,7 @@ async function saveChat() {
             chat[i]['name'] = default_user_name;
         }
     });
-    var save_chat = [{ user_name: default_user_name, character_name: name2, create_date: chat_create_date }, ...chat];
+    var save_chat = [{ user_name: default_user_name, character_name: name2 }, ...chat];
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
@@ -1161,11 +1217,8 @@ async function getChat() {
                     chat.push(data[key]);
                 }
                 //chat =  data;
-                chat_create_date = chat[0]['create_date'];
                 chat.shift();
 
-            } else {
-                chat_create_date = Date.now();
             }
             //console.log(chat);
             getChatResult();
@@ -1206,11 +1259,11 @@ function getChatResult() {
         } else {
             chat[0]['mes'] = default_ch_mes;
         }
+        }
+        printMessages();
+        select_selected_character(active_character_index);
     }
-    printMessages();
-    select_selected_character(active_character_index);
-}
-$("#send_textarea").keypress(function (e) {
+    $("#send_textarea").keypress(function (e) {
     if (e.which === 13 && !e.shiftKey && is_send_press == false) {
         is_send_press = true;
         e.preventDefault();
@@ -1867,35 +1920,21 @@ $('#firstmessage_textarea').on('keyup paste cut', function () {
 $("#api_button").click(function () {
     if ($('#api_url_text').val() != '') {
         $("#api_button").css("display", 'none');
-        api_server = $('#api_url_text').val();
-        api_server = $.trim(api_server);
+        kobold_API_key = $('#api_url_text').val();
+        kobold_API_key = $.trim(kobold_API_key);
         //console.log("1: "+api_server);
-        if (api_server.substr(api_server.length - 1, 1) == "/") {
-            api_server = api_server.substr(0, api_server.length - 1);
+        if (kobold_API_key.substr(kobold_API_key.length - 1, 1) == "/") {
+            kobold_API_key = kobold_API_key.substr(0, kobold_API_key.length - 1);
         }
-        if (!(api_server.substr(api_server.length - 3, 3) == "api" || api_server.substr(api_server.length - 4, 4) == "api/")) {
-            api_server = api_server + "/api";
+        if (!(kobold_API_key.substr(kobold_API_key.length - 3, 3) == "api" || kobold_API_key.substr(kobold_API_key.length - 4, 4) == "api/")) {
+            kobold_API_key = kobold_API_key + "/api";
         }
         //console.log("2: "+api_server);
         saveSettings();
-        is_get_status = true;
-        is_api_button_press = true;
         getStatus();
     }
 });
-/*
-$("body").click(function () {
-    if ($("#options").css('opacity') == 1.0) {
-        $('#options').transition({
-            opacity: 0.0,
-            duration: 100,//animation_rm_duration,
-            easing: animation_rm_easing,
-            complete: function () {
-                $("#options").addClass('generic_hidden')
-            }
-        });
-    }
-});*/
+
 //bookmark
 let options_butt = document.getElementById('options-content')
 let optins_open = false
@@ -2057,7 +2096,7 @@ $("#settings_perset_openai").change(function () {
 
     temp_openai = openai_settings[openai_setting_names[preset_settings_openai]].temperature;
     freq_pen_openai = openai_settings[openai_setting_names[preset_settings_openai]].frequency_penalty;
-    pres_pen_openai = openai_settings[openai_setting_names[preset_settings_openai]].presence_penalty;
+    pres_pen_openai = openai_settings[openai_setting_names[preset_settings_openai]].presence_penalty;scale_settings
 
     $('#temp_openai').val(temp_openai);
     $('#temp_counter_openai').html(temp_openai);
@@ -2085,15 +2124,11 @@ $("#settings_perset_scale").change(function () {
     saveSettings();
 });
 $("#main_api").change(function () {
+    changeMainAPI();
 	console.log("main api changed");
     is_pygmalion = false;
-    is_get_status = false;
-    is_get_status_novel = false;
-    is_get_status_openai = false;
-	is_get_status_scale = false;
     online_status = 'no_connection';
     checkOnlineStatus();
-    changeMainAPI();
     saveSettings();
 });
 function changeMainAPI() {
@@ -2733,8 +2768,8 @@ async function getSettings(type) {//timer
                     }
                 });
 
-                api_server = settings.api_server;
-                $('#api_url_text').val(api_server);
+                kobold_API_key = settings.api_server;
+                $('#api_url_text').val(kobold_API_key);
             }
             if (!is_checked_colab) isColab();
 
@@ -2755,7 +2790,7 @@ async function saveSettings(type) {
         data: JSON.stringify({
             api_key_novel: api_key_novel,
             api_key_openai: api_key_openai,
-            api_server: api_server,
+            kobold_API_key: kobold_API_key,
             anchor_order: anchor_order,
             bg_shuffle_delay: bg_shuffle_delay,
             character_anchor: character_anchor,
@@ -2979,71 +3014,17 @@ async function getAllCharaChats() {
         }
     });
 }
-//************************************************************
-//************************Novel.AI****************************
-//************************************************************
-async function getStatusNovel() {
-    if (is_get_status_novel) {
-        var data = { key: api_key_novel };
-        jQuery.ajax({
-            type: 'POST', // 
-            url: '/getstatus_novelai', // 
-            data: JSON.stringify(data),
-            cache: false,
-            dataType: "json",
-            contentType: "application/json",
-            success: function (data) {
-				console.log("getStatusNovel success");
-                if (data.error != true) {
-                    novel_tier = data.tier;
-                    switch (novel_tier) {
-                        case undefined:
-                            online_status = 'no_connection';
-                            break;
-                        case 0:
-                            online_status = "Paper";
-                            break;
-                        case 1:
-                            online_status = "Tablet";
-                            break;
-                        case 2:
-                            online_status = "Scroll";
-                            break;
-                        case 3:
-                            online_status = "Opus";
-                            break;
-                    }
-                }
-                resultCheckStatusNovel();
-            },
-            error: function (jqXHR, exception) {
-				console.log("getStatusNovel error");
-                online_status = 'no_connection';
-                console.log(exception);
-                console.log(jqXHR);
-                resultCheckStatusNovel();
-            }
-        });
-    } else {
-        if (!is_get_status && !is_get_status_openai && !is_get_status_scale) {
-            //console.log("getStatusNovel else")
-            online_status = 'no_connection';
-        }
-    }
-}
+
 $("#api_button_novel").click(function () {
     if ($('#api_key_novel').val() != '') {
         $("#api_button_novel").css("display", 'none');
         api_key_novel = $('#api_key_novel').val();
         api_key_novel = $.trim(api_key_novel);
-        //console.log("1: "+api_server);
         saveSettings();
-        is_get_status_novel = true;
-        is_api_button_press_novel = true;
+        getStatus();
     }
 });
 function resultCheckStatusNovel() {
-    is_api_button_press_novel = false;
     checkOnlineStatus();
     $("#api_button_novel").css("display", 'inline-block');
 }
@@ -3080,59 +3061,21 @@ function compareVersions(v1, v2) {
     return 0;
 }
 
-//************************************************************
-//************************OPENAI****************************
-//************************************************************
-async function getStatusOpen() {
-    if (is_get_status_openai) {
-        var data = { key: api_key_openai };
 
-        jQuery.ajax({
-            type: 'POST', // 
-            url: '/getstatus_openai', // 
-            data: JSON.stringify(data),
-            cache: false,
-            dataType: "json",
-            contentType: "application/json",
-            success: function (data) {
-                if (!('error' in data)) online_status = 'Valid';
-                resultCheckStatusOpen();
-            },
-            error: function (jqXHR, exception) {
-				console.log("getStatusOpen error");
-                online_status = 'no_connection';
-                console.log(exception);
-                console.log(jqXHR);
-                resultCheckStatusOpen();
-            }
-        });
-    } else {
-        if (!is_get_status && !is_get_status_novel) {
-			console.log("getStatusOpen else");
-            online_status = 'no_connection';
-        }
-    }
-}
 $("#api_button_openai").click(function () {
     if ($('#api_key_openai').val() != '') {
         $("#api_button_openai").css("display", 'none');
         api_key_openai = $('#api_key_openai').val();
         api_key_openai = $.trim(api_key_openai);
         saveSettings();
-        is_get_status_openai = true;
-        is_api_button_press_openai = true;
-        getStatusOpen();
+        getStatus();
     }
 });
 function resultCheckStatusOpen() {
-    is_api_button_press_openai = false;
     checkOnlineStatus();
     $("#api_button_openai").css("display", 'inline-block');
 }
 
-//************************************************************
-//************************SCALE****************************
-//************************************************************
 $("#api_button_scale").click(function () {
     if ($('#api_key_scale').val() != '') {
         $("#api_button_scale").css("display", 'none');
@@ -3141,49 +3084,16 @@ $("#api_button_scale").click(function () {
         api_url_scale = $('#api_url_scale').val();
         api_url_scale = $.trim(api_url_scale);
         saveSettings();
-        is_get_status_scale = true;
-        is_api_button_press_scale = true;
-        getStatusScale();
+        getStatus();
     }
 });
 
 async function resultCheckStatusScale() {
-    is_api_button_press_scale = false;
     checkOnlineStatus();
     $("#api_button_scale").css("display", 'inline-block');
 }
 
 async function getStatusScale() {
-    if (is_get_status_scale) {
-        var data = { key: api_key_scale, url: api_url_scale };
-
-        jQuery.ajax({
-            type: 'POST', // 
-            url: '/getstatus_scale', // 
-            data: JSON.stringify(data),
-            cache: false,
-            dataType: "json",
-            contentType: "application/json",
-            success: function (data) {
-                console.log("getstatus_scale success", data);
-                if (!('error' in data)) online_status = 'Valid (see disclaimer below)';
-                console.log("online_status", online_status);
-                resultCheckStatusScale();
-            },
-            error: function (jqXHR, exception) {
-                console.log("getstatus_scale error", jqXHR, exception);
-                online_status = 'no_connection';
-                console.log(exception);
-                console.log(jqXHR);
-                resultCheckStatusScale();
-            }
-        });
-    } else {
-        if (!is_get_status && !is_get_status_novel) {
-            console.log("getstatus_scale no connection");
-            online_status = 'no_connection';
-        }
-    }
 }
 
 $("#anchor_order").change(function () {

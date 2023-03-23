@@ -5,15 +5,12 @@ need
 
 
 placeholder elements that need to go:
-    red active
     pink HR
     toggles ugly as sin
     submenu for chat options ugly
     new chat submenu buttons need new look
 
 want:
-    improve soft refresh messages
-        buggy and replaces user avatar
     toggle for (text) being hidden
         in API menu, thats important enough
     toggle greentext / quote behavior in system
@@ -22,6 +19,9 @@ maybe:
     expand 'description' in character by default?
     second /third prompt previews in character and prompt submenu
 
+todo with swipe rework
+    improve soft refresh messages
+        buggy and replaces user avatar
 
 big maybe:
     export / import just for prompt files
