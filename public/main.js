@@ -5,12 +5,10 @@
 const VERSION = '1.2.8-Tavmod';
 var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true, underline:true,splitAdjacentBlockquotes:true});
 var default_user_name = "You";
-var name1 = default_user_name;
-var name2 = "Chloe";
-var chat = [{
-    name: 'Chloe',
+var curr_username = default_user_name;
+var curr_charname = "Chloe";
+var chat_mess_content = [{
     is_user: false,
-    is_name: true,
     mes: '*You went inside. The air smelled of fried meat, tobacco and a hint of wine. A dim light was cast by candles, and a fire crackled in the fireplace. It seems to be a very pleasant place. Behind the wooden bar is an elf waitress, she is smiling. Her ears are very pointy, and there is a twinkle in her eye. She wears glasses and a white apron. As soon as she noticed you, she immediately came right up close to you.*' +
         ' <p>Hello there! How is your evening going?</P>\n' +
         '<img src="img/tavern.png" width=50% style="opacity:1; display:block;border-radius:5px;margin-top:25px;margin-bottom:23px; margin-left: 45px;margin-right: auto;">\n<a id="verson" style="color:rgb(229, 224, 216,0.8);" href="https://github.com/TavernAI/TavernAI" target="_blank">TavernAI v' + VERSION + '</a><div id="characloud_url" style="margin-right:10px;margin-top:0px;float:right; height:25px;cursor: pointer;opacity: 0.99;display:inline-block;"><img src="img/cloud_logo.png" style="width: 25px;height: auto;display:inline-block; opacity:0.7;"><div style="vertical-align: top;display:inline-block;">Cloud</div></div><br><br><br><br>'
@@ -188,10 +186,10 @@ var css_send_form_display = $('<div id=send_form></div>').css('display');
 var colab_ini_step = 1;
 // feels good replacing 5+ places with a single function
 function replacePlaceholders(text) {
-    return text.replace(/{{user}}/gi, name1)
-        .replace(/{{char}}/gi, name2)
-        .replace(/<USER>/gi, name1)
-        .replace(/<BOT>/gi, name2)
+    return text.replace(/{{user}}/gi, curr_username)
+        .replace(/{{char}}/gi, curr_charname)
+        .replace(/<USER>/gi, curr_username)
+        .replace(/<BOT>/gi, curr_charname)
         .replace('\r\n\r\n', "\r\n")
         .replace('\n\n', "\n");
         
@@ -216,18 +214,18 @@ function parseExampleIntoIndividual(messageExampleString) {
         let cur_str = tmp[i];
         // if it's the user message, switch into user mode and out of bot mode
         // yes, repeated code, but I don't care
-        if (cur_str.indexOf(name1 + ":") === 0) {
+        if (cur_str.indexOf(curr_username + ":") === 0) {
             in_user = true;
             // we were in the bot mode previously, add the message
             if (in_bot) {
-                add_msg(name2, "assistant");
+                add_msg(curr_charname, "assistant");
             }
             in_bot = false;
-        } else if (cur_str.indexOf(name2 + ":") === 0) {
+        } else if (cur_str.indexOf(curr_charname + ":") === 0) {
             in_bot = true;
             // we were in the user mode previously, add the message
             if (in_user) {
-                add_msg(name1, "user");
+                add_msg(curr_username, "user");
             }
             in_user = false;
         }
@@ -236,9 +234,9 @@ function parseExampleIntoIndividual(messageExampleString) {
     }
     // Special case for last message in a block because we don't have a new message to trigger the switch
     if (in_user) {
-        add_msg(name1, "user");
+        add_msg(curr_username, "user");
     } else if (in_bot) {
-        add_msg(name2, "assistant");
+        add_msg(curr_charname, "assistant");
     }
     return result;
 }
@@ -594,8 +592,8 @@ function soft_refresh(){
 //add new messages
 function printMessages() {
     //0 index
-    newest_mes_index = chat.length -1
-    chat.forEach(function (item, i, arr) {
+    newest_mes_index = chat_mess_content.length -1
+    chat_mess_content.forEach(function (item, i, arr) {
         addOneMessage(item);
     });
 }
@@ -612,7 +610,7 @@ function format_raw(payload,user_flag='',force_format=false){
     payload = payload.replace(/\n>| >|" >|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
     payload = converter.makeHtml(payload);
     payload = payload.replace(/\n/g, '<br>')
-    if (user_flag == name1 || force_format){
+    if (user_flag == curr_username || force_format){
     }
     //payload = payload.replace(/\n/g, '<br/>');
     return payload
@@ -626,8 +624,8 @@ function messageFormating(mes, ch_name,force_format = false) {
     } else {
         mes = format_raw(mes,ch_name,force_format)
     }
-    if (ch_name !== name1) {
-        mes = mes.replaceAll(name2 + ":", "");
+    if (ch_name !== curr_username) {
+        mes = mes.replaceAll(curr_charname + ":", "");
     }
     return mes;
 }
@@ -640,7 +638,7 @@ function clear_swipe(){
 function addOneMessage(mes) {
     clear_swipe()
     var messageText = mes['mes'];
-    var characterName = name1;
+    var characterName = curr_username;
     generatedPromtCache = '';
     var avatarImg = "User Avatars/" + user_avatar;
     if (!mes['is_user']) {
@@ -653,7 +651,7 @@ function addOneMessage(mes) {
                 avatarImg = "img/fluffy.png";
             }
         }
-        characterName = name2;
+        characterName = curr_charname;
     }
     //bookmark
     if (curr_message_id == 0) {
@@ -667,7 +665,7 @@ function addOneMessage(mes) {
             <div class='for_checkbox generic_hidden'></div>
             <input type='checkbox' class='del_checkbox generic_hidden'>
     `;
-    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != name1 && swipe_index > 0) {
+    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != curr_username && swipe_index > 0) {
         chatTemplate += `<div id='swipe_left' class="swipe_left"><img src="img/tri.png"></div>`;
     }
     chatTemplate += `<div class=avatar>
@@ -688,7 +686,7 @@ function addOneMessage(mes) {
             </div>
             <div class=mes_text></div>
             </div>`
-    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != name1) {
+    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != curr_username) {
         chatTemplate += `<div id='swipe_right' class="swipe_right"><img src="img/tri.png"></div>`;
     }
     chatTemplate += `</div>`;
@@ -739,7 +737,7 @@ function build_main_system_message(r_flag=false){
         }
         return
     }
-    name2 = characters_array[active_character_index].name;
+    curr_charname = characters_array[active_character_index].name;
     let sys_prompt_compiler = `${replacePlaceholders(system_prompt)}\n`
     if (nsfw_toggle) {
         sys_prompt_compiler += `${replacePlaceholders(NSFW_on_prompt)}\n`;
@@ -811,16 +809,16 @@ function token_cost_converter(){
 
 async function Generate(type) {
     tokens_already_generated = 0;
-    message_already_generated = name2 + ': ';
+    message_already_generated = curr_charname + ': ';
     if (online_status != 'no_connection' && active_character_index != undefined) {
         if (type != 'regenerate') {
             var textareaText = $("#send_textarea").val();
             $("#send_textarea").val('');
         } else {
             var textareaText = "";
-            if (chat[chat.length - 1]['is_user']) {//If last message from You
+            if (chat_mess_content[chat_mess_content.length - 1]['is_user']) {//If last message from You
             } else {
-                chat.length = chat.length - 1;
+                chat_mess_content.length = chat_mess_content.length - 1;
                 curr_message_id -= 1;
                 $('#chat').children().last().remove();
                 // We MUST remove the last message from the bot here as it's being regenerated.
@@ -837,9 +835,9 @@ async function Generate(type) {
         var topAnchorDepth = 8;
         if (character_anchor && !is_pygmalion) {
             if (anchor_order === 0) {
-                anchorTop = `${name2}: ${postAnchorChar}`;
+                anchorTop = `${curr_charname}: ${postAnchorChar}`;
             } else {
-                anchorBottom = `[${name2} ${postAnchorChar}]`
+                anchorBottom = `[${curr_charname} ${postAnchorChar}]`
             }
         }
         if (style_anchor && !is_pygmalion) {
@@ -853,15 +851,12 @@ async function Generate(type) {
         //PRE FORMATING STRING
         //*********************************
         if (textareaText != "") {
-            chat[chat.length] = {};
-            chat[chat.length - 1]['name'] = name1;
-            chat[chat.length - 1]['is_user'] = true;
-            chat[chat.length - 1]['is_name'] = true;
-            chat[chat.length - 1]['send_date'] = Date.now();
-            chat[chat.length - 1]['swipe_index'] =swipe_index;
-            chat[chat.length - 1]['swipe_array'] =swipe_array;
-            chat[chat.length - 1]['mes'] = textareaText;
-            addOneMessage(chat[chat.length - 1]);
+            chat_mess_content[chat_mess_content.length] = {};
+            chat_mess_content[chat_mess_content.length - 1]['is_user'] = true;
+            chat_mess_content[chat_mess_content.length - 1]['swipe_index'] =swipe_index;
+            chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
+            chat_mess_content[chat_mess_content.length - 1]['mes'] = textareaText;
+            addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
         }
         var charPersonality = $.trim(characters_array[active_character_index].personality);
         var mesExamples = $.trim(characters_array[active_character_index].mes_example);
@@ -887,13 +882,13 @@ async function Generate(type) {
         var j = 0;
         // clean openai msgs
         openai_msgs = [];
-        for (var i = chat.length - 1; i >= 0; i--) {
+        for (var i = chat_mess_content.length - 1; i >= 0; i--) {
             // first greeting message
             if (j == 0) {
-                chat[j]['mes'] = replacePlaceholders(chat[j]['mes']);
+                chat_mess_content[j]['mes'] = replacePlaceholders(chat_mess_content[j]['mes']);
             }
-            let role = chat[j]['is_user'] ? 'user' : 'assistant';
-            openai_msgs[i] = { "role": role, "content": chat[j]['mes'] };
+            let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
+            openai_msgs[i] = { "role": role, "content": chat_mess_content[j]['mes'] };
             j++;
         }
 
@@ -935,10 +930,10 @@ async function Generate(type) {
                         if ((anchorTop != "" || charPersonality != "")) {
                             if (anchorTop != "") charPersonality += ' ';
                             // todo: change to something else?
-                            item = `[${name2} is ${charPersonality}${anchorTop}]\n${item}`;
+                            item = `[${curr_charname} is ${charPersonality}${anchorTop}]\n${item}`;
                         }
                     }
-                    if (i >= openai_msgs.length - 1 && curr_message_id > 8 && $.trim(item).substr(0, (name1 + ":").length) == name1 + ":") {//For add anchor in end
+                    if (i >= openai_msgs.length - 1 && curr_message_id > 8 && $.trim(item).substr(0, (curr_username + ":").length) == curr_username + ":") {//For add anchor in end
                         item = anchorBottom + "\n" + item;
                     }
                     msg["content"] = item;
@@ -1065,10 +1060,7 @@ async function Generate(type) {
 
                         if ($("#chat").children().filter('[mesid="' + last_view_mes + '"]').length == 0) {
                             chat[chat.length] = {};
-                            chat[chat.length - 1]['name'] = name2;
                             chat[chat.length - 1]['is_user'] = false;
-                            chat[chat.length - 1]['is_name'] = false;
-                            chat[chat.length - 1]['send_date'] = Date.now();
                             chat[chat.length - 1]['swipe_index'] = swipe_index;
                             chat[chat.length - 1]['swipe_array'] =swipe_array;
                             chat[chat.length - 1]['mes'] = "";
@@ -1076,7 +1068,7 @@ async function Generate(type) {
                         }
 
                         getMessage = $.trim(getMessage);
-                        var messageText = messageFormating(getMessage, name1);
+                        var messageText = messageFormating(getMessage, curr_username);
                         $("#chat").children().filter('[mesid="' + last_view_mes + '"]').children('.mes_block').children('.mes_text').html(messageText);
 
                         var $textchat = $('#chat');
@@ -1109,39 +1101,32 @@ async function Generate(type) {
                         //Formating
                         getMessage = $.trim(getMessage);
                         if (is_pygmalion) {
-                            getMessage = getMessage.replace(new RegExp('<USER>', "g"), name1);
-                            getMessage = getMessage.replace(new RegExp('<BOT>', "g"), name2);
-                            getMessage = getMessage.replace(new RegExp('You:', "g"), name1 + ':');
+                            getMessage = getMessage.replace(new RegExp('<USER>', "g"), curr_username);
+                            getMessage = getMessage.replace(new RegExp('<BOT>', "g"), curr_charname);
+                            getMessage = getMessage.replace(new RegExp('You:', "g"), curr_username + ':');
                         }
-                        if (getMessage.indexOf(name1 + ":") != -1) {
-                            getMessage = getMessage.substr(0, getMessage.indexOf(name1 + ":"));
+                        if (getMessage.indexOf(curr_username + ":") != -1) {
+                            getMessage = getMessage.substr(0, getMessage.indexOf(curr_username + ":"));
 
                         }
                         if (getMessage.indexOf('<|endoftext|>') != -1) {
                             getMessage = getMessage.substr(0, getMessage.indexOf('<|endoftext|>'));
 
                         }
-                        let this_mes_is_name = true;
-                        if (getMessage.indexOf(name2 + ":") === 0) {
-                            getMessage = getMessage.replace(name2 + ':', '');
+                        if (getMessage.indexOf(curr_charname + ":") === 0) {
+                            getMessage = getMessage.replace(curr_charname + ':', '');
                             getMessage = getMessage.trimStart();
-                        } else {
-                            this_mes_is_name = false;
                         }
-                        if (type === 'force_name2') this_mes_is_name = true;
                         //getMessage = getMessage.replace(/^\s+/g, '');
                         if (getMessage.length > 0) {
-                            chat[chat.length] = {};
-                            chat[chat.length - 1]['name'] = name2;
-                            chat[chat.length - 1]['is_user'] = false;
-                            chat[chat.length - 1]['is_name'] = this_mes_is_name;
-                            chat[chat.length - 1]['send_date'] = Date.now();
-                            chat[chat.length - 1]['swipe_index'] = swipe_index;
-                            chat[chat.length - 1]['swipe_array'] =swipe_array;
+                            chat_mess_content[chat_mess_content.length] = {};
+                            chat_mess_content[chat_mess_content.length - 1]['is_user'] = false;
+                            chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = swipe_index;
+                            chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
                             getMessage = $.trim(getMessage);
-                            chat[chat.length - 1]['mes'] = getMessage;
+                            chat_mess_content[chat_mess_content.length - 1]['mes'] = getMessage;
                             //hook here for swipe right
-                            addOneMessage(chat[chat.length - 1]);
+                            addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
                             $("#send_but").removeClass('generic_hidden');
                             $("#loading_mes").addClass('generic_hidden');
                             saveChat();
@@ -1165,7 +1150,7 @@ async function Generate(type) {
                 },
                 error: function (jqXHR, exception) {
                     if (streaming) {
-                        chat.length = chat.length - 1;
+                        chat_mess_content.length = chat_mess_content.length - 1;
                         curr_message_id -= 1;
                         $('#chat').children().last().remove();
                     }
@@ -1189,18 +1174,18 @@ async function Generate(type) {
 }
 
 async function saveChat() {
-    chat.forEach(function (item, i) {
+    chat_mess_content.forEach(function (item, i) {
         if (item['is_user']) {
-            var str = item['mes'].replace(name1 + ':', default_user_name + ':');
-            chat[i]['mes'] = str;
-            chat[i]['name'] = default_user_name;
+            var str = item['mes'].replace(curr_username + ':', default_user_name + ':');
+            chat_mess_content[i]['mes'] = str;
         }
     });
-    var save_chat = [{ user_name: default_user_name, character_name: name2 }, ...chat];
+    //only exists as future support for custom log names
+    var save_chat = [{last_open_date:Date.now() }, ...chat_mess_content];
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
-        data: JSON.stringify({ ch_name: characters_array[active_character_index].name, file_name: characters_array[active_character_index].chat, chat: save_chat, avatar_url: characters_array[active_character_index].avatar }),
+        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, chat: save_chat, avatar_url: characters_array[active_character_index].avatar }),
         cache: true,
         dataType: "json",
         contentType: "application/json",
@@ -1217,7 +1202,7 @@ async function getChat() {
     jQuery.ajax({
         type: 'POST',
         url: '/getchat',
-        data: JSON.stringify({ ch_name: characters_array[active_character_index].name, file_name: characters_array[active_character_index].chat, avatar_url: characters_array[active_character_index].avatar }),
+        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, avatar_url: characters_array[active_character_index].avatar }),
         cache: false,
         dataType: "json",
         contentType: "application/json",
@@ -1226,10 +1211,10 @@ async function getChat() {
             //chat.length = 0;
             if (data[0] !== undefined) {
                 for (let key in data) {
-                    chat.push(data[key]);
+                    chat_mess_content.push(data[key]);
                 }
                 //chat =  data;
-                chat.shift();
+                chat_mess_content.shift();
 
             }
             //console.log(chat);
@@ -1245,31 +1230,27 @@ async function getChat() {
 }
 
 function getChatResult() {
-    name2 = characters_array[active_character_index].name;
-    if (chat.length > 1) {
+    curr_charname = characters_array[active_character_index].name;
+    if (chat_mess_content.length > 1) {
 
-        chat.forEach(function (item, i) {
+        chat_mess_content.forEach(function (item, i) {
             if (item['is_user']) {
-                var str = item['mes'].replace(default_user_name + ':', name1 + ':');
-                chat[i]['mes'] = str;
-                chat[i]['name'] = name1;
+                var str = item['mes'].replace(default_user_name + ':', curr_charname + ':');
+                chat_mess_content[i]['mes'] = str;
             }
         });
 
 
     } else {
         //console.log(characters[active_character_index].first_mes);
-        chat[0] = {};
-        chat[0]['name'] = name2;
-        chat[0]['is_user'] = false;
-        chat[0]['is_name'] = true;
-        chat[0]['send_date'] = Date.now();
-        chat[0]['swipe_index'] = swipe_index;
-        chat[0]['swipe_array'] =swipe_array;
+        chat_mess_content[0] = {};
+        chat_mess_content[0]['is_user'] = false;
+        chat_mess_content[0]['swipe_index'] = swipe_index;
+        chat_mess_content[0]['swipe_array'] = swipe_array;
         if (characters_array[active_character_index].first_mes != "") {
-            chat[0]['mes'] = characters_array[active_character_index].first_mes;
+            chat_mess_content[0]['mes'] = characters_array[active_character_index].first_mes;
         } else {
-            chat[0]['mes'] = default_ch_mes;
+            chat_mess_content[0]['mes'] = default_ch_mes;
         }
         }
         printMessages();
@@ -1474,7 +1455,7 @@ $(document).on('click', '.character_select', function () {
             selected_button = 'character_edit';
             active_character_index = $(this).attr("chid");
             clearChat();
-            chat.length = 0;
+            chat_mess_content.length = 0;
             getChat();
         }
     } else {
@@ -1505,7 +1486,7 @@ $(document).on('click', '.del_checkbox', function () {
     $(this).parent().css('background', "#791b31");
     var i = $(this).parent().attr('mesid');
     this_del_mes = i;
-    while (i < chat.length) {
+    while (i < chat_mess_content.length) {
         $(".mes[mesid='" + i + "']").css('background', "#791b31");
         $(".mes[mesid='" + i + "']").children('.del_checkbox').prop("checked", true);
         i++;
@@ -1516,7 +1497,7 @@ $(document).on('click', '.del_checkbox', function () {
 $(document).on('click', '#user_avatar_block .avatar', function () {
     user_avatar = $(this).attr("imgfile");
     $('.mes').each(function () {
-        if ($(this).attr('ch_name') == name1) {
+        if ($(this).attr('ch_name') == curr_username) {
             $(this).children('.avatar').children('img').attr('src', 'User Avatars/' + user_avatar);
         }
     });
@@ -1583,7 +1564,7 @@ $("#dialogue_popup_ok").click(function () {
     }
     if (popup_type == 'new_chat' && active_character_index != undefined && menu_type != "create") {//Fix it; New chat doesn't create while open create character menu
         clearChat();
-        chat.length = 0;
+        chat_mess_content.length = 0;
         characters_array[active_character_index].chat = Date.now();
         $("#selected_chat_pole").val(characters_array[active_character_index].chat);
         common_click_save()
@@ -1757,25 +1738,23 @@ $("#form_create").submit(function(type) {
             processData: false,
             success: function (html) {
                 $('.mes').each(function () {
-                    if ($(this).attr('ch_name') != name1) {
+                    if ($(this).attr('ch_name') != curr_username) {
                         $(this).children('.avatar').children('img').attr('src', $('#avatar_load_preview').attr('src'));
                     }
                 });
-                if (chat.length === 1) {
+                if (chat_mess_content.length === 1) {
                     var this_ch_mes = default_ch_mes;
                     if ($('#firstmessage_textarea').val() != "") {
                         this_ch_mes = $('#firstmessage_textarea').val();
                     }
                     if (this_ch_mes != $.trim($("#chat").children('.mes').children('.mes_block').children('.mes_text').text())) {
                         clearChat();
-                        chat.length = 0;
-                        chat[0] = {};
-                        chat[0]['name'] = name2;
-                        chat[0]['is_user'] = false;
-                        chat[0]['is_name'] = true;
-                        chat[0]['mes'] = this_ch_mes;
+                        chat_mess_content.length = 0;
+                        chat_mess_content[0] = {};
+                        chat_mess_content[0]['is_user'] = false;
+                        chat_mess_content[0]['mes'] = this_ch_mes;
                         add_mes_without_animation = true;
-                        addOneMessage(chat[0]);
+                        addOneMessage(chat_mess_content[0]);
                     }
                 }
                 $('#create_button').removeAttr("disabled");
@@ -1849,7 +1828,7 @@ $('#character_name_pole').on('change keyup paste', function () {
         raise_save_flag()
         clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click();
-        name2 = $("#character_name_pole")[0].value
+        curr_charname = $("#character_name_pole")[0].value
         build_main_system_message()
         soft_refresh(); }
         , durationSaveEdit);
@@ -2007,7 +1986,7 @@ $("#dialogue_del_mes_ok").click(function () {
     if (this_del_mes != 0) {
         $(".mes[mesid='" + this_del_mes + "']").nextAll('div').remove();
         $(".mes[mesid='" + this_del_mes + "']").remove();
-        chat.length = this_del_mes;
+        chat_mess_content.length = this_del_mes;
         curr_message_id = this_del_mes;
         saveChat();
         var $textchat = $('#chat');
@@ -2443,8 +2422,8 @@ async function getSettings(type) {//timer
                 settings = JSON.parse(data.settings);
                 if (settings.username !== undefined) {
                     if (settings.username !== '') {
-                        name1 = settings.username;
-                        $('#your_name').val(name1);
+                        curr_username = settings.username;
+                        $('#your_name').val(curr_username);
                     }
                 }
 
@@ -2810,7 +2789,7 @@ async function getSettings(type) {//timer
                 //User
                 user_avatar = settings.user_avatar;
                 $('.mes').each(function () {
-                    if ($(this).attr('ch_name') == name1) {
+                    if ($(this).attr('ch_name') == curr_username) {
                         $(this).children('.avatar').children('img').attr('src', 'User Avatars/' + user_avatar);
                     }
                 });
@@ -2870,7 +2849,7 @@ async function saveSettings(type) {
             temp_kobold: temp_kobold,
             temp_novel: temp_novel,
             temp_openai: temp_openai,
-            username: name1,
+            username: curr_username,
             user_avatar: user_avatar,
 			api_key_scale: api_key_scale,
             api_url_scale: api_url_scale,
@@ -2953,11 +2932,11 @@ $(document).on('click', '.mes_edit', function () {
         var edit_mes_id = $(this).parent().parent().parent().attr('mesid');
         this_edit_mes_id = edit_mes_id;
 
-        var text = chat[edit_mes_id]['mes'];
-        if (chat[edit_mes_id]['is_user']) {
-            this_edit_mes_chname = name1;
+        var text = chat_mess_content[edit_mes_id]['mes'];
+        if (chat_mess_content[edit_mes_id]['is_user']) {
+            this_edit_mes_chname = curr_username;
         } else {
-            this_edit_mes_chname = name2;
+            this_edit_mes_chname = curr_charname;
         }
         text = text.trim();
         $(this).parent().parent().children('.mes_text').append('<textarea class=edit_textarea style="max-width:auto; ">' + text + '</textarea>');
@@ -2980,7 +2959,7 @@ $(document).on('click', '.mes_edit', function () {
 });
 $(document).on('click', '.mes_edit_cancel', function () {
     //var text = $(this).parent().parent().children('.mes_text').children('.edit_textarea').val();
-    var text = chat[this_edit_mes_id]['mes'];
+    var text = chat_mess_content[this_edit_mes_id]['mes'];
 
     $(this).parent().parent().children('.mes_text').empty();
     $(this).addClass('generic_hidden')
@@ -2996,7 +2975,7 @@ function messageEditDone(div) {
     var text = div.parent().parent().children('.mes_text').children('.edit_textarea').val();
     //var text = chat[this_edit_mes_id];
     text = text.trim();
-    chat[this_edit_mes_id]['mes'] = text;
+    chat_mess_content[this_edit_mes_id]['mes'] = text;
     div.parent().parent().children('.mes_text').empty();
     div.addClass('generic_hidden')
     div.parent().children('.mes_edit_cancel').addClass('generic_hidden')
@@ -3008,9 +2987,9 @@ function messageEditDone(div) {
 
 $("#your_name_button").click(function () {
     if (!is_send_press) {
-        name1 = $("#your_name").val();
-        if (name1 === undefined || name1 == '') name1 = default_user_name;
-        console.log(name1);
+        curr_username = $("#your_name").val();
+        if (curr_username === undefined || curr_username == '') curr_username = default_user_name;
+        console.log(curr_username);
         soft_refresh()
         //saveSettings('change_name');
         saveSettings();
@@ -3198,7 +3177,7 @@ $(document).on('click', '.select_chat_block', function () {
     let file_name = $(this).attr("file_name").replace('.jsonl', '');
     characters_array[active_character_index]['chat'] = file_name;
     clearChat();
-    chat.length = 0;
+    chat_mess_content.length = 0;
     getChat();
     $('#selected_chat_pole').val(file_name);
     $("#create_button").click();
