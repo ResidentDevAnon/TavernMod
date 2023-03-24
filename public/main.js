@@ -1903,18 +1903,21 @@ $('#firstmessage_textarea').on('keyup paste cut', function () {
         common_click_save()
     }
 });
-$("#api_button").on('click', function () {
-    console.log(`clicked`)
-    if (main_api == 'kobold'){
-        $("#api_button").css("display", 'none');
-        kobold_API_key = $('#api_url_text').val();
-        kobold_API_key = $.trim(kobold_API_key);
-        if (kobold_API_key.substr(kobold_API_key.length - 1, 1) == "/") {
-            kobold_API_key = kobold_API_key.substr(0, kobold_API_key.length - 1);
-        }
-        if (!(kobold_API_key.substr(kobold_API_key.length - 3, 3) == "api" || kobold_API_key.substr(kobold_API_key.length - 4, 4) == "api/")) {
-            kobold_API_key = kobold_API_key + "/api";
-        }
+document.querySelectorAll('.api_button').forEach((element) => {
+    element.addEventListener('click', try_connect);
+});
+function try_connect(){
+console.log(`clicked`)
+if (main_api == 'kobold'){
+    $("#api_button").css("display", 'none');
+    kobold_API_key = $('#api_url_text').val();
+    kobold_API_key = $.trim(kobold_API_key);
+    if (kobold_API_key.substr(kobold_API_key.length - 1, 1) == "/") {
+        kobold_API_key = kobold_API_key.substr(0, kobold_API_key.length - 1);
+    }
+    if (!(kobold_API_key.substr(kobold_API_key.length - 3, 3) == "api" || kobold_API_key.substr(kobold_API_key.length - 4, 4) == "api/")) {
+        kobold_API_key = kobold_API_key + "/api";
+    }
     }else if (main_api == 'novel'){
         api_key_novel = $('#api_key_novel').val();
         api_key_novel = $.trim(api_key_novel);
@@ -1926,11 +1929,10 @@ $("#api_button").on('click', function () {
         api_key_scale = $.trim(api_key_scale);
         api_url_scale = $('#api_url_scale').val();
         api_url_scale = $.trim(api_url_scale);
-    }
-    saveSettings();
-    getStatus();
-    }
-);
+}
+saveSettings();
+getStatus();
+}
 
 //bookmark
 let options_butt = document.getElementById('options-content')
@@ -3212,11 +3214,10 @@ function trim_chars(){
 }
 
 function auto_start(){
-    document.getElementById("api_button").click();
+    document.querySelectorAll('.api_button')[0].click()
 }
 
 function auto_open(){
-    //pasted code
     if (open_nav_bar){
         document.getElementById("logo_block").click()
     }
@@ -3235,7 +3236,7 @@ function auto_last_menu(){
             document.getElementById("rm_button_selected_ch").click()
         }
         else{
-                        document.getElementById("rm_button_characters").click()
+            document.getElementById("rm_button_characters").click()
         }
     }
 ;
@@ -3265,17 +3266,15 @@ function getRandomInt(max) {
 async function BG_shuffle(){
     const parentDiv = document.querySelector('#bg_menu_content');
     const BGs = parentDiv.querySelectorAll('img.bg_example_img');
-    var BG_shuffler = []
     while (true) {
         if (bg_shuffle_delay <= 59000) {
             await new Promise(resolve => setTimeout(resolve, bg_shuffle_delay));
         }
         else{
             await new Promise(resolve => setTimeout(resolve, bg_shuffle_delay));
-            BG_shuffler = BGs
-            var rng = getRandomInt(Math.floor(Math.random() * BG_shuffler.length))
+            var rng = getRandomInt(Math.floor(Math.random() * BGs.length))
             //console.log(BGs)
-            BG_shuffler[rng].click();
+            BGs[rng].click();
         }
     }
 }
@@ -3333,7 +3332,6 @@ $("#sys_sel_box").change(function() {
 $("#menu_sel_box").change(function() {
     var menu = document.getElementById('menu_sel_box');
     last_menu = menu.options[menu.selectedIndex].value;
-    //console.log(last_menu)
     saveSettings();
 });
 

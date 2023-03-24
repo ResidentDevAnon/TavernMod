@@ -157,7 +157,7 @@
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                 <h4>API url</h4><h5>Example: http://127.0.0.1:5000/api </h5>
                 <input id="api_url_text" name="api_url" class="text_pole" maxlength="500" value="" autocomplete="off">
-                <input id="api_button" type="submit" value="Connect">
+                <input class="api_button" type="submit" value="Connect">
                 </form>
                 <h4>Preset settings</h4><h5>Selecting settings (<a href="/notes/4" target="_blank">?</a>)</h5>
                 <select id="settings_perset">
@@ -179,7 +179,7 @@
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                     <h4>API key</h4><h5>Where to get (<a href="/notes/6" target="_blank">?</a>)</h5>
                     <input id="api_key_novel" name="api_key_novel" class="text_pole" maxlength="500" size="35" value="" autocomplete="off">
-                    <input id="api_button" type="submit" value="Connect">
+                    <input class="api_button" type="submit" value="Connect">
                 </form>
                 <h4>Model</h4><h5>Selecting NovelAI model (<a href="/notes/8" target="_blank">?</a>)</h5>
                 <select id="model_novel_select" class="option_select_right_menu" style='margin-bottom: 16px;'>
@@ -206,7 +206,7 @@
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                     <h4>API key </h4>
                     <input id="api_key_openai" name="api_key_openai" class="text_pole" maxlength="500" value="" autocomplete="off">
-                    <input id="api_button" type="submit" value="Connect">
+                    <input class="api_button" type="submit" value="Connect">
                 </form>
                 <h4>Preset settings</h4><h5>Selecting settings</h5>
                 <select id="settings_perset_openai" class="option_select_right_menu">
@@ -235,7 +235,7 @@
                         yeah that's a hardcoded api key
                         if it gets rate limited, just get your own
                      -->
-                    <input id="api_button" type="submit" value="Connect">
+                    <input class="api_button" type="submit" value="Connect">
                 </form>
                 <p style="white-space: normal;"><strong>IMPORTANT:&nbsp;</strong>
                     Scale offers no way to check whether your key is correct. If you see "Valid" here but you still can't send prompts,

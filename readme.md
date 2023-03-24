@@ -2,11 +2,6 @@
 
 ### [original Tavernai](https://github.com/TavernAI/TavernAI)
 
-
-
-# there is a major bug right now that will not let you connect to API's after the first click on the 'connect' button
-## looking into it 
-
 # this is a complete rewrite / WIP in progress, use the main branch if you want consistency and stability
 ## check notes_to_future_me.txt for some known problems
 ## make backups before using
