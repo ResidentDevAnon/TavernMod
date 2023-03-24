@@ -11,7 +11,6 @@ var chat = [{
     name: 'Chloe',
     is_user: false,
     is_name: true,
-    create_date: 0,
     mes: '*You went inside. The air smelled of fried meat, tobacco and a hint of wine. A dim light was cast by candles, and a fire crackled in the fireplace. It seems to be a very pleasant place. Behind the wooden bar is an elf waitress, she is smiling. Her ears are very pointy, and there is a twinkle in her eye. She wears glasses and a white apron. As soon as she noticed you, she immediately came right up close to you.*' +
         ' <p>Hello there! How is your evening going?</P>\n' +
         '<img src="img/tavern.png" width=50% style="opacity:1; display:block;border-radius:5px;margin-top:25px;margin-bottom:23px; margin-left: 45px;margin-right: auto;">\n<a id="verson" style="color:rgb(229, 224, 216,0.8);" href="https://github.com/TavernAI/TavernAI" target="_blank">TavernAI v' + VERSION + '</a><div id="characloud_url" style="margin-right:10px;margin-top:0px;float:right; height:25px;cursor: pointer;opacity: 0.99;display:inline-block;"><img src="img/cloud_logo.png" style="width: 25px;height: auto;display:inline-block; opacity:0.7;"><div style="vertical-align: top;display:inline-block;">Cloud</div></div><br><br><br><br>'
@@ -19,7 +18,6 @@ var chat = [{
 
 var default_ch_mes = "Hello";
 var curr_message_id = 0;
-var count_view_mes = 0;
 var generatedPromtCache = '';
 var characters_array = [];
 var active_character_index;
@@ -602,7 +600,7 @@ function printMessages() {
     });
 }
 function clearChat() {
-    count_view_mes = 0;
+    curr_message_id = 0;
     $('#chat').html('');
 }
 
@@ -658,18 +656,18 @@ function addOneMessage(mes) {
         characterName = name2;
     }
     //bookmark
-    if (count_view_mes == 0) {
+    if (curr_message_id == 0) {
         messageText = replacePlaceholders(messageText);
     }
     messageText = messageFormating(messageText, characterName,true);
 
     //ugly way to build a template
     let chatTemplate = `
-        <div class='mes' mesid=${count_view_mes} ch_name=${characterName}>
+        <div class='mes' mesid=${curr_message_id} ch_name=${characterName}>
             <div class='for_checkbox generic_hidden'></div>
             <input type='checkbox' class='del_checkbox generic_hidden'>
     `;
-    if (count_view_mes == newest_mes_index && count_view_mes != 0 && characterName != name1 && swipe_index > 0) {
+    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != name1 && swipe_index > 0) {
         chatTemplate += `<div id='swipe_left' class="swipe_left"><img src="img/tri.png"></div>`;
     }
     chatTemplate += `<div class=avatar>
@@ -690,7 +688,7 @@ function addOneMessage(mes) {
             </div>
             <div class=mes_text></div>
             </div>`
-    if (count_view_mes == newest_mes_index && count_view_mes != 0 && characterName != name1) {
+    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != name1) {
         chatTemplate += `<div id='swipe_right' class="swipe_right"><img src="img/tri.png"></div>`;
     }
     chatTemplate += `</div>`;
@@ -698,11 +696,11 @@ function addOneMessage(mes) {
     $("#chat").append(chatTemplate);
 
     if (!if_typing_text) {
-        $("#chat").children().filter('[mesid="' + count_view_mes + '"]').children('.mes_block').children('.mes_text').append(messageText);
+        $("#chat").children().filter('[mesid="' + curr_message_id + '"]').children('.mes_block').children('.mes_text').append(messageText);
     } else {
-        typeWriter($("#chat").children().filter('[mesid="' + count_view_mes + '"]').children('.mes_block').children('.mes_text'), messageText, 50, 0);
+        typeWriter($("#chat").children().filter('[mesid="' + curr_message_id + '"]').children('.mes_block').children('.mes_text'), messageText, 50, 0);
     }
-    count_view_mes++;
+    curr_message_id++;
     if (!add_mes_without_animation) {
         $('#chat').children().last().transition({
             opacity: 1.0,
@@ -823,7 +821,7 @@ async function Generate(type) {
             if (chat[chat.length - 1]['is_user']) {//If last message from You
             } else {
                 chat.length = chat.length - 1;
-                count_view_mes -= 1;
+                curr_message_id -= 1;
                 $('#chat').children().last().remove();
                 // We MUST remove the last message from the bot here as it's being regenerated.
                 openai_msgs.pop();
@@ -932,7 +930,7 @@ async function Generate(type) {
                 var is_add_personality = false;
                 openai_msgs.forEach(function (msg, i, arr) {//For added anchors and others
                     let item = msg["content"];
-                    if (i === openai_msgs.length - topAnchorDepth && count_view_mes >= topAnchorDepth && !is_add_personality) {
+                    if (i === openai_msgs.length - topAnchorDepth && curr_message_id >= topAnchorDepth && !is_add_personality) {
                         is_add_personality = true;
                         if ((anchorTop != "" || charPersonality != "")) {
                             if (anchorTop != "") charPersonality += ' ';
@@ -940,7 +938,7 @@ async function Generate(type) {
                             item = `[${name2} is ${charPersonality}${anchorTop}]\n${item}`;
                         }
                     }
-                    if (i >= openai_msgs.length - 1 && count_view_mes > 8 && $.trim(item).substr(0, (name1 + ":").length) == name1 + ":") {//For add anchor in end
+                    if (i >= openai_msgs.length - 1 && curr_message_id > 8 && $.trim(item).substr(0, (name1 + ":").length) == name1 + ":") {//For add anchor in end
                         item = anchorBottom + "\n" + item;
                     }
                     msg["content"] = item;
@@ -1027,7 +1025,7 @@ async function Generate(type) {
                 };
             }
 
-            var last_view_mes = count_view_mes;
+            var last_view_mes = curr_message_id;
             jQuery.ajax({
                 type: 'POST', // 
                 url: generate_url, // 
@@ -1168,7 +1166,7 @@ async function Generate(type) {
                 error: function (jqXHR, exception) {
                     if (streaming) {
                         chat.length = chat.length - 1;
-                        count_view_mes -= 1;
+                        curr_message_id -= 1;
                         $('#chat').children().last().remove();
                     }
                     $("#send_textarea").removeAttr('disabled');
@@ -2010,7 +2008,7 @@ $("#dialogue_del_mes_ok").click(function () {
         $(".mes[mesid='" + this_del_mes + "']").nextAll('div').remove();
         $(".mes[mesid='" + this_del_mes + "']").remove();
         chat.length = this_del_mes;
-        count_view_mes = this_del_mes;
+        curr_message_id = this_del_mes;
         saveChat();
         var $textchat = $('#chat');
         $textchat.scrollTop($textchat[0].scrollHeight);
@@ -2975,7 +2973,7 @@ $(document).on('click', '.mes_edit', function () {
         edit_textarea.height(edit_textarea[0].scrollHeight);
         edit_textarea.focus();
         edit_textarea[0].setSelectionRange(edit_textarea.val().length, edit_textarea.val().length);
-        if (this_edit_mes_id == count_view_mes - 1) {
+        if (this_edit_mes_id == curr_message_id - 1) {
             $("#chat").scrollTop(chatScrollPosition);
         }
     }
