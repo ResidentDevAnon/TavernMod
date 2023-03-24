@@ -66,8 +66,8 @@
         <div class="right_menu_button" id="rm_button_settings"><h2>Settings</h2></div>
         <div class="right_menu_button" id="rm_button_selected_ch"><h2></h2></div>
         <!--character details-->
-        <div id="rm_ch_create_block" class="right_menu">
-            <div id="rm_button_back" class="right_menu_button"><h2 style="color: rgb(188, 193, 200, 0.5);">&#8656;</h2></div>
+        <div id="rm_ch_create_block" class="right_menu generic_hidden">
+            <div id="rm_button_back" class="right_menu_button generic_hidden"><h2 style="color: rgb(188, 193, 200, 0.5);">&#8656;</h2></div>
             <form id="form_create"  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                 <h4 id="name_butt">Name and Avatar</h4>
                 <div id="name_avatar_div"class="generic_hidden">
@@ -281,6 +281,16 @@
                 </div>
             </div>
             <hr>
+            <!--temporary location-->
+            <datalist id="values">
+                <option value="300" label="300"></option>
+                <option value="1000" label="1000"></option>
+                <option value="2000" label="2000"></option>
+                <option value="2500" label="2500"></option>
+                <option value="3000" label="3000"></option>
+                <option value="3500" label="3500"></option>
+                <option value="4000" label="4000"></option>
+              </datalist>
             <!-- OAI / scale settings block-->
             <div style="opacity:0.80">
                 <h3 style='margin-bottom: 10px;'>Pro Settings</h3>
@@ -300,7 +310,7 @@
                 <div id="openai_gen_block">
                     <h4>Tokens to Generate</h4><h5 id="OAI_gen_display">select</h5>
                     <input type="number" id="OAI_gen_input" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
-                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
+                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="4095" placeholder='0'value='0'step="1" list="values">
                     <div class="buton_block">
                         <input type="button" id="OAI_gen_button" value='300'>
                         <input type="button" id="OAI_gen_button" value='1000'>
@@ -311,7 +321,7 @@
 				<div id="openai_context_block">
                     <h4>OpenAI Context Size</h4><h5 id="OAI_context_display">select</h5>
                     <input type="number" id="OAI_context_input" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
-                    <input type="range" id="OAI_context_slider" name="volume" min="300" max="4095" step="1">
+                    <input type="range" id="OAI_context_slider" name="volume" min="300" max="4095" step="1" list="values">
                     <div class="buton_block">
                         <input type="button" id="OAI_contx_button" value='300'>
                         <input type="button" id="OAI_contx_button" value='1000'>

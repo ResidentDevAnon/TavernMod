@@ -731,7 +731,7 @@ $("#send_but").click(function () {
 });
 
 
-function build_main_system_message(){
+function build_main_system_message(r_flag=false){
     //global needs to be updated at this point
     //dont want to jump though updating it on char click right now
     if (active_character_index == undefined){
@@ -794,7 +794,10 @@ function build_main_system_message(){
     built = `${sys_prompt_compiler}${built}`
     document.getElementById('scenario_preview').value = built
     console.log(`${countTokens(sys_prompt_compiler)} tokens dedicated for SYS commands`)
-    return built
+    if(r_flag){
+        return built
+    }else
+    {return}
 }
 function token_cost_converter(){
     var prompt_price_per1k = 0.002
@@ -876,7 +879,7 @@ async function Generate(type) {
 
 
 
-        storyString = build_main_system_message()
+        storyString = build_main_system_message(true)
 
 
         var j = 0;
@@ -1830,7 +1833,9 @@ $("#rm_info_button").click(function () {
 function common_click_save() {
     raise_save_flag()
     clearTimeout(timerSaveEdit);
-    timerSaveEdit = setTimeout(() => { $("#create_button").click(); }, durationSaveEdit);
+    timerSaveEdit = setTimeout(() => { 
+        $("#create_button").click(),
+        build_main_system_message() }, durationSaveEdit);
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@
 //character text poles creating and editing save
@@ -1843,6 +1848,7 @@ $('#character_name_pole').on('change keyup paste', function () {
         clearTimeout(timerSaveEdit);
         timerSaveEdit = setTimeout(() => { $("#create_button").click();
         name2 = $("#character_name_pole")[0].value
+        build_main_system_message()
         soft_refresh(); }
         , durationSaveEdit);
     }
@@ -1854,9 +1860,9 @@ function raise_save_flag(){
     document.getElementById('save_indicator').classList.remove('saved')
 }
 function lower_save_flag(){
-    document.getElementById("save_indicator").innerHTML = "saved!"
-    document.getElementById('save_indicator').classList.remove('warning')
-    document.getElementById('save_indicator').classList.add('saved')
+        document.getElementById("save_indicator").innerHTML = "saved!"
+        document.getElementById('save_indicator').classList.remove('warning')
+        document.getElementById('save_indicator').classList.add('saved')
     clearTimeout(save_text_clear);
     save_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "" }, durationSaveEdit);
 }
@@ -1865,12 +1871,12 @@ $('#description_textarea').on('keyup paste cut', function () {//change keyup pas
         create_save_description = $('#description_textarea').val();
     } else {
         common_click_save()
+        prompt_flag_save()
     }
 
 });
 $('#personality_textarea').on('keyup paste cut', function () {
     if (menu_type == 'create') {
-
         create_save_personality = $('#personality_textarea').val();
     } else {
         common_click_save()
@@ -1878,7 +1884,6 @@ $('#personality_textarea').on('keyup paste cut', function () {
 });
 $('#scenario_pole').on('keyup paste cut', function () {
     if (menu_type == 'create') {
-
         create_save_scenario = $('#scenario_pole').val();
     } else {
         common_click_save()
@@ -2303,7 +2308,7 @@ function update_OAI_contx(){
     $('#OAI_context_display').html(openai_selected_context + text);
     $('#OAI_context_input').val(openai_selected_context);
     $('#OAI_context_slider').val(openai_selected_context);
-    console.log(openai_selected_context)
+    //console.log(openai_selected_context)
     token_cost_converter()
     clearTimeout(max_contextTimer)
     var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
@@ -2342,7 +2347,7 @@ function update_OAI_gen(){
     $('#OAI_gen_display').html(openai_selected_gen + text);
     $('#OAI_gen_input').val(openai_selected_gen);
     $('#OAI_gen_slider').val(openai_selected_gen);
-    console.log(openai_selected_gen)
+    //console.log(openai_selected_gen)
     token_cost_converter()
     clearTimeout(max_contextTimer)
     var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
@@ -2813,6 +2818,7 @@ async function getSettings(type) {//timer
 
 }
 
+//save settings function
 async function saveSettings(type) {
     jQuery.ajax({
         type: 'POST',
@@ -2896,9 +2902,6 @@ async function saveSettings(type) {
         success: function (data) {
             lower_save_flag()
             clearTimeout(timerSaveEdit);
-            //bookmark refresh system prompt preview
-            //dump value because it returns a value
-            let dump = build_main_system_message()
             //online_status = data.result;
             if (type === 'change_name') {
                 location.reload();
@@ -3221,26 +3224,28 @@ function auto_open(){
     }
 };
 function auto_last_menu(){
-    switch (last_menu) {
-    case "char_list":
-        document.getElementById("rm_button_characters").click()
-        break
-    case "sett":
-        document.getElementById("rm_button_settings").click()
-        break
-    case "last_char":
-        document.getElementById("rm_button_selected_ch").click()
-        break
+        if (last_menu == "char_list"){
+            document.getElementById("rm_button_characters").click()
+        }
+        else if (last_menu == "sett"){
+            document.getElementById("rm_button_settings").click()
+        }
+        else if (last_menu == "last_char" && settings.last_char != undefined){
+            document.getElementById("rm_button_selected_ch").click()
+        }
+        else{
+                        document.getElementById("rm_button_characters").click()
+        }
     }
-};
+;
 async function auto_char(){
-    if (open_last_char == false){
+    if (open_last_char == false && settings.last_char == undefined){
         auto_last_menu()
         return
     }
     const parentDiv = document.querySelector('#rm_print_charaters_block');
     const characters = parentDiv.querySelectorAll('div.character_select');
-    const last_char_match = settings.last_char
+    const last_char_match = last_char
     for (let i = 0; i < characters.length; i++) {
         var avatar = characters[i].querySelector('div.avatar').querySelector('img').getAttribute('src').replace(/#.*/, "")
         if (avatar == last_char_match){
@@ -3352,10 +3357,12 @@ $("#bg_shuffle_time").change(function () {
 }
 )
 
-function common_flag_save(){
+function prompt_flag_save(){
     raise_save_flag()
     clearTimeout(timerSaveEdit);
-    timerSaveEdit = setTimeout(() => { saveSettings() }, durationSaveEdit);
+    timerSaveEdit = setTimeout(() => {
+            saveSettings();
+            build_main_system_message(); }, durationSaveEdit);
 }
 
 $("#system_prompt_button").click(function () {
@@ -3432,130 +3439,130 @@ $("#CUST_5_prompt_button").click(function () {
     }});
 $('#system_prompt').on('keyup paste cut', function () {
         system_prompt = document.getElementById("system_prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 $('#desc_prompt').on('keyup paste cut', function () {
     description_prompt = document.getElementById("desc_prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 $('#personality_prompt').on('keyup paste cut', function () {
     personality_prompt = document.getElementById("personality_prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 $('#scenario_prompt').on('keyup paste cut', function () {
     scenario_prompt = document.getElementById("scenario_prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#NSFW_ON_prompt').on('keyup paste cut', function () {
     NSFW_on_prompt = document.getElementById("NSFW_ON_prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#NSFW_OFF_prompt').on('keyup paste cut', function () {
     NSFW_off_prompt = document.getElementById("NSFW_OFF_prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CYOA_prompt').on('keyup paste cut', function () {
     CYOA_prompt = document.getElementById("CYOA_prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_1_title').on('keyup paste cut', function () {
     custom_1_title = document.getElementById("CUST_1_title").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_1_description').on('keyup paste cut', function () {
     custom_1_desc = document.getElementById("CUST_1_description").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_1_Prompt').on('keyup paste cut', function () {
     custom_1_prompt = document.getElementById("CUST_1_Prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_2_title').on('keyup paste cut', function () {
     custom_2_title = document.getElementById("CUST_2_title").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_2_description').on('keyup paste cut', function () {
     custom_2_desc = document.getElementById("CUST_2_description").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_2_Prompt').on('keyup paste cut', function () {
     custom_2_prompt = document.getElementById("CUST_2_Prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_3_title').on('keyup paste cut', function () {
     custom_3_title = document.getElementById("CUST_3_title").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_3_description').on('keyup paste cut', function () {
     custom_3_desc = document.getElementById("CUST_3_description").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_3_Prompt').on('keyup paste cut', function () {
     custom_3_prompt = document.getElementById("CUST_3_Prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_4_title').on('keyup paste cut', function () {
     custom_4_title = document.getElementById("CUST_4_title").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_4_description').on('keyup paste cut', function () {
     custom_4_desc = document.getElementById("CUST_4_description").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_4_Prompt').on('keyup paste cut', function () {
     custom_4_prompt = document.getElementById("CUST_4_Prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_5_title').on('keyup paste cut', function () {
     custom_5_title = document.getElementById("CUST_5_title").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_5_description').on('keyup paste cut', function () {
     custom_5_desc = document.getElementById("CUST_5_description").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
 $('#CUST_5_Prompt').on('keyup paste cut', function () {
     custom_5_prompt = document.getElementById("CUST_5_Prompt").value
-    common_flag_save()
+    prompt_flag_save()
     }
 );
 
