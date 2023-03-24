@@ -1903,7 +1903,8 @@ $('#firstmessage_textarea').on('keyup paste cut', function () {
         common_click_save()
     }
 });
-$("#api_button").click(function () {
+$("#api_button").on('click', function () {
+    console.log(`clicked`)
     if (main_api == 'kobold'){
         $("#api_button").css("display", 'none');
         kobold_API_key = $('#api_url_text').val();
