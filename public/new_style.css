@@ -381,6 +381,10 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
+div#generating_thumbs {
+    width: 137px;
+}
+
 .bg_menu_button-toggle img {
     height: 20px;
 }
