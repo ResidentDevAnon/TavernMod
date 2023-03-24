@@ -145,7 +145,7 @@
             <div class="submenu" id="system_settings"><h2>system Settings</h2></div>
         <!-- Main API settings  -->
         <div id="API_sett_block" class="API_block">
-            <select id="main_api" style="color:#fff;background-color:#000000;" >
+            <select id="main_api" >
                 <option value="kobold">KoboldAI</option>
                 <option value="novel">NovelAI</option>
                 <option value="openai">OpenAI</option>
@@ -292,7 +292,8 @@
                 <option value="4000" label="4000"></option>
               </datalist>
             <!-- OAI / scale settings block-->
-            <div style="opacity:0.80">
+            <!-- seperate because its shared-->
+            <div>
                 <h3 style='margin-bottom: 10px;'>Pro Settings</h3>
                 <div id="amount_gen_block">
                 <h4>Amount generation </h4><h5 id="amount_gen_counter">select</h5>
@@ -417,7 +418,7 @@
         </div>
         <!--system settings-->
         <div id="sys_sett_block" style="display: none">
-            <select id="sys_sel_box" style="color:#fff;background-color:#000000;" >
+            <select id="sys_sel_box">
                 <option value="startup_sett">System Settings</option>
                 <option value="reply_sett">Prompt Settings</option>
             </select>
@@ -442,31 +443,35 @@
                     <!-- open settings nav on startup-->
                     <div id="block_open_settngs_start">
                         <label class="checkbox">
+                    <input id="open_bg_start" type="checkbox"/><span></span>
+                        <h4>open BG (left menu) on startup</h4>
+                        <label class="checkbox">
                             <input id="open_sett_start" type="checkbox"/><span></span>
                                 <h4>open nav (right menu) on startup</h4>
                                 <br>
-                                <label class="checkbox">
-                            <input id="open_bg_start" type="checkbox"/><span></span>
-                                <h4>open BG (left menu) on startup</h4>
                     </div>
-                    <br>
+                    <hr>
                     <!-- last menu clicked -->
                     <div>
                         <h4>what tab to open nav (right menu) to on startup</h4>
                         <br>
-                        <select id="menu_sel_box" style="color:#fff;background-color:#000000;" >
+                        <select id="menu_sel_box">
                             <option value="char_list">Characters</option>
                             <option value="sett">Settings</option>
                             <option value="last_char">selected char (if possible)</option>
                         </select>
+                    </div>
+                    <hr>
+                    <!-- avatar and name-->
+                    <div>
                         <h4>Your Avatar</h4><h5></h5>
                         <div id="user_avatar_block"></div>
-                        <form id='form_change_name' action="javascript:void(null);" method="post" enctype="multipart/form-data">
+                        <form id='form_change_name' method="post" enctype="multipart/form-data">
                             <h4>Name</h4>
                             <input id="your_name" name="your_name" class="text_pole" maxlength="35" size="16" value="" autocomplete="off">
                             <input id="your_name_button" type="submit" value="Change">
                         </form>
-                    </div>
+                        </div>
                 </div>
                 <!--reply settings-->
                 <div id="reply_sett" style="display: none;">

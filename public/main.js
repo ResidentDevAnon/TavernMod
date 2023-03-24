@@ -1185,7 +1185,7 @@ async function saveChat() {
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
-        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, chat: save_chat, avatar_url: characters_array[active_character_index].avatar }),
+        data: JSON.stringify({ file_name: characters_array[active_character_index].chat_mess_content, chat: save_chat, avatar_url: characters_array[active_character_index].avatar }),
         cache: true,
         dataType: "json",
         contentType: "application/json",
@@ -2672,7 +2672,7 @@ async function getSettings(type) {//timer
                 
                 $('#stream_toggle').prop('checked', stream_openai);
 
-                $('#OAI_context_input').val(openai_selected_gen);
+                $('#OAI_context_input').val(openai_selected_context);
                 $('#OAI_context_slider').val(openai_selected_context);
                 $('#OAI_context_display').html(openai_selected_context + ' Tokens');
                 $('#OAI_gen_input').val(openai_selected_gen);
@@ -3012,7 +3012,12 @@ async function getAllCharaChats() {
             let dataArr = Object.values(data);
             //what is this here for?
             //sorts by timestamp dumbass
-            const sortedSet = Object.values(data).sort((a, b) => b['file_name'].localeCompare(a['file_name']));
+            var sortedSet
+            try {
+                sortedSet = Object.values(data).sort((a, b) => b['file_name']['last_open_date'].localeCompare(a['file_name']['last_open_date']));
+            } catch (error) {
+                sortedSet = dataArr
+            }
             for (const key in sortedSet) {
                 let strlen = 200;
                 let mes = sortedSet[key]['mes'];
@@ -3344,6 +3349,8 @@ $("#bg_shuffle_time").change(function () {
 }
 )
 
+//learned about debouce 
+//not implementing it for now (tm)
 function prompt_flag_save(){
     raise_save_flag()
     clearTimeout(timerSaveEdit);

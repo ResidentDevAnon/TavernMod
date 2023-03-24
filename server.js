@@ -929,33 +929,33 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
     if(!request.body) return response.sendStatus(400);
 
     var char_dir = (request.body.avatar_url).replace('.png','')
-    fs.readdir(chatsPath+char_dir, (err, files) => {
-        if (err) {
-            console.error(err);
-            response.send({error: true});
-            return;
-        }
-
-        // filter for JSON files
-        const jsonFiles = files.filter(file => path.extname(file) === '.jsonl');
-
-        // sort the files by name
-        //jsonFiles.sort().reverse();
-
-        // print the sorted file names
-        var chatData = {};
-        let ii = jsonFiles.length;
-        for(let i = jsonFiles.length-1; i >= 0; i--){
+        fs.readdir(chatsPath+char_dir, (err, files) => {
+            if (err) {
+                console.error(err);
+                response.send({error: true});
+                return;
+            }
+            
+            // filter for JSON files
+            const jsonFiles = files.filter(file => path.extname(file) === '.jsonl');
+            
+            // sort the files by name
+            //jsonFiles.sort().reverse();
+            
+            // print the sorted file names
+            var chatData = {};
+            let ii = jsonFiles.length;
+            for(let i = jsonFiles.length-1; i >= 0; i--){
             const file = jsonFiles[i];
-
+            
             const fileStream = fs.createReadStream(chatsPath+char_dir+'/'+file);
             const rl = readline.createInterface({
                 input: fileStream,
                 crlfDelay: Infinity
             });
-
+            
             let lastLine;
-
+            
             rl.on('line', (line) => {
                 lastLine = line;
             });
@@ -963,17 +963,13 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
             rl.on('close', () => {
                 if(lastLine){
                     let jsonData = JSON.parse(lastLine);
-                    if(jsonData.name !== undefined){
-                        chatData[i] = {};
-                        chatData[i]['file_name'] = file;
-                        chatData[i]['mes'] = jsonData['mes'];
-                        ii--;
-                        if(ii === 0){ 
-                            response.send(chatData);
+                    chatData[i] = {};
+                    chatData[i]['file_name'] = file;
+                    chatData[i]['mes'] = jsonData['mes'];
+                    ii--;
+                    if(ii === 0){ 
+                        response.send(chatData);
                         }
-                    }else{
-                        return;
-                    }
                 }
                 rl.close();
             });

@@ -381,6 +381,10 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
+option {
+    /* color: black; */
+}
+
 div#generating_thumbs {
     width: 137px;
 }
@@ -457,7 +461,8 @@ select {
     height: 30px;
     width: -webkit-fill-available;
     border-width: thick;
-    color: black;
+    color: #fff;
+    background-color:#000000;
 }
 
 div#reply_sett {
@@ -468,12 +473,6 @@ div#anchor_checkbox {
     display: flex;
     justify-content: space-between;
     flex-direction: column;
-}
-
-select#anchor_order {
-    width: -webkit-fill-available;
-    color: black;
-    background: aliceblue;
 }
 
 div#tweaks_box {background: rgba(0,0,0,0.1);}
