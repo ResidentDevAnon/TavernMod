@@ -1185,7 +1185,7 @@ async function saveChat() {
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
-        data: JSON.stringify({ file_name: characters_array[active_character_index].chat_mess_content, chat: save_chat, avatar_url: characters_array[active_character_index].avatar }),
+        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, chat: save_chat, avatar_url: characters_array[active_character_index].avatar }),
         cache: true,
         dataType: "json",
         contentType: "application/json",
@@ -3014,8 +3014,9 @@ async function getAllCharaChats() {
             //sorts by timestamp dumbass
             var sortedSet
             try {
-                sortedSet = Object.values(data).sort((a, b) => b['file_name']['last_open_date'].localeCompare(a['file_name']['last_open_date']));
+                sortedSet = Object.values(data).sort((a, b) => new Date(b['last_open_date']) - new Date(a['last_open_date']));
             } catch (error) {
+                console.log(error)
                 sortedSet = dataArr
             }
             for (const key in sortedSet) {
@@ -3025,7 +3026,10 @@ async function getAllCharaChats() {
                     mes = '...' + mes.substring(mes.length - strlen);
                 }
                 mes = format_raw(mes)
-                var date = new Date(Number(sortedSet[key]['file_name'].replace('.jsonl',''))).toLocaleDateString('en-US');
+                var date = `Date: ${new Date(Number(sortedSet[key]['file_name'].replace('.jsonl',''))).toLocaleDateString('en-US')}`;
+                if (date == "Date: Invalid Date"){
+                    date = `Filename: ${sortedSet[key]['file_name'].replace('.jsonl','')}`
+                }
                 $('#select_chat_div').append('<div class="select_chat_block" file_name="' +
                 sortedSet[key]['file_name'] + '"><div class=avatar><img src="characters/' +
                 characters_array[active_character_index]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' +
@@ -3033,7 +3037,7 @@ async function getAllCharaChats() {
                 mes + '</div></div><hr>');
                 //highlights last chat
                 if (characters_array[active_character_index]['chat'] == sortedSet[key]['file_name'].replace('.jsonl', '')) {
-                    $('#select_chat_div').children(':nth-last-child(1)').attr('highlight', true);
+                    document.getElementsByClassName('select_chat_block')[0].classList.add("highlighted");
                 }
             }
         },

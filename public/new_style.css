@@ -433,13 +433,13 @@ div#dialogue_popup {
 .select_chat_block_mes {
     position: relative;
     width: 100%;
-    left: -10%;
+    left: -15%;
 }
 
 .select_chat_block_filename {
     height: 30px;
     position: relative;
-    top: -10px;
+    white-space: nowrap;
 }
 
 .select_chat_block {
@@ -922,3 +922,4 @@ div#swipe_right img {
     height: 30px;
     width: 30px;
 }
+.highlighted{background: #222222;}

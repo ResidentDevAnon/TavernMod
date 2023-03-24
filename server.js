@@ -961,15 +961,21 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
             });
 
             rl.on('close', () => {
+                //this is very ugly and needs a refactor over the whole load func
+                //but it works for now
                 if(lastLine){
-                    let jsonData = JSON.parse(lastLine);
+                    let fileData = fs.readFileSync(chatsPath+char_dir+'/'+file);
+                    let firstLine = fileData.toString().split('\n')[0];
                     chatData[i] = {};
+                    let jsonData = JSON.parse(firstLine);
+                    chatData[i]['last_open_date'] = jsonData['last_open_date'];
                     chatData[i]['file_name'] = file;
+                    jsonData = JSON.parse(lastLine);
                     chatData[i]['mes'] = jsonData['mes'];
                     ii--;
                     if(ii === 0){ 
                         response.send(chatData);
-                        }
+                    }
                 }
                 rl.close();
             });
