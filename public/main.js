@@ -9,9 +9,10 @@ var curr_username = default_user_name;
 var curr_charname = "Chloe";
 var chat_mess_content = [{
     is_user: false,
-    mes: '*You went inside. The air smelled of fried meat, tobacco and a hint of wine. A dim light was cast by candles, and a fire crackled in the fireplace. It seems to be a very pleasant place. Behind the wooden bar is an elf waitress, she is smiling. Her ears are very pointy, and there is a twinkle in her eye. She wears glasses and a white apron. As soon as she noticed you, she immediately came right up close to you.*' +
+    swipe_index: 0,
+    swipe_array: ['*You went inside. The air smelled of fried meat, tobacco and a hint of wine. A dim light was cast by candles, and a fire crackled in the fireplace. It seems to be a very pleasant place. Behind the wooden bar is an elf waitress, she is smiling. Her ears are very pointy, and there is a twinkle in her eye. She wears glasses and a white apron. As soon as she noticed you, she immediately came right up close to you.*' +
         ' <p>Hello there! How is your evening going?</P>\n' +
-        '<img src="img/tavern.png" width=50% style="opacity:1; display:block;border-radius:5px;margin-top:25px;margin-bottom:23px; margin-left: 45px;margin-right: auto;">\n<a id="verson" style="color:rgb(229, 224, 216,0.8);" href="https://github.com/TavernAI/TavernAI" target="_blank">TavernAI v' + VERSION + '</a><div id="characloud_url" style="margin-right:10px;margin-top:0px;float:right; height:25px;cursor: pointer;opacity: 0.99;display:inline-block;"><img src="img/cloud_logo.png" style="width: 25px;height: auto;display:inline-block; opacity:0.7;"><div style="vertical-align: top;display:inline-block;">Cloud</div></div><br><br><br><br>'
+        '<img src="img/tavern.png" width=50% style="opacity:1; display:block;border-radius:5px;margin-top:25px;margin-bottom:23px; margin-left: 45px;margin-right: auto;">\n<a id="verson" style="color:rgb(229, 224, 216,0.8);" href="https://github.com/TavernAI/TavernAI" target="_blank">TavernAI v' + VERSION + '</a><div id="characloud_url" style="margin-right:10px;margin-top:0px;float:right; height:25px;cursor: pointer;opacity: 0.99;display:inline-block;"><img src="img/cloud_logo.png" style="width: 25px;height: auto;display:inline-block; opacity:0.7;"><div style="vertical-align: top;display:inline-block;">Cloud</div></div><br><br><br><br>']
 }];
 
 var default_ch_mes = "Hello";
@@ -637,7 +638,7 @@ function clear_swipe(){
 
 function addOneMessage(mes) {
     clear_swipe()
-    var messageText = mes['mes'];
+    var messageText = mes['swipe_array'][swipe_index];
     var characterName = curr_username;
     generatedPromtCache = '';
     var avatarImg = "User Avatars/" + user_avatar;
@@ -855,7 +856,7 @@ async function Generate(type) {
             chat_mess_content[chat_mess_content.length - 1]['is_user'] = true;
             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] =swipe_index;
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
-            chat_mess_content[chat_mess_content.length - 1]['mes'] = textareaText;
+            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][swipe_index] = textareaText;
             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
         }
         var charPersonality = $.trim(characters_array[active_character_index].personality);
@@ -885,10 +886,10 @@ async function Generate(type) {
         for (var i = chat_mess_content.length - 1; i >= 0; i--) {
             // first greeting message
             if (j == 0) {
-                chat_mess_content[j]['mes'] = replacePlaceholders(chat_mess_content[j]['mes']);
+                chat_mess_content[j]['swipe_array'][swipe_index] = replacePlaceholders(chat_mess_content[j]['swipe_array'][swipe_index]);
             }
             let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
-            openai_msgs[i] = { "role": role, "content": chat_mess_content[j]['mes'] };
+            openai_msgs[i] = { "role": role, "content": chat_mess_content[j]['swipe_array'][swipe_index] };
             j++;
         }
 
@@ -1047,7 +1048,7 @@ async function Generate(type) {
                                 continue;
                             if (event == "data: [DONE]") {
                                 is_send_press = false;
-                                chat[chat.length - 1]['mes'] = getMessage;
+                                chat[chat.length - 1]['swipe_array'][swipe_index] = getMessage;
                                 $("#send_but").removeClass('generic_hidden');
                                 $("#loading_mes").addClass('generic_hidden');
                                 saveChat();
@@ -1063,7 +1064,7 @@ async function Generate(type) {
                             chat[chat.length - 1]['is_user'] = false;
                             chat[chat.length - 1]['swipe_index'] = swipe_index;
                             chat[chat.length - 1]['swipe_array'] =swipe_array;
-                            chat[chat.length - 1]['mes'] = "";
+                            chat[chat.length - 1]['swipe_array'][swipe_index] = "";
                             addOneMessage(chat[chat.length - 1]);
                         }
 
@@ -1124,7 +1125,7 @@ async function Generate(type) {
                             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = swipe_index;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
                             getMessage = $.trim(getMessage);
-                            chat_mess_content[chat_mess_content.length - 1]['mes'] = getMessage;
+                            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][swipe_index] = getMessage;
                             //hook here for swipe right
                             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
                             $("#send_but").removeClass('generic_hidden');
@@ -1176,16 +1177,16 @@ async function Generate(type) {
 async function saveChat() {
     chat_mess_content.forEach(function (item, i) {
         if (item['is_user']) {
-            var str = item['mes'].replace(curr_username + ':', default_user_name + ':');
-            chat_mess_content[i]['mes'] = str;
+            var str = item['swipe_array'][swipe_index].replace(curr_username + ':', default_user_name + ':');
+            chat_mess_content[i]['swipe_array'][swipe_index] = str;
         }
     });
     //only exists as future support for custom log names
-    var save_chat = [{last_open_date:Date.now() }, ...chat_mess_content];
+    var payload = [{last_open_date:Date.now() }, ...chat_mess_content];
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
-        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, chat: save_chat, avatar_url: characters_array[active_character_index].avatar }),
+        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, chat: payload, avatar_url: characters_array[active_character_index].avatar }),
         cache: true,
         dataType: "json",
         contentType: "application/json",
@@ -1198,7 +1199,6 @@ async function saveChat() {
     });
 }
 async function getChat() {
-    //console.log(characters[active_character_index].chat);
     jQuery.ajax({
         type: 'POST',
         url: '/getchat',
@@ -1207,17 +1207,12 @@ async function getChat() {
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
-            //console.log(data);
-            //chat.length = 0;
             if (data[0] !== undefined) {
                 for (let key in data) {
                     chat_mess_content.push(data[key]);
                 }
-                //chat =  data;
                 chat_mess_content.shift();
-
             }
-            //console.log(chat);
             getChatResult();
             saveChat();
         },
@@ -1235,22 +1230,20 @@ function getChatResult() {
 
         chat_mess_content.forEach(function (item, i) {
             if (item['is_user']) {
-                var str = item['mes'].replace(default_user_name + ':', curr_charname + ':');
-                chat_mess_content[i]['mes'] = str;
+                var str = item['swipe_array'][swipe_index].replace(default_user_name + ':', curr_charname + ':');
+                str.replace(default_user_name + ':', curr_charname + ':');
+                chat_mess_content[i]['swipe_array'][swipe_index] = str;
             }
         });
-
-
     } else {
-        //console.log(characters[active_character_index].first_mes);
         chat_mess_content[0] = {};
         chat_mess_content[0]['is_user'] = false;
         chat_mess_content[0]['swipe_index'] = swipe_index;
         chat_mess_content[0]['swipe_array'] = swipe_array;
         if (characters_array[active_character_index].first_mes != "") {
-            chat_mess_content[0]['mes'] = characters_array[active_character_index].first_mes;
+            chat_mess_content[0]['swipe_array'][swipe_index] = characters_array[active_character_index].first_mes;
         } else {
-            chat_mess_content[0]['mes'] = default_ch_mes;
+            chat_mess_content[0]['swipe_array'][swipe_index] = default_ch_mes;
         }
         }
         printMessages();
@@ -1565,7 +1558,7 @@ $("#dialogue_popup_ok").click(function () {
     if (popup_type == 'new_chat' && active_character_index != undefined && menu_type != "create") {//Fix it; New chat doesn't create while open create character menu
         clearChat();
         chat_mess_content.length = 0;
-        characters_array[active_character_index].chat = Date.now();
+        characters_array[active_character_index]['chat'] = Date.now();
         $("#selected_chat_pole").val(characters_array[active_character_index].chat);
         common_click_save()
         getChat();
@@ -1752,7 +1745,8 @@ $("#form_create").submit(function(type) {
                         chat_mess_content.length = 0;
                         chat_mess_content[0] = {};
                         chat_mess_content[0]['is_user'] = false;
-                        chat_mess_content[0]['mes'] = this_ch_mes;
+                        chat_mess_content[0]['swipe_array']=swipe_array;
+                        chat_mess_content[0]['swipe_array'][swipe_index] = this_ch_mes;
                         add_mes_without_animation = true;
                         addOneMessage(chat_mess_content[0]);
                     }
@@ -2932,7 +2926,7 @@ $(document).on('click', '.mes_edit', function () {
         var edit_mes_id = $(this).parent().parent().parent().attr('mesid');
         this_edit_mes_id = edit_mes_id;
 
-        var text = chat_mess_content[edit_mes_id]['mes'];
+        var text = chat_mess_content[edit_mes_id]['swipe_array'][swipe_index];
         if (chat_mess_content[edit_mes_id]['is_user']) {
             this_edit_mes_chname = curr_username;
         } else {
@@ -2959,7 +2953,7 @@ $(document).on('click', '.mes_edit', function () {
 });
 $(document).on('click', '.mes_edit_cancel', function () {
     //var text = $(this).parent().parent().children('.mes_text').children('.edit_textarea').val();
-    var text = chat_mess_content[this_edit_mes_id]['mes'];
+    var text = chat_mess_content[this_edit_mes_id]['swipe_array'][swipe_index];
 
     $(this).parent().parent().children('.mes_text').empty();
     $(this).addClass('generic_hidden')
@@ -2975,7 +2969,7 @@ function messageEditDone(div) {
     var text = div.parent().parent().children('.mes_text').children('.edit_textarea').val();
     //var text = chat[this_edit_mes_id];
     text = text.trim();
-    chat_mess_content[this_edit_mes_id]['mes'] = text;
+    chat_mess_content[this_edit_mes_id]['swipe_array'][swipe_index] = text;
     div.parent().parent().children('.mes_text').empty();
     div.addClass('generic_hidden')
     div.parent().children('.mes_edit_cancel').addClass('generic_hidden')
@@ -2999,7 +2993,6 @@ $("#your_name_button").click(function () {
 //Select chat
 async function getAllCharaChats() {
     $('#select_chat_div').html('');
-    //console.log(characters[active_character_index].chat);
     jQuery.ajax({
         type: 'POST',
         url: '/getallchatsofchatacter',
@@ -3008,6 +3001,8 @@ async function getAllCharaChats() {
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
+            if (data == 'empty')
+            {console.log(`no chats found`)}
             $('#load_select_chat_div').addClass('generic_hidden')
             let dataArr = Object.values(data);
             //what is this here for?
@@ -3021,7 +3016,7 @@ async function getAllCharaChats() {
             }
             for (const key in sortedSet) {
                 let strlen = 200;
-                let mes = sortedSet[key]['mes'];
+                let mes = sortedSet[key]['swipe_array'][swipe_index];
                 if (mes.length > strlen) {
                     mes = '...' + mes.substring(mes.length - strlen);
                 }
@@ -3036,9 +3031,7 @@ async function getAllCharaChats() {
                 date + '</div><div class="select_chat_block_mes">' +
                 mes + '</div></div><hr>');
                 //highlights last chat
-                if (characters_array[active_character_index]['chat'] == sortedSet[key]['file_name'].replace('.jsonl', '')) {
-                    document.getElementsByClassName('select_chat_block')[0].classList.add("highlighted");
-                }
+                document.getElementsByClassName('select_chat_block')[0].classList.add("highlighted");
             }
         },
         error: function (jqXHR, exception) {
@@ -3183,7 +3176,7 @@ $("#chat_import_file").on("change", function (e) {
     });
 });
 $(document).on('click', '.select_chat_block', function () {
-    let file_name = $(this).attr("file_name").replace('.jsonl', '');
+    var file_name = $(this).attr("file_name").replace('.jsonl', '');
     characters_array[active_character_index]['chat'] = file_name;
     clearChat();
     chat_mess_content.length = 0;

@@ -929,59 +929,65 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
     if(!request.body) return response.sendStatus(400);
 
     var char_dir = (request.body.avatar_url).replace('.png','')
+    try { 
         fs.readdir(chatsPath+char_dir, (err, files) => {
-            if (err) {
-                console.error(err);
-                response.send({error: true});
-                return;
-            }
-            
-            // filter for JSON files
-            const jsonFiles = files.filter(file => path.extname(file) === '.jsonl');
-            
-            // sort the files by name
-            //jsonFiles.sort().reverse();
-            
-            // print the sorted file names
-            var chatData = {};
-            let ii = jsonFiles.length;
-            for(let i = jsonFiles.length-1; i >= 0; i--){
-            const file = jsonFiles[i];
-            
-            const fileStream = fs.createReadStream(chatsPath+char_dir+'/'+file);
-            const rl = readline.createInterface({
-                input: fileStream,
-                crlfDelay: Infinity
-            });
-            
-            let lastLine;
-            
-            rl.on('line', (line) => {
-                lastLine = line;
-            });
-
-            rl.on('close', () => {
-                //this is very ugly and needs a refactor over the whole load func
-                //but it works for now
-                if(lastLine){
-                    let fileData = fs.readFileSync(chatsPath+char_dir+'/'+file);
-                    let firstLine = fileData.toString().split('\n')[0];
-                    chatData[i] = {};
-                    let jsonData = JSON.parse(firstLine);
-                    chatData[i]['last_open_date'] = jsonData['last_open_date'];
-                    chatData[i]['file_name'] = file;
-                    jsonData = JSON.parse(lastLine);
-                    chatData[i]['mes'] = jsonData['mes'];
-                    ii--;
-                    if(ii === 0){ 
-                        response.send(chatData);
-                    }
+                if (err) {
+                    console.error(err);
+                    response.send({error: true});
+                    return;
                 }
-                rl.close();
-            });
-        }
-    });
-    
+                
+                // filter for JSON files
+                const jsonFiles = files.filter(file => path.extname(file) === '.jsonl');
+                
+                // sort the files by name
+                //jsonFiles.sort().reverse();
+                
+                // print the sorted file names
+                var chatData = {};
+                let ii = jsonFiles.length;
+                for(let i = jsonFiles.length-1; i >= 0; i--){
+                const file = jsonFiles[i];
+                
+                const fileStream = fs.createReadStream(chatsPath+char_dir+'/'+file);
+                const rl = readline.createInterface({
+                    input: fileStream,
+                    crlfDelay: Infinity
+                });
+                
+                let lastLine;
+                
+                rl.on('line', (line) => {
+                    lastLine = line;
+                });
+
+                rl.on('close', () => {
+                    //this is very ugly and needs a refactor over the whole load func
+                    //but it works for now
+                    if(lastLine){
+                        let fileData = fs.readFileSync(chatsPath+char_dir+'/'+file);
+                        let firstLine = fileData.toString().split('\n')[0];
+                        chatData[i] = {};
+                        let jsonData = JSON.parse(firstLine);
+                        chatData[i]['last_open_date'] = jsonData['last_open_date'];
+                        chatData[i]['file_name'] = file;
+                        jsonData = JSON.parse(lastLine);
+                        chatData[i]['swipe_index'] = jsonData['swipe_index'];
+                        chatData[i]['swipe_array'] = jsonData['swipe_array'];
+                        ii--;
+                        if(ii === 0){ 
+                            response.send(chatData);
+                        }
+                    }
+                    rl.close();
+                });
+            }
+        })
+    } catch (error) {
+        //no files
+        console.log(`empty`)
+        response.send('empty');
+    }  
 });
 
 app.post("/getstatus_scale", jsonParser, function(request, response_getstatus_scale = response){
