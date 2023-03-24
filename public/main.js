@@ -732,10 +732,14 @@ $("#send_but").click(function () {
 
 
 function build_main_system_message(r_flag=false){
+    //console.log(`tried update sys prompt`)
     //global needs to be updated at this point
     //dont want to jump though updating it on char click right now
     if (active_character_index == undefined){
-        return ''
+        if (r_flag){
+            return ''
+        }
+        return
     }
     name2 = characters_array[active_character_index].name;
     let sys_prompt_compiler = `${replacePlaceholders(system_prompt)}\n`
@@ -744,7 +748,7 @@ function build_main_system_message(r_flag=false){
     }
     else{
         sys_prompt_compiler += `${replacePlaceholders(NSFW_off_prompt)}\n`;
-        }
+    }
     if (CYOA_mode) {
         sys_prompt_compiler += `${replacePlaceholders(CYOA_prompt)}\n`;
     }
@@ -2373,6 +2377,7 @@ $(document).on('click', '#OAI_gen_button', function () {
 $('#stream_toggle').change(function () {
     stream_openai = !!$('#stream_toggle').prop('checked');
     saveSettings();
+    build_main_system_message()
 });
 $('#nsfw_toggle').change(function () {
     nsfw_toggle = !!$('#nsfw_toggle').prop('checked');
@@ -2380,26 +2385,32 @@ $('#nsfw_toggle').change(function () {
 });$('#CYOA_mode').change(function () {
     CYOA_mode = !!$('#CYOA_mode').prop('checked');
     saveSettings();
+    build_main_system_message()
 });
 $('#custom_1_switch').change(function () {
     custom_1_switch = !!$('#custom_1_switch').prop('checked');
     saveSettings();
+    build_main_system_message()
 });
 $('#custom_2_switch').change(function () {
     custom_2_switch = !!$('#custom_2_switch').prop('checked');
     saveSettings();
+    build_main_system_message()
 });
 $('#custom_3_switch').change(function () {
     custom_3_switch = !!$('#custom_3_switch').prop('checked');
     saveSettings();
+    build_main_system_message()
 });
 $('#custom_4_switch').change(function () {
     custom_4_switch = !!$('#custom_4_switch').prop('checked');
     saveSettings();
+    build_main_system_message()
 });
 $('#custom_5_switch').change(function () {
     custom_5_switch = !!$('#custom_5_switch').prop('checked');
     saveSettings();
+    build_main_system_message()
 });
 
 //submenu stuff
