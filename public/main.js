@@ -82,6 +82,12 @@ var anchor_order = 0;
 var style_anchor = true;
 var character_anchor = true;
 
+//cost vars
+var prompt_price_per1k = 0.002 / 1000
+var reply_price_per1k = 0.002 / 1000
+var last_sent_cntn_tokens = 0;
+var last_got_gen_tokens = 0;
+
 //novel settings
 var temp_novel = 0.5;
 var rep_pen_novel = 1;
@@ -107,8 +113,9 @@ var preset_settings_openai = 'Default';
 
 var openai_selected_gen = 300;
 var openai_min_gen = 300;
-var openai_max_gen = 4095;
-var openai_selected_context = 4095;
+var openai_max_gen = 3795;
+//'reserve' 300 tokens for a reply
+var openai_selected_context = 2048;
 var scale_max_context = 7750;
 var scale_max_gen = 400;
 
@@ -585,18 +592,58 @@ async function delBackground(bg) {
 
 //soft refresh chat messages
 //for new format rules / new names
-function soft_refresh(){
-    clearChat()
-    printMessages()
-}
+function soft_refresh() {
+    //whatever it works ok
+    if ($("#character_name_pole")[0].value != ''){
+        curr_charname = $("#character_name_pole")[0].value
+        $("#rm_button_selected_ch").children("h2").text(curr_charname);
+    }
 
+    let messages = document.getElementsByClassName('mes');
+    console.log(messages);
+    
+    for (let i = 0; i < messages.length; i++) {
+        let element = messages[i];
+        var is_user = element.getAttribute('is_user');
+        var swipe_counter = Number(element.getAttribute('swipe_index'));
+        //console.log(is_user);
+        
+        // Hide swipe_left and swipe_right on all but last message with is_user=false, check if swipe index > 0 for left swipe
+        let swipeLeft = element.querySelector('.swipe_left');
+        let swipeRight = element.querySelector('.swipe_right');
+        if (is_user=='false' && i !== messages.length - 1 || i  == 0) {
+            //yes these if statements are needed, it throws a null reading error if its not here
+            if (swipeLeft){
+                swipeLeft.classList.add('generic_hidden')
+            }
+            if (swipeRight){
+            swipeRight.classList.add('generic_hidden')
+            }
+    }else{
+        if (swipeLeft && swipe_counter > 0){
+            swipeLeft.classList.remove('generic_hidden')
+        }
+        if (swipeRight){
+        swipeRight.classList.remove('generic_hidden')
+        }
+    }
+    //display names
+    if(is_user == 'true'){
+        element.getElementsByClassName('displayname')[0].textContent = curr_username
+    }
+    else{
+        element.getElementsByClassName('displayname')[0].textContent = curr_charname
+    }
+    }}
 //add new messages
 function printMessages() {
     //0 index
     newest_mes_index = chat_mess_content.length -1
     chat_mess_content.forEach(function (item, i, arr) {
-        addOneMessage(item);
-    });
+        addOneMessage(item,chat_mess_content);
+    }
+    );
+    soft_refresh()
 }
 function clearChat() {
     curr_message_id = 0;
@@ -661,20 +708,17 @@ function addOneMessage(mes) {
     messageText = messageFormating(messageText, characterName,true);
 
     //ugly way to build a template
-    let chatTemplate = `
-        <div class='mes' mesid=${curr_message_id} ch_name=${characterName}>
+    var chatTemplate = `
+        <div class='mes' mesid=${curr_message_id} ch_name=${characterName} is_user='${mes['is_user']}' swipe_index='${mes['swipe_index']}'>
             <div class='for_checkbox generic_hidden'></div>
             <input type='checkbox' class='del_checkbox generic_hidden'>
     `;
-    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != curr_username && swipe_index > 0) {
-        chatTemplate += `<div id='swipe_left' class="swipe_left"><img src="img/tri.png"></div>`;
-    }
     chatTemplate += `<div class=avatar>
     <img src='${avatarImg}'>
     </div>
     <div class=mes_block>
     <div class=ch_name>
-    ${characterName}
+    <div class=displayname>${characterName}</div>
     <div title=Edit class=mes_edit>
     <img src='img/scroll.png' style='width:30px;height:30px;'>
     </div>
@@ -686,9 +730,19 @@ function addOneMessage(mes) {
             </div>
             </div>
             <div class=mes_text></div>
-            </div>`
-    if (curr_message_id == newest_mes_index && curr_message_id != 0 && characterName != curr_username) {
-        chatTemplate += `<div id='swipe_right' class="swipe_right"><img src="img/tri.png"></div>`;
+            `
+
+        //genuis moment, swap the order here and throw it in reverse in the justify so its 'right aligned' by default
+        //and stetches left for the left swipe
+    if (!mes['is_user']) {
+        chatTemplate += `<div class='swipe_block'>
+        <div id='swipe_right' class="swipe_right generic_hidden">
+        <img src="img/tri.png">
+        </div>
+        <div id='swipe_left' class="swipe_left generic_hidden">
+            <img src="img/tri.png">
+        </div>
+        </div>`;
     }
     chatTemplate += `</div>`;
     
@@ -784,13 +838,13 @@ function build_main_system_message(r_flag=false){
         }
     }
     if (charDescription.length > 0) {
-        built = replacePlaceholders(description_prompt) + charDescription;
+        built = replacePlaceholders(description_prompt) + charDescription + '\n';
     }
     if (charPersonality.length > 0) {
-        built += replacePlaceholders(personality_prompt) + charPersonality;
+        built += replacePlaceholders(personality_prompt) + charPersonality+ '\n';
     }
     if (Scenario.length > 0) {
-        built += replacePlaceholders(scenario_prompt) + Scenario;
+        built += replacePlaceholders(scenario_prompt) + Scenario+ '\n';
     }
     built = `${sys_prompt_compiler}${built}`
     document.getElementById('scenario_preview').value = built
@@ -801,11 +855,10 @@ function build_main_system_message(r_flag=false){
     {return}
 }
 function token_cost_converter(){
-    var prompt_price_per1k = 0.002
-    var reply_price_per1k = 0.002
-    prompt_price_per1k /= 1000
-    reply_price_per1k /= 1000
-    document.getElementById('cost_preview').value = `Min $${(openai_selected_context*prompt_price_per1k)}\n(${openai_selected_context} context tokens with 0 reply tokens)\nMax $${((openai_selected_gen*prompt_price_per1k)+(openai_selected_context*reply_price_per1k))}\n(${openai_selected_context} context tokens with ${openai_selected_gen} reply tokens)`
+    document.getElementById('cost_preview').value = `Min $${(openai_selected_context*prompt_price_per1k)}
+(${openai_selected_context} context tokens with 0 reply tokens)
+Max $${((openai_selected_context*prompt_price_per1k)+((4096-openai_selected_context)*reply_price_per1k))}
+(${openai_selected_context} context tokens with ${4096-openai_selected_context} reply tokens)`
 }
 
 async function Generate(type) {
@@ -893,16 +946,16 @@ async function Generate(type) {
             j++;
         }
 
-        let this_max_context = openai_selected_context;
-		let this_max_tokens = openai_selected_gen;
+        let max_context_tokens = openai_selected_context;
+		let max_gen_tokens = openai_selected_gen;
 
         // If we're using Scale, the user (presumably) is using GPT4 so we want
         // to be able to use a larger context. We're still using the GPT3
         // tokenization API so we can't go too close to the full 8192 limit.
         if (main_api == 'scale') {
             console.log(`Using Scale; increasing max context to ${scale_max_context} and max repsonse tokens to ${scale_max_gen}`);
-            this_max_context = scale_max_context;
-            this_max_tokens = scale_max_gen;
+            max_context_tokens = scale_max_context;
+            max_gen_tokens = scale_max_gen;
         }
 
         var i = 0;
@@ -962,10 +1015,21 @@ async function Generate(type) {
                 }
             }
             total_count += countTokens(examples_tosend);
+            var dynamic_gen = 0
+            //this WAS for scale but i remembered it doesnt take tavern gen settings
+            //so its now a placeholder for a hook for what model to use
+            if (main_api == 'openai'){
+                dynamic_gen = 4096 - max_context_tokens
+            }
+            console.log(`dynamic gen amount assignment given ${dynamic_gen} tokens`)
+            if (max_gen_tokens < dynamic_gen){
+                dynamic_gen = max_gen_tokens
+                console.log(`cap'd at ${dynamic_gen} tokens`)
+            }
             for (let j = openai_msgs.length - 1; j >= 0; j--) {
                 let item = openai_msgs[j];
                 let item_count = countTokens(item);
-                if ((total_count + item_count) >= (openai_selected_context - openai_selected_gen)) {break;}
+                if ((total_count + item_count) >= (max_context_tokens)) {break;}
                 if (j == openai_msgs.length - 1){item.content = item.content}
                 openai_msgs_tosend.push(item);
                 total_count += item_count;
@@ -976,7 +1040,7 @@ async function Generate(type) {
                     for (let k = 0; k < example_block.length; k++) {
                         if (example_block.length == 0) { continue; }
                         let example_count = countTokens(example_block[k]);
-                        if ((total_count + example_count + start_chat_count) >= (openai_selected_context - openai_selected_gen)) {break;}
+                        if ((total_count + example_count + start_chat_count) >= (max_context_tokens)) {break;}
                         if (k == 0) {
                             examples_tosend.push(new_chat_msg);
                             total_count += start_chat_count;
@@ -1005,7 +1069,7 @@ async function Generate(type) {
                 "temperature": parseFloat(temp_openai),
                 "frequency_penalty": parseFloat(freq_pen_openai),
                 "presence_penalty": parseFloat(pres_pen_openai),
-                "max_tokens": openai_selected_gen,
+                "max_tokens": dynamic_gen,
                 "stream": stream_openai
             };
 
@@ -1079,6 +1143,14 @@ async function Generate(type) {
                 success: function (data) {
                     if (streaming)
                         return;
+                    try{
+                        last_sent_cntn_tokens = data.usage.prompt_tokens
+                        last_got_gen_tokens = data.usage.completion_tokens
+                        update_real_cost()
+                    }
+                    catch{
+                        update_real_cost(true)
+                    }
                     is_send_press = false;
                     //$("#send_textarea").focus();
                     //$("#send_textarea").removeAttr('disabled');
@@ -1148,6 +1220,7 @@ async function Generate(type) {
                             $("#send_but").click()
                         }
                     }
+                    soft_refresh()
                 },
                 error: function (jqXHR, exception) {
                     if (streaming) {
@@ -1277,6 +1350,7 @@ $("#rm_button_settings").click(function () {
     $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
     //default selected option
     //$("#api_settings").children("h2").addClass('selected_button')
+    build_main_system_message()
 });
 $("#rm_button_characters").click(function () {
         selected_button = 'characters';
@@ -1652,7 +1726,8 @@ function read_avatar_load(input) {
         }
         reader.onload = function (e) {
             if (selected_button == 'character_edit') {
-                common_click_save()
+                //bypass save delay
+                $("#create_button").click()
             }
             $('#avatar_load_preview')
                 .attr('src', e.target.result);
@@ -1730,11 +1805,6 @@ $("#form_create").submit(function(type) {
             contentType: false,
             processData: false,
             success: function (html) {
-                $('.mes').each(function () {
-                    if ($(this).attr('ch_name') != curr_username) {
-                        $(this).children('.avatar').children('img').attr('src', $('#avatar_load_preview').attr('src'));
-                    }
-                });
                 if (chat_mess_content.length === 1) {
                     var this_ch_mes = default_ch_mes;
                     if ($('#firstmessage_textarea').val() != "") {
@@ -1749,6 +1819,7 @@ $("#form_create").submit(function(type) {
                         chat_mess_content[0]['swipe_array'][swipe_index] = this_ch_mes;
                         add_mes_without_animation = true;
                         addOneMessage(chat_mess_content[0]);
+                        soft_refresh()
                     }
                 }
                 $('#create_button').removeAttr("disabled");
@@ -1775,7 +1846,7 @@ $("#form_create").submit(function(type) {
                     let example_blocks = parseExampleIntoIndividual(block);
                     for (var block of example_blocks) {
                         exmp_tokens += countTokens(block);
-                        msg_count += example_blocks.length;
+                        msg_count ++;
                     }
                 }
                 let count_tokens = desc_tokens + pers_tokens + scen_tokens + exmp_tokens;
@@ -1941,6 +2012,7 @@ $("#option_regenerate").click(function () {
         Generate('regenerate');
     }
 });
+//what the fuck is this
 $("#option_delete_mes").click(function () {
     if (active_character_index != undefined && !is_send_press) {
         $('#dialogue_del_mes').removeClass('generic_hidden')
@@ -1974,7 +2046,7 @@ $("#dialogue_del_mes_ok").click(function () {
         $(this).parent().children('.for_checkbox').removeClass('generic_hidden')
         $(this).parent().css('background', css_mes_bg);
         $(this).prop("checked", false);
-
+        soft_refresh()
 
     });
     if (this_del_mes != 0) {
@@ -2985,8 +3057,8 @@ $("#your_name_button").click(function () {
         if (curr_username === undefined || curr_username == '') curr_username = default_user_name;
         console.log(curr_username);
         soft_refresh()
-        //saveSettings('change_name');
-        saveSettings();
+        //the insane bastard somehow uses username as a validator somwhere in server.js so we need to reload
+        saveSettings("change_name");
 
     }
 });
@@ -3282,6 +3354,7 @@ $("#api_settings").click(function () {
         $("#api_settings").children("h2").addClass('selected_button')
         $("#system_settings").children("h2").removeClass('selected_button')
         //assignments are handled elsewhere in legacy so theres none here
+        build_main_system_message()
     }
 );
 $("#system_settings").click(function () {
@@ -3656,3 +3729,12 @@ $('#right_menu-toggle').change(function () {
         main_chat.classList.remove('right_open');
     }
 })
+function update_real_cost(error) {
+    if (error){
+        document.getElementById('cost_spent').value = `something borked during message gen`
+        return
+    }
+    //weird formattting is a req because its in a format block, acts as \n but more readable
+    document.getElementById('cost_spent').value = `Actual $${((last_got_gen_tokens*prompt_price_per1k)+(last_sent_cntn_tokens*reply_price_per1k))}
+(${last_sent_cntn_tokens} context tokens with ${last_got_gen_tokens} reply tokens, total: ${last_sent_cntn_tokens+last_got_gen_tokens})`
+}

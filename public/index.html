@@ -309,68 +309,75 @@
                     </label>
                 </div>
                 <div id="openai_gen_block">
-                    <h4>Tokens to Generate</h4><h5 id="OAI_gen_display">select</h5>
-                    <input type="number" id="OAI_gen_input" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
-                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="4095" placeholder='0'value='0'step="1" list="values">
+                    <h4>Max Tokens to Generate</h4><h5>its dynmaic now</h5><h5>you can slide this all the way right no problem</h5><h5>or cap to prevent huge text blocks</h5><h5 id="OAI_gen_display">select</h5>
+                    <input type="number" id="OAI_gen_input" name="volume" min="300" max="3795" placeholder='0'value='0'step="1">
+                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="3795" placeholder='0'value='0'step="1" list="values">
                     <div class="buton_block">
                         <input type="button" id="OAI_gen_button" value='300'>
                         <input type="button" id="OAI_gen_button" value='1000'>
                         <input type="button" id="OAI_gen_button" value='2048'>
-                        <input type="button" id="OAI_gen_button" value='4095'>
+                        <input type="button" id="OAI_gen_button" value='3795'>
                     </div>
                 </div>
 				<div id="openai_context_block">
                     <h4>OpenAI Context Size</h4><h5 id="OAI_context_display">select</h5>
-                    <input type="number" id="OAI_context_input" name="volume" min="300" max="4095" placeholder='0'value='0'step="1">
-                    <input type="range" id="OAI_context_slider" name="volume" min="300" max="4095" step="1" list="values">
+                    <input type="number" id="OAI_context_input" name="volume" min="300" max="3795" placeholder='0'value='0'step="1">
+                    <input type="range" id="OAI_context_slider" name="volume" min="300" max="3795" step="1" list="values">
                     <div class="buton_block">
                         <input type="button" id="OAI_contx_button" value='300'>
                         <input type="button" id="OAI_contx_button" value='1000'>
                         <input type="button" id="OAI_contx_button" value='2048'>
-                        <input type="button" id="OAI_contx_button" value='4095'>
+                        <input type="button" id="OAI_contx_button" value='3795'>
                     </div>
-                </div>
-                <h4>Anchors Order</h4><h5>Helps to increase the length of messages (<a href="/notes/9" target="_blank">?</a>)</h5>
-                <select id="anchor_order">
-                    <option value="0">Character Anchor - Style Anchor</option>
-                    <option value="1">Style Anchor - Character Anchor</option>
-                </select>
-                <!--anchors and retry checks-->
-                <div id="anchor_checkbox">
-                    <label class="switch">
-                        <input id="character_anchor" type="checkbox"/><span></span>
-                        <h4>Character Anchor</h4>
-                    </label>
-                    <label class="switch" >
-                        <input id="style_anchor" type="checkbox"/><span></span>
-                        <h4>Style Anchor</h4>
-                    </label>
-                    <label class="switch">
-                        <input id="auto_retry" type="checkbox"/><span></span>
-                            <h4>Auto retry on fail</h4>
-                    </label>
-                    <h5>it just slaps enter again for you</h5>
-                    <label class="switch">
-                        <input id="continuous_mode" type="checkbox"/><span></span>
-                            <h4>continuous generation</h4>
-                    </label>
-                    <h5>slaps enter as soon as possible, either loads current message as is or lets bot continue where it left</h5>
-                    <h5>this is potentially a VERY dangerous toggle</h5>
                 </div>
             </div>
 			<!-- Tweaks -->
 			<div style='clear: both'></div>
 			<hr id = "tweak_hr">
 			<div id = "tweak_container">
-				<h3 style='margin-bottom: 10px;'>Tweaks and Reply Mods</h3>
+                <h3 style='margin-bottom: 10px;'>Tweaks and Reply Mods</h3>
+                <div class="right_menu_button" id=""><h2>ANCHORS</h2>
+                    <div id = 'anchor_block'>
+                        <h4>Anchors Order</h4><h5>Helps to increase the length of messages (<a href="/notes/9" target="_blank">?</a>)</h5>
+                        <select id="anchor_order">
+                            <option value="0">Detail Anchor -> Length Anchor</option>
+                            <option value="1">Length Anchor -> Detail Anchor</option>
+                        </select>
+                        <!--anchors and retry checks-->
+                        <div id="anchor_checkbox">
+                    <label class="switch">
+                        <input id="character_anchor" type="checkbox"/><span></span>
+                        <h4>Detail Anchor</h4>
+                    </label>
+                    <label class="switch" >
+                        <input id="style_anchor" type="checkbox"/><span></span>
+                        <h4>Length Anchor</h4>
+                    </label>
+                </div>
+                </div>
+                <div class="right_menu_button" id=""><h2>RETRY</h2> 
+                    <label class="switch">
+                        <input id="auto_retry" type="checkbox"/><span></span>
+                        <h4>Auto retry on fail</h4>
+                    </label>
+                    <h5>it just slaps enter again for you</h5>
+                    <label class="switch">
+                        <input id="continuous_mode" type="checkbox"/><span></span>
+                        <h4>continuous generation</h4>
+                    </label>
+                    <h5>slaps enter as soon as possible, either loads current message as is or lets bot continue where it left</h5>
+                    <h5>this is potentially a VERY dangerous toggle</h5>
+                </div>
+                </div>
+                <div class="right_menu_button" id=""><h2>TOGGLES</h2>
                 <div id="tweaks_box">
                     <label class="switch">
                         <input id="keep_example_dialogue" type="checkbox"/><span></span>
-                            <h4>Keep Example Dialogue</h4>
+                        <h4>Keep Example Dialogue</h4>
                     </label>
                     <h5>Keeps example dialogues from being removed</h5>
 					<label class="switch">
-						<input id="nsfw_toggle" type="checkbox" checked><span class="slider round"></span>
+                        <input id="nsfw_toggle" type="checkbox" checked><span class="slider round"></span>
                         <h4 style="display: inline-block;">NSFW Toggle</h4>
 					</label>
 					<label class="switch">
@@ -402,18 +409,25 @@
                         <h4 id = "custom_5_title"style="display: inline-block;">replaced in JS</h4>
                     </label>
                         <h5 id = "custom_5_desc">repalced in JS</h5>
-                
+                    </div>
                 </div>
+                
 			</div>
             <!--prompt preview-->
-            <hr>
+            <hr>                
+            <div class="right_menu_button" id=""><h2>PREVIEW</h2>
             <h3>Preview for current card</h3>
             <textarea id="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
+            </div>
             <hr>
-            <h3>rough expected cost per message</h3>
-            <h3>OAI can stop sending 'early' so its UP TO</h3>
+            <div class="right_menu_button" id=""><h2>CPM</h2>
+                
+                <h3>rough expected cost per message</h3>
             <h3>3.5T only for now</h3>
             <textarea id="cost_preview" palceholder="" disabled>replaced in JS</textarea>
+            <h3>actual cost spent on last message</h3>
+            <textarea id="cost_spent" palceholder="" disabled>Updates on message success</textarea>
+        </div>
     
         </div>
         <!--system settings-->

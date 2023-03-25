@@ -319,9 +319,20 @@ textarea{
     margin-right: var(--rm_margin_lr);
 }
 
+textarea#scenario_preview {
+    color: gray;
+}
+
+/*yes this is a redundant dupe for now*/
 textarea#cost_preview {
     user-select: none;
     color: gray;
+    height: 105px;
+}
+textarea#cost_spent {
+    user-select: none;
+    color: gray;
+    height: 75px;
 }
 
 textarea#scenario_preview {
@@ -381,10 +392,13 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
-option {
-    /* color: black; */
+.swipe_block {
+    display: inline-flex;
+    width: -webkit-fill-available;
+    padding-right: 6px;
+    justify-content: space-between;
+    flex-direction: row-reverse;
 }
-
 div#generating_thumbs {
     width: 137px;
 }
