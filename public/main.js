@@ -182,8 +182,6 @@ var continuous_mode = false
 
 //swipe stuff
 var newest_mes_index = 0
-var swipe_index = 0
-var swipe_array = []
 
 //css
 var bg1_toggle = true;
@@ -673,15 +671,9 @@ function messageFormating(mes, ch_name,force_format = false) {
     }
     return mes;
 }
-//yes i am throwing this in a function
-function clear_swipe(){
-    swipe_array = []
-    swipe_index = 0
-}
 
 function addOneMessage(mes) {
-    clear_swipe()
-    var messageText = mes['swipe_array'][swipe_index];
+    var messageText = mes['swipe_array'][mes['swipe_index']];
     var characterName = curr_username;
     generatedPromtCache = '';
     var avatarImg = "User Avatars/" + user_avatar;
@@ -856,21 +848,24 @@ function token_cost_converter(){
 
 async function Generate(type) {
     if (online_status != 'no_connection' && active_character_index != undefined) {
-        if (type != 'regenerate') {
+        if (type == 'regenerate' || type == 'swipe') {
+            var textareaText = "";
+            if (chat_mess_content[chat_mess_content.length - 1]['is_user']) {//If last message from You
+                return
+            }
+            //you cant do that?
+            //chat_mess_content.length = chat_mess_content.length - 1;
+
+            //hook here for split for swipe
+            curr_message_id -= 1;
+            if (type == 'regenerate'){
+                $('#chat').children().last().remove();
+                // We MUST remove the last message from the bot here as it's being regenerated.
+            }
+        } else {
             //get and clear textarea
             var textareaText = $("#send_textarea").val();
             $("#send_textarea").val('');
-        } else {
-            var textareaText = "";
-            if (chat_mess_content[chat_mess_content.length - 1]['is_user']) {//If last message from You
-                //do nothing? what the fuck???
-            } else {
-                chat_mess_content.length = chat_mess_content.length - 1;
-                curr_message_id -= 1;
-                $('#chat').children().last().remove();
-                // We MUST remove the last message from the bot here as it's being regenerated.
-                openai_msgs.pop();
-            }
         }
         //swap button with loading icon
         $("#send_but").addClass('generic_hidden');
@@ -885,15 +880,10 @@ async function Generate(type) {
         if (character_anchor && !is_pygmalion) {
             if (anchor_order === 0) {
                 anchorTop = `${curr_charname}: ${description_anchor}`;
-            } else {
-                anchorBottom = `[${curr_charname} ${description_anchor}]`
-            }
-        }
-        if (style_anchor && !is_pygmalion) {
-            if (anchor_order === 1) {
-                anchorTop = length_anchor;
-            } else {
                 anchorBottom = `[${length_anchor}]`;
+            } else {
+                anchorTop = length_anchor;
+                anchorBottom = `[${curr_charname} ${description_anchor}]`
             }
         }
         //*********************************
@@ -904,9 +894,10 @@ async function Generate(type) {
         if (textareaText != "") {
             chat_mess_content[chat_mess_content.length] = {};
             chat_mess_content[chat_mess_content.length - 1]['is_user'] = true;
-            chat_mess_content[chat_mess_content.length - 1]['swipe_index'] =swipe_index;
-            chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
-            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][swipe_index] = textareaText;
+            chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = 0;
+            chat_mess_content[chat_mess_content.length - 1]['swipe_array'] = [];
+            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][0] = textareaText;
+            clear_swipe()
             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
         }
         var charPersonality = $.trim(characters_array[active_character_index].personality);
@@ -930,12 +921,12 @@ async function Generate(type) {
         for (var unkown = chat_mess_content.length - 1; unkown >= 0; unkown--) {
             // first greeting message
             if (j == 0) {
-                chat_mess_content[j]['swipe_array'][swipe_index] = replacePlaceholders(chat_mess_content[j]['swipe_array'][swipe_index]);
+                chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] = replacePlaceholders(chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']]);
             }
             let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
-            openai_msgs[unkown] = { "role": role, "content": chat_mess_content[j]['swipe_array'][swipe_index] };
+            openai_msgs[unkown] = { "role": role, "content": chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] };
             //behavior for if last message was a bots
-            if (unkown == 0 && !chat_mess_content[j]['is_user']){
+            if (unkown == 0 && !chat_mess_content[j]['is_user'] && type != 'swipe'){
                 openai_msgs.unshift(0)
                 openai_msgs[0] = { "role": 'user', "content": "(continue)" };
             }
@@ -1028,6 +1019,9 @@ async function Generate(type) {
                 let item_count = countTokens(item);
                 if ((total_count + item_count) >= (max_context_tokens)) {break;}
                 if (j == openai_msgs.length - 1){item.content = item.content}
+                if (type == 'swipe' && j == 0){
+                    continue
+                }
                 openai_msgs_tosend.push(item);
                 total_count += item_count;
             }
@@ -1104,7 +1098,7 @@ async function Generate(type) {
                                 continue;
                             if (event == "data: [DONE]") {
                                 is_send_press = false;
-                                chat[chat.length - 1]['swipe_array'][swipe_index] = getMessage;
+                                chat[chat.length - 1]['swipe_array'][chat[chat.length - 1]["swipe_index"]] = getMessage;
                                 $("#send_but").removeClass('generic_hidden');
                                 $("#loading_mes").addClass('generic_hidden');
                                 saveChat();
@@ -1118,9 +1112,9 @@ async function Generate(type) {
                         if ($("#chat").children().filter('[mesid="' + last_view_mes + '"]').length == 0) {
                             chat[chat.length] = {};
                             chat[chat.length - 1]['is_user'] = false;
-                            chat[chat.length - 1]['swipe_index'] = swipe_index;
-                            chat[chat.length - 1]['swipe_array'] =swipe_array;
-                            chat[chat.length - 1]['swipe_array'][swipe_index] = "";
+                            chat[chat.length - 1]['swipe_index'] = 0;
+                            chat[chat.length - 1]['swipe_array'] =[];
+                            chat[chat.length - 1]['swipe_array'][0] = "";
                             addOneMessage(chat[chat.length - 1]);
                         }
                         getMessage = $.trim(getMessage);
@@ -1186,11 +1180,18 @@ async function Generate(type) {
                         if (getMessage.length > 0) {
                             //hook here for split swipe / new behavior 
                             getMessage = $.trim(getMessage);
-                            chat_mess_content[chat_mess_content.length] = {};
-                            chat_mess_content[chat_mess_content.length - 1]['is_user'] = false;
-                            chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = swipe_index;
-                            chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
-                            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][swipe_index] = getMessage;
+                            if (type != 'swipe'){
+                                chat_mess_content[chat_mess_content.length] = {};
+                                chat_mess_content[chat_mess_content.length - 1]['is_user'] = false;
+                                chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
+                                //cheat
+                                chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = -1;
+                            }
+                            chat_mess_content[chat_mess_content.length - 1]['swipe_index'] ++;
+                            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][chat_mess_content[chat_mess_content.length - 1]['swipe_index']] = getMessage;
+                            if (type == 'swipe'){
+                                $('#chat').children().last().remove();
+                            }
                             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
                             //unhook here for updaring
                             $("#send_but").removeClass('generic_hidden');
@@ -1259,8 +1260,8 @@ async function Generate(type) {
 async function saveChat() {
     chat_mess_content.forEach(function (item, i) {
         if (item['is_user']) {
-            var str = item['swipe_array'][swipe_index].replace(curr_username + ':', default_user_name + ':');
-            chat_mess_content[i]['swipe_array'][swipe_index] = str;
+            var str = item['swipe_array'][item['swipe_index']].replace(curr_username + ':', default_user_name + ':');
+            chat_mess_content[i]['swipe_array'][item['swipe_index']] = str;
         }
     });
     //only exists as future support for custom log names
@@ -1314,20 +1315,20 @@ function getChatResult() {
 
         chat_mess_content.forEach(function (item, i) {
             if (item['is_user']) {
-                var str = item['swipe_array'][swipe_index].replace(default_user_name + ':', curr_charname + ':');
+                var str = item['swipe_array'][item['swipe_index']].replace(default_user_name + ':', curr_charname + ':');
                 str.replace(default_user_name + ':', curr_charname + ':');
-                chat_mess_content[i]['swipe_array'][swipe_index] = str;
+                chat_mess_content[i]['swipe_array'][item['swipe_index']] = str;
             }
         });
     } else {
         chat_mess_content[0] = {};
         chat_mess_content[0]['is_user'] = false;
-        chat_mess_content[0]['swipe_index'] = swipe_index;
-        chat_mess_content[0]['swipe_array'] = swipe_array;
+        chat_mess_content[0]['swipe_index'] = 0;
+        chat_mess_content[0]['swipe_array'] = [];
         if (characters_array[active_character_index].first_mes != "") {
-            chat_mess_content[0]['swipe_array'][swipe_index] = characters_array[active_character_index].first_mes;
+            chat_mess_content[0]['swipe_array'][0] = characters_array[active_character_index].first_mes;
         } else {
-            chat_mess_content[0]['swipe_array'][swipe_index] = default_ch_mes;
+            chat_mess_content[0]['swipe_array'][0] = default_ch_mes;
         }
         }
         printMessages();
@@ -1827,8 +1828,8 @@ $("#form_create").submit(function(type) {
                         chat_mess_content.length = 0;
                         chat_mess_content[0] = {};
                         chat_mess_content[0]['is_user'] = false;
-                        chat_mess_content[0]['swipe_array']=swipe_array;
-                        chat_mess_content[0]['swipe_array'][swipe_index] = this_ch_mes;
+                        chat_mess_content[0]['swipe_array']=[];
+                        chat_mess_content[0]['swipe_array'][chat_mess_content[0]["swipe_index"]] = this_ch_mes;
                         add_mes_without_animation = true;
                         addOneMessage(chat_mess_content[0]);
                         soft_refresh()
@@ -3010,7 +3011,7 @@ $(document).on('click', '.mes_edit', function () {
         var edit_mes_id = $(this).parent().parent().parent().attr('mesid');
         this_edit_mes_id = edit_mes_id;
 
-        var text = chat_mess_content[edit_mes_id]['swipe_array'][swipe_index];
+        var text = chat_mess_content[edit_mes_id]['swipe_array'][chat_mess_content[edit_mes_id]['swipe_index']];
         if (chat_mess_content[edit_mes_id]['is_user']) {
             this_edit_mes_chname = curr_username;
         } else {
@@ -3037,7 +3038,7 @@ $(document).on('click', '.mes_edit', function () {
 });
 $(document).on('click', '.mes_edit_cancel', function () {
     //var text = $(this).parent().parent().children('.mes_text').children('.edit_textarea').val();
-    var text = chat_mess_content[this_edit_mes_id]['swipe_array'][swipe_index];
+    var text = chat_mess_content[this_edit_mes_id]['swipe_array'][chat_mess_content[this_edit_mes_id]['swipe_index']];
 
     $(this).parent().parent().children('.mes_text').empty();
     $(this).addClass('generic_hidden')
@@ -3053,7 +3054,7 @@ function messageEditDone(div) {
     var text = div.parent().parent().children('.mes_text').children('.edit_textarea').val();
     //var text = chat[this_edit_mes_id];
     text = text.trim();
-    chat_mess_content[this_edit_mes_id]['swipe_array'][swipe_index] = text;
+    chat_mess_content[this_edit_mes_id]['swipe_array'][chat_mess_content[this_edit_mes_id]['swipe_index']] = text;
     div.parent().parent().children('.mes_text').empty();
     div.addClass('generic_hidden')
     div.parent().children('.mes_edit_cancel').addClass('generic_hidden')
@@ -3100,7 +3101,7 @@ async function getAllCharaChats() {
             }
             for (const key in sortedSet) {
                 let strlen = 200;
-                let mes = sortedSet[key]['swipe_array'][swipe_index];
+                let mes = sortedSet[key]['swipe_array'][sortedSet[key]['swipe_index']];
                 if (mes.length > strlen) {
                     mes = '...' + mes.substring(mes.length - strlen);
                 }
@@ -3792,3 +3793,27 @@ $("#preview_butt").click(function () {
         $("#preview_box").css("display", 'none');
         $("#preview_butt").removeClass('selected_button')
     }});
+$(document).on('click', '.swipe_right', function() {
+    var swipe_index = Number(document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index'))
+    if (swipe_index != chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'].length-1){
+        document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index+1])
+        document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].setAttribute('swipe_index', (swipe_index +1))
+        chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_index'] = swipe_index +1
+        saveChat()
+        return
+    }
+        Generate('swipe');
+      });
+    $(document).on('click', '.swipe_left', function() {
+    shift_left();
+    });
+function shift_left() {
+    var swipe_index = document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index')
+    if (swipe_index == 0){
+        return
+    }
+    document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index-1])
+    document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].setAttribute('swipe_index', (swipe_index -1))
+    chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_index'] = swipe_index -1
+    saveChat()
+}
