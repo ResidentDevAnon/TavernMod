@@ -90,6 +90,9 @@ em {
     opacity: 0.5;
     margin-left: 36px;
     display: flex;
+    height: 18px;
+    width: -webkit-fill-available;
+    margin-right: 69px;
 }
 #character_popup{
     max-width: -webkit-fill-available;
@@ -265,12 +268,17 @@ todo, make it flop*/
     flex-direction: column;
 }
 .right_menu_button {
-    background: var(--h4_bg);
+    /* background: var(--h4_bg); */
 }
 h2{
     cursor: pointer;
     margin-top: 0px;
     color: var(--deselected_butt_color);
+    background: var(--h4_bg);
+}
+
+.submenu h2 {
+    background: none;
 }
 #rm_api_block{
     display: block;
@@ -324,17 +332,13 @@ textarea#scenario_preview {
 }
 
 /*yes this is a redundant dupe for now*/
-textarea#cost_preview {
+cost_preview {
     user-select: none;
     color: gray;
-    height: 105px;
+    height: 18px;
+    max-height: 18px;
+    min-height: 18px;
 }
-textarea#cost_spent {
-    user-select: none;
-    color: gray;
-    height: 75px;
-}
-
 textarea#scenario_preview {
     user-select: none;
     color: grey;
@@ -392,6 +396,17 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
+.cost_preview {
+    height: 18px;
+    display: inline-flex;
+    max-height: 10px;
+    width: -webkit-fill-available;
+    white-space: nowrap;
+    font-size: 11px;
+    text-align: center;
+    /* margin-right: 34.5px; */
+}
+
 .swipe_block {
     display: inline-flex;
     width: -webkit-fill-available;
@@ -419,9 +434,11 @@ div#generating_thumbs {
 
 div#save_indicator.saved {
     color: var(--confirm_green);
+    white-space: nowrap;
 }
 div#save_indicator.warning {
     color: var(--warning_red);
+        white-space: nowrap;
 }
 
 div#online_status_text.connected {
@@ -429,6 +446,7 @@ div#online_status_text.connected {
 }
 div#online_status_text.disconnected {
     color: var(--warning_red);
+    white-space: nowrap;
 }
 
 div#dialogue_popup {
@@ -627,7 +645,7 @@ div#chat {
 #options-content.active{
     display: flex;
     position: absolute;
-    bottom: 10.1%;
+    bottom: 14.1%;
     background-color: rgba(0, 0, 0,1);
     min-width: 205px;
     z-index: 1;
@@ -635,7 +653,7 @@ div#chat {
     flex-direction: column;
 }
 .mes_block{
-    padding-left: 35px;
+    padding-left: 15px;
     width: -webkit-fill-available;
 }
 .del_checkbox{
@@ -937,3 +955,22 @@ div#swipe_right img {
     width: 30px;
 }
 .highlighted{background: #222222;}
+
+/*table*/
+table {
+    border: 1px solid black;
+    padding: 0px;
+    padding-bottom: 5px;
+    background-color: #222222ff;
+    filter: drop-shadow(0px 0px 1px #238eF9);
+    list-style-position: inside;
+}
+
+th {
+    border-bottom-style: dotted;
+}
+
+td {
+    border-bottom: dashed;
+    text-align: center;
+}

@@ -336,7 +336,7 @@
 			<hr id = "tweak_hr">
 			<div id = "tweak_container">
                 <h3 style='margin-bottom: 10px;'>Tweaks and Reply Mods</h3>
-                <div class="right_menu_button" id=""><h2>ANCHORS</h2>
+                <div class="right_menu_button"><h2 id="anchor_butt">ANCHORS</h2>
                     <div id = 'anchor_block'>
                         <h4>Anchors Order</h4><h5>Helps to increase the length of messages (<a href="/notes/9" target="_blank">?</a>)</h5>
                         <select id="anchor_order">
@@ -355,21 +355,25 @@
                     </label>
                 </div>
                 </div>
-                <div class="right_menu_button" id=""><h2>RETRY</h2> 
-                    <label class="switch">
-                        <input id="auto_retry" type="checkbox"/><span></span>
-                        <h4>Auto retry on fail</h4>
-                    </label>
-                    <h5>it just slaps enter again for you</h5>
-                    <label class="switch">
-                        <input id="continuous_mode" type="checkbox"/><span></span>
-                        <h4>continuous generation</h4>
-                    </label>
-                    <h5>slaps enter as soon as possible, either loads current message as is or lets bot continue where it left</h5>
-                    <h5>this is potentially a VERY dangerous toggle</h5>
                 </div>
+                <hr>
+                <div class="right_menu_button"><h2 id="retry_butt">RETRY</h2> 
+                    <div id="retry_block">
+                        <label class="switch">
+                            <input id="auto_retry" type="checkbox"/><span></span>
+                            <h4>Auto retry on fail</h4>
+                        </label>
+                        <h5>it just slaps enter again for you</h5>
+                        <label class="switch">
+                            <input id="continuous_mode" type="checkbox"/><span></span>
+                            <h4>continuous generation</h4>
+                        </label>
+                        <h5>slaps enter as soon as possible, either loads current message as is or lets bot continue where it left</h5>
+                        <h5>this is potentially a VERY dangerous toggle</h5>
+                    </div>
                 </div>
-                <div class="right_menu_button" id=""><h2>TOGGLES</h2>
+                <hr>
+                <div class="right_menu_button" ><h2 id="api_togg_butt">TOGGLES</h2>
                 <div id="tweaks_box">
                     <label class="switch">
                         <input id="keep_example_dialogue" type="checkbox"/><span></span>
@@ -415,18 +419,13 @@
 			</div>
             <!--prompt preview-->
             <hr>                
-            <div class="right_menu_button" id=""><h2>PREVIEW</h2>
-            <h3>Preview for current card</h3>
-            <textarea id="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
+            <div class="right_menu_button" ><h2 id="preview_butt">PREVIEW</h2>
+            <div id = "preview_box">
+                <h3>Preview for current card</h3>
+                <textarea id="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
+            </div>
             </div>
             <hr>
-            <div class="right_menu_button" id=""><h2>CPM</h2>
-                
-                <h3>rough expected cost per message</h3>
-            <h3>3.5T only for now</h3>
-            <textarea id="cost_preview" palceholder="" disabled>replaced in JS</textarea>
-            <h3>actual cost spent on last message</h3>
-            <textarea id="cost_spent" palceholder="" disabled>Updates on message success</textarea>
         </div>
     
         </div>
@@ -599,7 +598,6 @@
             </div>
         </select>
         </div>
-        </div>
         <!--char import-->
         <div id="rm_charater_import" class="right_menu" style="display: none;">
             <form id="form_import"  action="javascript:void(null);" method="post" enctype="multipart/form-data">
@@ -633,12 +631,14 @@
                 <div id="dialogue_del_mes_cancel" class="menu_button">Cancel</div>
             </div>
             <div id="online_status">
-                <!--cheat to keep the div 'open in html'-->
-                <div > </div>
                 <!--cheat space at end for dynamic spacing-->
                 <div id="online_status_indicator"></div><div id="online_status_text"class="disconnected">No connection... </div>
                 <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->
                 <div id="save_indicator"style="position: relative;"> </div>
+                <div class="cost_preview">
+                    <input class = 'cost_preview'id="cost_preview" palceholder="replaced in JS" disabled></input>
+                    <input class = 'cost_preview'id="cost_spent" palceholder="Updates on message success" disabled></input>
+                </div>
             </div>
             <form id="send_form">
                 <!--options submenu-->

@@ -83,10 +83,11 @@ var style_anchor = true;
 var character_anchor = true;
 
 //cost vars
-var prompt_price_per1k = 0.002 / 1000
-var reply_price_per1k = 0.002 / 1000
-var last_sent_cntn_tokens = 0;
+var cntx_price_per1k = 0.002 / 1000
+var gen_price_per1k = 0.002 / 1000
+var last_sent_cntx_tokens = 0;
 var last_got_gen_tokens = 0;
+var running_total = 0
 
 //novel settings
 var temp_novel = 0.5;
@@ -600,7 +601,7 @@ function soft_refresh() {
     }
 
     let messages = document.getElementsByClassName('mes');
-    console.log(messages);
+    //console.log(messages);
     
     for (let i = 0; i < messages.length; i++) {
         let element = messages[i];
@@ -657,10 +658,10 @@ function clearChat() {
 function format_raw(payload,user_flag='',force_format=false){
     payload = payload.replace(/\n>| >|" >|'>/g, '\n> >').replace(/```/g, '\n```\n').replace(/(?=\<.+?\>)/g, '\\')
     payload = converter.makeHtml(payload);
-    payload = payload.replace(/\n/g, '<br>')
+    //payload = payload.replace(/\n/g, '<br>')
     if (user_flag == curr_username || force_format){
+        payload = payload.replace(/\n/g, '<br/>');
     }
-    //payload = payload.replace(/\n/g, '<br/>');
     return payload
 }
 //message modifications
@@ -855,10 +856,7 @@ function build_main_system_message(r_flag=false){
     {return}
 }
 function token_cost_converter(){
-    document.getElementById('cost_preview').value = `Min $${(openai_selected_context*prompt_price_per1k)}
-(${openai_selected_context} context tokens with 0 reply tokens)
-Max $${((openai_selected_context*prompt_price_per1k)+((4096-openai_selected_context)*reply_price_per1k))}
-(${openai_selected_context} context tokens with ${4096-openai_selected_context} reply tokens)`
+    document.getElementById('cost_preview').value = `Min $${(openai_selected_context*cntx_price_per1k)} (${openai_selected_context} / 0) Max $${((openai_selected_context*cntx_price_per1k)+((4096-openai_selected_context)*gen_price_per1k))} (${openai_selected_context} / ${4096-openai_selected_context})`
 }
 
 async function Generate(type) {
@@ -943,6 +941,10 @@ async function Generate(type) {
             }
             let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
             openai_msgs[i] = { "role": role, "content": chat_mess_content[j]['swipe_array'][swipe_index] };
+            if (i == 0 && !chat_mess_content[j]['is_user']){
+                openai_msgs.unshift(0)
+                openai_msgs[0] = { "role": 'user', "content": "(continue)" };
+            }
             j++;
         }
 
@@ -1144,7 +1146,7 @@ async function Generate(type) {
                     if (streaming)
                         return;
                     try{
-                        last_sent_cntn_tokens = data.usage.prompt_tokens
+                        last_sent_cntx_tokens = data.usage.prompt_tokens
                         last_got_gen_tokens = data.usage.completion_tokens
                         update_real_cost()
                     }
@@ -1287,7 +1289,9 @@ async function getChat() {
                 chat_mess_content.shift();
             }
             getChatResult();
+            soft_refresh();
             saveChat();
+
         },
         error: function (jqXHR, exception) {
             getChatResult();
@@ -1367,19 +1371,19 @@ $("#rm_button_create").click(function () {
 $("#rm_button_selected_ch").click(function () {
         selected_button = 'character_edit';
         select_selected_character(active_character_index);
-  });
-function select_rm_create() {
-    menu_type = 'create';
-    if (selected_button == 'create') {
-        if (create_save_avatar != '') {
-            $("#add_avatar_button").get(0).files = create_save_avatar;
-            read_avatar_load($("#add_avatar_button").get(0));
-        }
-
+    });
+    function select_rm_create() {
+        menu_type = 'create';
+        if (selected_button == 'create') {
+            if (create_save_avatar != '') {
+                $("#add_avatar_button").get(0).files = create_save_avatar;
+                read_avatar_load($("#add_avatar_button").get(0));
+            }
     }
     $("#rm_charaters_block").addClass('generic_hidden');
     $("#rm_api_block").addClass('generic_hidden');
     $("#rm_ch_create_block").removeClass('generic_hidden');
+    $("#sys_sett_block").addClass('generic_hidden');
 
     $('#rm_ch_create_block').transition({
         opacity: 1.0,
@@ -1434,6 +1438,7 @@ function select_rm_characters() {
     });
 
     $("#rm_api_block").addClass('generic_hidden');
+    $("#sys_sett_block").addClass('generic_hidden');
     $("#rm_ch_create_block").addClass('generic_hidden');
     $("#rm_info_block").addClass('generic_hidden');
 
@@ -1444,6 +1449,7 @@ function select_rm_characters() {
 function select_rm_info(text) {
     $("#rm_charaters_block").addClass('generic_hidden');
     $("#rm_api_block").addClass('generic_hidden');
+    $("#sys_sett_block").addClass('generic_hidden');
     $("#rm_ch_create_block").addClass('generic_hidden');
     $("#rm_info_block").css("display", "flex");
 
@@ -1524,6 +1530,7 @@ $(document).on('click', '.character_select', function () {
             clearChat();
             chat_mess_content.length = 0;
             getChat();
+            
         }
     } else {
         selected_button = 'character_edit';
@@ -3347,6 +3354,7 @@ $(document).ready(function() {
     setTimeout(auto_open, 700)
     setTimeout(auto_char, 1000)
     setTimeout(BG_shuffle, 700)
+    setTimeout(update_real_cost, 700)
 })
 $("#api_settings").click(function () {
         $("#API_sett_block").css("display", 'block');
@@ -3360,6 +3368,7 @@ $("#api_settings").click(function () {
 $("#system_settings").click(function () {
     $("#sys_sett_block").css("display", 'block');
     $("#API_sett_block").css("display", 'none');
+    $("#sys_sett_block").removeClass('generic_hidden');
     $("#system_settings").children("h2").addClass('selected_button')
     $("#api_settings").children("h2").removeClass('selected_button')
         //default is system so we populate those fields
@@ -3734,7 +3743,47 @@ function update_real_cost(error) {
         document.getElementById('cost_spent').value = `something borked during message gen`
         return
     }
+    let prompt_price = last_sent_cntx_tokens*cntx_price_per1k
+    let gen_price = last_got_gen_tokens*gen_price_per1k
+    running_total += prompt_price+gen_price
+    const formatted_prompt_total = parseFloat((prompt_price+gen_price).toFixed(6));
+    const formatted_running_total = parseFloat(running_total.toFixed(6));
     //weird formattting is a req because its in a format block, acts as \n but more readable
-    document.getElementById('cost_spent').value = `Actual $${((last_got_gen_tokens*prompt_price_per1k)+(last_sent_cntn_tokens*reply_price_per1k))}
-(${last_sent_cntn_tokens} context tokens with ${last_got_gen_tokens} reply tokens, total: ${last_sent_cntn_tokens+last_got_gen_tokens})`
+    document.getElementById('cost_spent').value = `Actual $${(formatted_prompt_total)} (${last_sent_cntx_tokens} / ${last_got_gen_tokens} total:${last_sent_cntx_tokens+last_got_gen_tokens}), $${formatted_running_total} spent this session`
 }
+$("#anchor_butt").click(function () {
+    if (document.getElementById("anchor_block").style.display == "none"){
+        $("#anchor_block").css("display", 'block');
+        $("#anchor_butt").addClass('selected_button')
+    } 
+    else{
+        $("#anchor_block").css("display", 'none');
+        $("#anchor_butt").removeClass('selected_button')
+    }});
+$("#retry_butt").click(function () {
+    if (document.getElementById("retry_block").style.display == "none"){
+        $("#retry_block").css("display", 'block');
+        $("#retry_butt").addClass('selected_button')
+    } 
+    else{
+        $("#retry_block").css("display", 'none');
+        $("#retry_butt").removeClass('selected_button')
+    }});
+$("#api_togg_butt").click(function () {
+    if (document.getElementById("tweaks_box").style.display == "none"){
+        $("#tweaks_box").css("display", 'block');
+        $("#api_togg_butt").addClass('selected_button')
+    } 
+    else{
+        $("#tweaks_box").css("display", 'none');
+        $("#api_togg_butt").removeClass('selected_button')
+    }});
+$("#preview_butt").click(function () {
+    if (document.getElementById("preview_box").style.display == "none"){
+        $("#preview_box").css("display", 'block');
+        $("#preview_butt").addClass('selected_button')
+    } 
+    else{
+        $("#preview_box").css("display", 'none');
+        $("#preview_butt").removeClass('selected_button')
+    }});
