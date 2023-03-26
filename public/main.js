@@ -68,15 +68,12 @@ var user_avatar = 'you1.png';
 var temp_kobold = 0.5;
 var kobold_amount_gen = 80;
 var Kobold_max_context = 2048;//2048;
-var rep_pen = 1;
-var rep_pen_size = 100;
+var rep_pen_kobold = 1;
+var rep_pen_size_kobold = 100;
 
 var is_pygmalion = false;
-var tokens_already_generated = 0;
-var message_already_generated = '';
+//unkown
 var if_typing_text = false;
-const tokens_cycle_count = 30;
-var cycle_count_generation = 0;
 
 var anchor_order = 0;
 var style_anchor = true;
@@ -191,8 +188,6 @@ var swipe_array = []
 //css
 var bg1_toggle = true;
 var css_mes_bg = $('<div class="mes"></div>').css('background');
-var css_send_form_display = $('<div id=send_form></div>').css('display');
-var colab_ini_step = 1;
 // feels good replacing 5+ places with a single function
 function replacePlaceholders(text) {
     return text.replace(/{{user}}/gi, curr_username)
@@ -860,15 +855,15 @@ function token_cost_converter(){
 }
 
 async function Generate(type) {
-    tokens_already_generated = 0;
-    message_already_generated = curr_charname + ': ';
     if (online_status != 'no_connection' && active_character_index != undefined) {
         if (type != 'regenerate') {
+            //get and clear textarea
             var textareaText = $("#send_textarea").val();
             $("#send_textarea").val('');
         } else {
             var textareaText = "";
             if (chat_mess_content[chat_mess_content.length - 1]['is_user']) {//If last message from You
+                //do nothing? what the fuck???
             } else {
                 chat_mess_content.length = chat_mess_content.length - 1;
                 curr_message_id -= 1;
@@ -877,31 +872,35 @@ async function Generate(type) {
                 openai_msgs.pop();
             }
         }
+        //swap button with loading icon
         $("#send_but").addClass('generic_hidden');
         $("#loading_mes").removeClass('generic_hidden');
         var storyString = "";
-        var postAnchorChar = "Elaborate speaker";//'Talk a lot with description what is going on around';// in asterisks
-        var postAnchorStyle = "Writing style: very long messages";//"[Genre: roleplay chat][Tone: very long messages with descriptions]";
+        //anchor crap 
+        var description_anchor = "Elaborate speaker";//'Talk a lot with description what is going on around';// in asterisks
+        var length_anchor = "Writing style: very long messages";//"[Genre: roleplay chat][Tone: very long messages with descriptions]";
         var anchorTop = '';
         var anchorBottom = '';
         var topAnchorDepth = 8;
         if (character_anchor && !is_pygmalion) {
             if (anchor_order === 0) {
-                anchorTop = `${curr_charname}: ${postAnchorChar}`;
+                anchorTop = `${curr_charname}: ${description_anchor}`;
             } else {
-                anchorBottom = `[${curr_charname} ${postAnchorChar}]`
+                anchorBottom = `[${curr_charname} ${description_anchor}]`
             }
         }
         if (style_anchor && !is_pygmalion) {
             if (anchor_order === 1) {
-                anchorTop = postAnchorStyle;
+                anchorTop = length_anchor;
             } else {
-                anchorBottom = `[${postAnchorStyle}]`;
+                anchorBottom = `[${length_anchor}]`;
             }
         }
         //*********************************
         //PRE FORMATING STRING
         //*********************************
+        //check if message is not empty
+        //this is user so empty swipes is ok
         if (textareaText != "") {
             chat_mess_content[chat_mess_content.length] = {};
             chat_mess_content[chat_mess_content.length - 1]['is_user'] = true;
@@ -916,51 +915,43 @@ async function Generate(type) {
         if (checkMesExample.length == 0) mesExamples = '';
         var mesExamplesArray = [];
         //***Base replace***
-        //bookmark 
+
         if (mesExamples !== undefined) {
             if (mesExamples.length > 0) {
                 mesExamples = replacePlaceholders(mesExamples);
-                //mesExamples = mesExamples.replaceAll('<START>', '[An example of how '+name2+' responds]');
                 let blocks = mesExamples.split(/<START>/gi);
                 mesExamplesArray = blocks.slice(1).map(block => `<START>\n${block.trim()}\n`);
             }
         }
-
-
-
         storyString = build_main_system_message(true)
-
-
         var j = 0;
         // clean openai msgs
         openai_msgs = [];
-        for (var i = chat_mess_content.length - 1; i >= 0; i--) {
+        for (var unkown = chat_mess_content.length - 1; unkown >= 0; unkown--) {
             // first greeting message
             if (j == 0) {
                 chat_mess_content[j]['swipe_array'][swipe_index] = replacePlaceholders(chat_mess_content[j]['swipe_array'][swipe_index]);
             }
             let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
-            openai_msgs[i] = { "role": role, "content": chat_mess_content[j]['swipe_array'][swipe_index] };
-            if (i == 0 && !chat_mess_content[j]['is_user']){
+            openai_msgs[unkown] = { "role": role, "content": chat_mess_content[j]['swipe_array'][swipe_index] };
+            //behavior for if last message was a bots
+            if (unkown == 0 && !chat_mess_content[j]['is_user']){
                 openai_msgs.unshift(0)
                 openai_msgs[0] = { "role": 'user', "content": "(continue)" };
             }
             j++;
         }
-
-        let max_context_tokens = openai_selected_context;
-		let max_gen_tokens = openai_selected_gen;
-
+        
         // If we're using Scale, the user (presumably) is using GPT4 so we want
         // to be able to use a larger context. We're still using the GPT3
         // tokenization API so we can't go too close to the full 8192 limit.
+            let max_context_tokens = openai_selected_context;
+            let max_gen_tokens = openai_selected_gen;
         if (main_api == 'scale') {
             console.log(`Using Scale; increasing max context to ${scale_max_context} and max repsonse tokens to ${scale_max_gen}`);
             max_context_tokens = scale_max_context;
             max_gen_tokens = scale_max_gen;
         }
-
-        var i = 0;
 
         // get a nice array of all blocks of all example messages = array of arrays (important!)
         openai_msgs_example = [];
@@ -969,20 +960,20 @@ async function Generate(type) {
             // remove <START> {Example Dialogue:} and replace \r\n with just \n
             item = item.replace(/<START>/i, "{Example Dialogue:}").replace('\r\n', '\n');
             let parsed = parseExampleIntoIndividual(item);
-            // add to the example message blocks array
-            openai_msgs_example.push(parsed);
+            // add to the example message blocks array, pushing at index 0
+            openai_msgs_example.unshift(0);
+            openai_msgs_example[0] = parsed
         }
         //dont know why this is an inline, too small brain to remove it
         runGenerate();
         function runGenerate(cycleGenerationPromt = '') {
             generatedPromtCache += cycleGenerationPromt;
             if (generatedPromtCache.length == 0) {
-                openai_msgs = openai_msgs.reverse();
-                var is_add_personality = false;
+                var has_added_anchor_top = false;
                 openai_msgs.forEach(function (msg, i, arr) {//For added anchors and others
                     let item = msg["content"];
-                    if (i === openai_msgs.length - topAnchorDepth && curr_message_id >= topAnchorDepth && !is_add_personality) {
-                        is_add_personality = true;
+                    if (i === openai_msgs.length - topAnchorDepth && curr_message_id >= topAnchorDepth && !has_added_anchor_top) {
+                        has_added_anchor_top = true;
                         if ((anchorTop != "" || charPersonality != "")) {
                             if (anchorTop != "") charPersonality += ' ';
                             // todo: change to something else?
@@ -996,7 +987,7 @@ async function Generate(type) {
                     openai_msgs[i] = msg;
                 });
             }
-
+            //first message
             let prompt_msg = { "role": "system", "content": storyString }
             let examples_tosend = [];
             let openai_msgs_tosend = [];
@@ -1005,6 +996,7 @@ async function Generate(type) {
             let new_chat_msg = { "role": "system", "content": "[Start a new chat]" };
             let start_chat_count = countTokens([new_chat_msg]);
             let total_count = countTokens([prompt_msg], true) + start_chat_count;
+            //check first if we prio example dialog
             if (keep_example_dialogue) {
                 for (let j = 0; j < openai_msgs_example.length; j++) {
                     let example_block = openai_msgs_example[j];
@@ -1016,7 +1008,9 @@ async function Generate(type) {
                     }
                 }
             }
+            //update total
             total_count += countTokens(examples_tosend);
+            //create dynammic gen var
             var dynamic_gen = 0
             //this WAS for scale but i remembered it doesnt take tavern gen settings
             //so its now a placeholder for a hook for what model to use
@@ -1028,6 +1022,7 @@ async function Generate(type) {
                 dynamic_gen = max_gen_tokens
                 console.log(`cap'd at ${dynamic_gen} tokens`)
             }
+            //add main messages
             for (let j = openai_msgs.length - 1; j >= 0; j--) {
                 let item = openai_msgs[j];
                 let item_count = countTokens(item);
@@ -1036,6 +1031,7 @@ async function Generate(type) {
                 openai_msgs_tosend.push(item);
                 total_count += item_count;
             }
+            //fit extra messages if there is context size and we didnt add it earlier
             if (!keep_example_dialogue){
                 for (let j = 0; j < openai_msgs_example.length; j++) {
                     let example_block = openai_msgs_example[j];
@@ -1053,17 +1049,12 @@ async function Generate(type) {
                 }
             }
             
-
-            // reverse the messages array because we had the newest at the top to remove the oldest,
-            // now we want proper order
-            openai_msgs_tosend.reverse();
             openai_msgs_tosend = [prompt_msg, ...examples_tosend, new_chat_msg, ...openai_msgs_tosend]
 
             console.log("We're sending this:")
             console.log(openai_msgs_tosend);
-            console.log(`${total_count} total context tokens`);
+            //console.log(`${total_count} total context tokens`);
 
-            var this_settings = openai_settings[openai_setting_names[preset_settings_openai]];
             var generate_data = {
                 "messages": openai_msgs_tosend,
                 // todo: add setting for le custom model
@@ -1079,14 +1070,13 @@ async function Generate(type) {
             var streaming = stream_openai;
 			
 			if (main_api == 'scale') {
-                //console.log("Using scale spellbook backend instead of OpenAI");
                 generate_url = '/generate_scale';
                 streaming = false;
                 generate_data = {
                     messages: openai_msgs_tosend,
                 };
             }
-
+            //remove this to use querry.length
             var last_view_mes = curr_message_id;
             jQuery.ajax({
                 type: 'POST', // 
@@ -1124,7 +1114,7 @@ async function Generate(type) {
                             // the first and last messages are undefined, protect against that
                             getMessage += data.choices[0]["delta"]["content"] || "";
                         }
-
+                        //unknown yet if this is create or edit
                         if ($("#chat").children().filter('[mesid="' + last_view_mes + '"]').length == 0) {
                             chat[chat.length] = {};
                             chat[chat.length - 1]['is_user'] = false;
@@ -1133,11 +1123,10 @@ async function Generate(type) {
                             chat[chat.length - 1]['swipe_array'][swipe_index] = "";
                             addOneMessage(chat[chat.length - 1]);
                         }
-
                         getMessage = $.trim(getMessage);
                         var messageText = messageFormating(getMessage, curr_username);
                         $("#chat").children().filter('[mesid="' + last_view_mes + '"]').children('.mes_block').children('.mes_text').html(messageText);
-
+                        //no fuckign idea
                         var $textchat = $('#chat');
                         $textchat.scrollTop($textchat[0].scrollHeight);
                     }
@@ -1192,20 +1181,24 @@ async function Generate(type) {
                             getMessage = getMessage.replace(curr_charname + ':', '');
                             getMessage = getMessage.trimStart();
                         }
-                        //getMessage = getMessage.replace(/^\s+/g, '');
+                        //might be the create part for bot?
+                        //length is string length
                         if (getMessage.length > 0) {
+                            //hook here for split swipe / new behavior 
+                            getMessage = $.trim(getMessage);
                             chat_mess_content[chat_mess_content.length] = {};
                             chat_mess_content[chat_mess_content.length - 1]['is_user'] = false;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = swipe_index;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
-                            getMessage = $.trim(getMessage);
                             chat_mess_content[chat_mess_content.length - 1]['swipe_array'][swipe_index] = getMessage;
-                            //hook here for swipe right
                             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
+                            //unhook here for updaring
                             $("#send_but").removeClass('generic_hidden');
                             $("#loading_mes").addClass('generic_hidden');
                             saveChat();
                         } else {
+                            //unkown recursive hook that retries if the message is empty, args unknown
+
                             //console.log('run force_name2 protocol');
                             Generate('force_name2');
                         }
@@ -1213,7 +1206,9 @@ async function Generate(type) {
                         console.log("generated a new block in continuous")
                         $("#send_but").click()
                     }
-                    } else {
+                    } 
+                    //error
+                    else {
                         $("#send_but").removeClass('generic_hidden');
                         $("#loading_mes").addClass('generic_hidden');
                         //janky hack to resend mesages in scale
@@ -1222,8 +1217,10 @@ async function Generate(type) {
                             $("#send_but").click()
                         }
                     }
+                    //finally
                     soft_refresh()
                 },
+                //error in generating
                 error: function (jqXHR, exception) {
                     if (streaming) {
                         chat_mess_content.length = chat_mess_content.length - 1;
@@ -1239,11 +1236,21 @@ async function Generate(type) {
                 }
             });
         }
-    } else {
+    }
+    //no connection || no char selected
+    else {
         if (active_character_index == undefined) {
-            //send ch sel
+            //throw error for no char selected
+            //reee unneeded global
             popup_type = 'char_not_selected';
-            callPopup('<h3>Сharacter is not selected</h3>');
+            var rng = getRandomInt(10)
+            if (rng < 9){
+                callPopup('<h3>Сharacter is not selected</h3>');
+            }else if (rng == 9){
+                callPopup('<h3>chloe is not a real person, she cant hurt you</h3>');
+            }else{
+                callPopup('<h3>if your wAIfu was real she would hang around the cool girls and think you was a big loser</h3>');
+            }
         }
         is_send_press = false;
     }
@@ -1336,8 +1343,6 @@ function getChatResult() {
 });
 
 //menu buttons
-var seleced_button_style = { color: "#bcc1c8" };
-var deselected_button_style = { color: "#565d66" };
 $("#rm_button_create").children("h2").addClass('selected_button')
 $("#rm_button_characters").children("h2").addClass('selected_button')
 $("#rm_button_settings").click(function () {
@@ -2076,8 +2081,8 @@ $("#settings_perset").change(function () {
         preset_settings = $('#settings_perset').find(":selected").text();
         temp_kobold = koboldai_settings[koboldai_setting_names[preset_settings]].temp;
         kobold_amount_gen = koboldai_settings[koboldai_setting_names[preset_settings]].genamt;
-        rep_pen = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen;
-        rep_pen_size = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen_range;
+        rep_pen_kobold = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen;
+        rep_pen_size_kobold = koboldai_settings[koboldai_setting_names[preset_settings]].rep_pen_range;
         Kobold_max_context = koboldai_settings[koboldai_setting_names[preset_settings]].max_length;
         $('#temp').val(temp_kobold);
         $('#temp_counter').html(temp_kobold);
@@ -2102,11 +2107,11 @@ $("#settings_perset").change(function () {
         $('#scale_max_gen').val(scale_max_gen);
         $('#scale_max_tokens_counter').html(scale_max_gen + " Tokens");
 
-        $('#rep_pen').val(rep_pen);
-        $('#rep_pen_counter').html(rep_pen);
+        $('#rep_pen').val(rep_pen_kobold);
+        $('#rep_pen_counter').html(rep_pen_kobold);
 
-        $('#rep_pen_size').val(rep_pen_size);
-        $('#rep_pen_size_counter').html(rep_pen_size + " Tokens");
+        $('#rep_pen_size').val(rep_pen_size_kobold);
+        $('#rep_pen_size_counter').html(rep_pen_size_kobold + " Tokens");
 
         $("#range_block").children().prop("disabled", false);
         $("#range_block").css('opacity', 1.0);
@@ -2288,8 +2293,8 @@ $('#character_anchor').change(function () {
     saveSettings();
 });
 $(document).on('input', '#rep_pen', function () {
-    rep_pen = $(this).val();
-    if (isInt(rep_pen)) {
+    rep_pen_kobold = $(this).val();
+    if (isInt(rep_pen_kobold)) {
         $('#rep_pen_counter').html($(this).val() + ".00");
     } else {
         $('#rep_pen_counter').html($(this).val());
@@ -2297,7 +2302,7 @@ $(document).on('input', '#rep_pen', function () {
     var repPenTimer = setTimeout(saveSettings, durationSaveContext);
 });
 $(document).on('input', '#rep_pen_size', function () {
-    rep_pen_size = $(this).val();
+    rep_pen_size_kobold = $(this).val();
     $('#rep_pen_size_counter').html($(this).val() + " Tokens");
     var repPenSizeTimer = setTimeout(saveSettings, durationSaveContext);
 });
@@ -2606,8 +2611,8 @@ async function getSettings(type) {//timer
                 if (settings.anchor_order !== undefined) anchor_order = parseInt(settings.anchor_order);
                 if (settings.style_anchor !== undefined) style_anchor = !!settings.style_anchor;
                 if (settings.character_anchor !== undefined) character_anchor = !!settings.character_anchor;
-                rep_pen = settings.rep_pen;
-                rep_pen_size = settings.rep_pen_size;
+                rep_pen_kobold = settings.rep_pen_kobold;
+                rep_pen_size_kobold = settings.rep_pen_size_kobold;
 
 
                 var addZeros = "";
@@ -2626,12 +2631,12 @@ async function getSettings(type) {//timer
                 $('#amount_gen_counter').html(kobold_amount_gen + ' Tokens');
 
                 addZeros = "";
-                if (isInt(rep_pen)) addZeros = ".00";
-                $('#rep_pen').val(rep_pen);
-                $('#rep_pen_counter').html(rep_pen + addZeros);
+                if (isInt(rep_pen_kobold)) addZeros = ".00";
+                $('#rep_pen').val(rep_pen_kobold);
+                $('#rep_pen_counter').html(rep_pen_kobold + addZeros);
 
-                $('#rep_pen_size').val(rep_pen_size);
-                $('#rep_pen_size_counter').html(rep_pen_size + " Tokens");
+                $('#rep_pen_size').val(rep_pen_size_kobold);
+                $('#rep_pen_size_counter').html(rep_pen_size_kobold + " Tokens");
 
                 //Novel
                 temp_novel = settings.temp_novel;
@@ -2913,8 +2918,8 @@ async function saveSettings(type) {
             preset_settings_novel: preset_settings_novel,
             preset_settings_openai: preset_settings_openai,
             pres_pen_openai: pres_pen_openai,
-            rep_pen: rep_pen,
-            rep_pen_size: rep_pen_size,
+            rep_pen_kobold: rep_pen_kobold,
+            rep_pen_size_kobold: rep_pen_size_kobold,
             rep_pen_novel: rep_pen_novel,
             rep_pen_size_novel: rep_pen_size_novel,
             style_anchor: style_anchor,
