@@ -859,9 +859,7 @@ async function Generate(type) {
 
             //hook here for split for swipe
             curr_message_id -= 1;
-            if (type =='regenerate'){
-                chat_mess_content.pop()
-            }
+            chat_mess_content.pop()
             $('#chat').children().last().remove();
             // We MUST remove the last message from the bot here as it's being regenerated.
         } else {
@@ -3079,6 +3077,7 @@ async function getAllCharaChats() {
         dataType: "json",
         contentType: "application/json",
         success: function (data) {
+            try{
             if (data == 'empty')
             {console.log(`no chats found`)}
             $('#load_select_chat_div').addClass('generic_hidden')
@@ -3110,7 +3109,7 @@ async function getAllCharaChats() {
                 //highlights last chat
                 document.getElementsByClassName('select_chat_block')[0].classList.add("highlighted");
             }
-        },
+        }catch(error){console.log(error)}},
         error: function (jqXHR, exception) {
             console.log(exception);
             console.log(jqXHR);

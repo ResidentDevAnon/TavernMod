@@ -276,6 +276,9 @@ app.post("/savechat", jsonParser, function(request, response){
         chat_data: request.body.chat
     }
     let jsonlData = JSON.stringify(rebuild)
+    if (!fs.existsSync(chatsPath+dir_name)) {
+        fs.mkdirSync(chatsPath+dir_name, { recursive: true });
+    }
     fs.writeFile(chatsPath+dir_name+"/"+request.body.file_name+'.jsonl', jsonlData, 'utf8', function(err) {
         if(err) {
             response.send(err);
@@ -290,6 +293,9 @@ app.post("/getchat", jsonParser, function(request, response){
     try {
         const files = fs.readdirSync(chatsPath+dir_name);
         const chats = [];
+        if (!fs.existsSync(chatsPath+dir_name)) {
+            fs.mkdirSync(chatsPath+dir_name, { recursive: true });
+        }
         for (const file of files) {
           if (file === request.body.file_name+'.jsonl') { // Only read JSONL files
             const filePath = path.join(chatsPath, dir_name, file);
