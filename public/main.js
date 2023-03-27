@@ -7,6 +7,7 @@ var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,striketh
 var default_user_name = "You";
 var curr_username = default_user_name;
 var curr_charname = "Chloe";
+//im not entirely sure where but this somehow gets replaced with the entirety of the current chat
 var chat_mess_content = [{
     is_user: false,
     swipe_index: 0,
@@ -611,7 +612,7 @@ function soft_refresh() {
                 swipeLeft.classList.add('generic_hidden')
             }
             if (swipeRight){
-            swipeRight.classList.add('generic_hidden')
+                swipeRight.classList.add('generic_hidden')
             }
     }else{
         if (swipeLeft && swipe_counter > 0){
@@ -673,7 +674,6 @@ function messageFormating(mes, ch_name,force_format = false) {
 }
 
 function addOneMessage(mes) {
-    var messageText = mes['swipe_array'][mes['swipe_index']];
     var characterName = curr_username;
     generatedPromtCache = '';
     var avatarImg = "User Avatars/" + user_avatar;
@@ -689,11 +689,12 @@ function addOneMessage(mes) {
         }
         characterName = curr_charname;
     }
+    var messageText = mes['swipe_array'][mes['swipe_index']];
     //bookmark
     if (curr_message_id == 0) {
         messageText = replacePlaceholders(messageText);
     }
-    messageText = messageFormating(messageText, characterName,true);
+    messageText = messageFormating(messageText, characterName);
 
     //ugly way to build a template
     var chatTemplate = `
@@ -858,10 +859,11 @@ async function Generate(type) {
 
             //hook here for split for swipe
             curr_message_id -= 1;
-            if (type == 'regenerate'){
-                $('#chat').children().last().remove();
-                // We MUST remove the last message from the bot here as it's being regenerated.
+            if (type =='regenerate'){
+                chat_mess_content.pop()
             }
+            $('#chat').children().last().remove();
+            // We MUST remove the last message from the bot here as it's being regenerated.
         } else {
             //get and clear textarea
             var textareaText = $("#send_textarea").val();
@@ -897,7 +899,6 @@ async function Generate(type) {
             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = 0;
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'] = [];
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'][0] = textareaText;
-            clear_swipe()
             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
         }
         var charPersonality = $.trim(characters_array[active_character_index].personality);
@@ -926,9 +927,9 @@ async function Generate(type) {
             let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
             openai_msgs[unkown] = { "role": role, "content": chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] };
             //behavior for if last message was a bots
-            if (unkown == 0 && !chat_mess_content[j]['is_user'] && type != 'swipe'){
+            if (unkown == 0 && !chat_mess_content[j]['is_user']){
                 openai_msgs.unshift(0)
-                openai_msgs[0] = { "role": 'user', "content": "(continue)" };
+                openai_msgs[0] = { "role": 'user', "content": `(continue ${curr_charname}'s last message)` };
             }
             j++;
         }
@@ -1014,15 +1015,12 @@ async function Generate(type) {
                 console.log(`cap'd at ${dynamic_gen} tokens`)
             }
             //add main messages
-            for (let j = openai_msgs.length - 1; j >= 0; j--) {
+            for (let j = 0; j <= openai_msgs.length - 1; j++) {
                 let item = openai_msgs[j];
                 let item_count = countTokens(item);
                 if ((total_count + item_count) >= (max_context_tokens)) {break;}
-                if (j == openai_msgs.length - 1){item.content = item.content}
-                if (type == 'swipe' && j == 0){
-                    continue
-                }
-                openai_msgs_tosend.push(item);
+                openai_msgs_tosend.unshift(0);
+                openai_msgs_tosend[0] = item
                 total_count += item_count;
             }
             //fit extra messages if there is context size and we didnt add it earlier
@@ -1182,16 +1180,13 @@ async function Generate(type) {
                             getMessage = $.trim(getMessage);
                             if (type != 'swipe'){
                                 chat_mess_content[chat_mess_content.length] = {};
-                                chat_mess_content[chat_mess_content.length - 1]['is_user'] = false;
-                                chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =swipe_array;
+                                chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =[];
                                 //cheat
                                 chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = -1;
                             }
+                            chat_mess_content[chat_mess_content.length - 1]['is_user'] = false;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] ++;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_array'][chat_mess_content[chat_mess_content.length - 1]['swipe_index']] = getMessage;
-                            if (type == 'swipe'){
-                                $('#chat').children().last().remove();
-                            }
                             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
                             //unhook here for updaring
                             $("#send_but").removeClass('generic_hidden');
@@ -1264,12 +1259,11 @@ async function saveChat() {
             chat_mess_content[i]['swipe_array'][item['swipe_index']] = str;
         }
     });
-    //only exists as future support for custom log names
-    var payload = [{last_open_date:Date.now() }, ...chat_mess_content];
+
     jQuery.ajax({
         type: 'POST',
         url: '/savechat',
-        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, chat: payload, avatar_url: characters_array[active_character_index].avatar }),
+        data: JSON.stringify({ file_name: characters_array[active_character_index].chat, chat: chat_mess_content, avatar_url: characters_array[active_character_index].avatar, timestamp:Date.now() }),
         cache: true,
         dataType: "json",
         contentType: "application/json",
@@ -1291,15 +1285,13 @@ async function getChat() {
         contentType: "application/json",
         success: function (data) {
             if (data[0] !== undefined) {
-                for (let key in data) {
-                    chat_mess_content.push(data[key]);
+                for (var key = 0; key <= data[0]['chat_data'].length - 1; key ++) {
+                    chat_mess_content.push(data[0]['chat_data'][key]);
                 }
-                chat_mess_content.shift();
             }
             getChatResult();
             soft_refresh();
             saveChat();
-
         },
         error: function (jqXHR, exception) {
             getChatResult();
@@ -1828,6 +1820,7 @@ $("#form_create").submit(function(type) {
                         chat_mess_content.length = 0;
                         chat_mess_content[0] = {};
                         chat_mess_content[0]['is_user'] = false;
+                        chat_mess_content[0]['swipe_index']=0;
                         chat_mess_content[0]['swipe_array']=[];
                         chat_mess_content[0]['swipe_array'][chat_mess_content[0]["swipe_index"]] = this_ch_mes;
                         add_mes_without_animation = true;
@@ -2059,8 +2052,7 @@ $("#dialogue_del_mes_ok").click(function () {
         $(this).parent().children('.for_checkbox').removeClass('generic_hidden')
         $(this).parent().css('background', css_mes_bg);
         $(this).prop("checked", false);
-        soft_refresh()
-
+        
     });
     if (this_del_mes != 0) {
         $(".mes[mesid='" + this_del_mes + "']").nextAll('div').remove();
@@ -2072,7 +2064,8 @@ $("#dialogue_del_mes_ok").click(function () {
         $textchat.scrollTop($textchat[0].scrollHeight);
     }
     this_del_mes = 0;
-
+    
+    soft_refresh()
 
 });
 
@@ -3089,6 +3082,7 @@ async function getAllCharaChats() {
             if (data == 'empty')
             {console.log(`no chats found`)}
             $('#load_select_chat_div').addClass('generic_hidden')
+
             let dataArr = Object.values(data);
             //what is this here for?
             //sorts by timestamp dumbass
@@ -3101,15 +3095,13 @@ async function getAllCharaChats() {
             }
             for (const key in sortedSet) {
                 let strlen = 200;
-                let mes = sortedSet[key]['swipe_array'][sortedSet[key]['swipe_index']];
+                //what teh fuck am i doing with my code
+                let mes = sortedSet[key]['chat_data'][sortedSet[key]['chat_data'].length-1]['swipe_array'][sortedSet[key]['chat_data'][sortedSet[key]['chat_data'].length-1]['swipe_index']]
                 if (mes.length > strlen) {
                     mes = '...' + mes.substring(mes.length - strlen);
                 }
                 mes = format_raw(mes)
-                var date = `Date: ${new Date(Number(sortedSet[key]['file_name'].replace('.jsonl',''))).toLocaleDateString('en-US')}`;
-                if (date == "Date: Invalid Date"){
-                    date = `Filename: ${sortedSet[key]['file_name'].replace('.jsonl','')}`
-                }
+                var date = `Date: ${new Date(Number(sortedSet[key]['Last_open'])).toLocaleDateString('en-US')}`;
                 $('#select_chat_div').append('<div class="select_chat_block" file_name="' +
                 sortedSet[key]['file_name'] + '"><div class=avatar><img src="characters/' +
                 characters_array[active_character_index]['avatar'] + '" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">' +
@@ -3799,6 +3791,9 @@ $(document).on('click', '.swipe_right', function() {
         document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index+1])
         document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].setAttribute('swipe_index', (swipe_index +1))
         chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_index'] = swipe_index +1
+        if (document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.contains('generic_hidden')  ){
+            document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.remove('generic_hidden')    
+        }
         saveChat()
         return
     }
@@ -3811,9 +3806,12 @@ function shift_left() {
     var swipe_index = document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index')
     if (swipe_index == 0){
         return
+    }else if (swipe_index == 1){
+    document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.add('generic_hidden')    
     }
     document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index-1])
     document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].setAttribute('swipe_index', (swipe_index -1))
     chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_index'] = swipe_index -1
+    soft_refresh()
     saveChat()
 }

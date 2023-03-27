@@ -19,10 +19,6 @@ maybe:
     expand 'description' in character by default?
     second /third prompt previews in character and prompt submenu
 
-todo with swipe rework
-    improve soft refresh messages
-        buggy and replaces user avatar
-
 big maybe:
     export / import just for prompt files
 

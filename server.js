@@ -271,8 +271,11 @@ app.post("/generate", jsonParser, function(request, response_generate = response
 });
 app.post("/savechat", jsonParser, function(request, response){
     var dir_name = String(request.body.avatar_url).replace('.png','');
-    let chat_data = request.body.chat;
-    let jsonlData = chat_data.map(JSON.stringify).join('\n');
+    const rebuild = {
+        Last_open: request.body.timestamp,
+        chat_data: request.body.chat
+    }
+    let jsonlData = JSON.stringify(rebuild)
     fs.writeFile(chatsPath+dir_name+"/"+request.body.file_name+'.jsonl', jsonlData, 'utf8', function(err) {
         if(err) {
             response.send(err);
@@ -281,61 +284,33 @@ app.post("/savechat", jsonParser, function(request, response){
             response.send({result: "ok"});
         }
     });
-    
 });
 app.post("/getchat", jsonParser, function(request, response){
     var dir_name = String(request.body.avatar_url).replace('.png','');
-
-    fs.stat(chatsPath+dir_name, function(err, stat) {
-            
-        if(stat === undefined){
-
-            fs.mkdirSync(chatsPath+dir_name);
-            response.send({});
-            return;
-        }else{
-            
-            if(err === null){
-                
-                fs.stat(chatsPath+dir_name+"/"+request.body.file_name+".jsonl", function(err, stat) {
-                    
-                    if (err === null) {
-                        
-                        if(stat !== undefined){
-                            fs.readFile(chatsPath+dir_name+"/"+request.body.file_name+".jsonl", 'utf8', (err, data) => {
-                                if (err) {
-                                  console.error(err);
-                                  response.send(err);
-                                  return;
-                                }
-                                //console.log(data);
-                                const lines = data.split('\n');
-
-                                // Iterate through the array of strings and parse each line as JSON
-                                const jsonData = lines.map(JSON.parse);
-                                response.send(jsonData);
-
-
-                            });
-                        }
-                    }else{
-                        response.send({});
-                        //return console.log(err);
-                        return;
-                    }
-                });
-            }else{
-                console.error(err);
-                response.send({});
-                return;
+    try {
+        const files = fs.readdirSync(chatsPath+dir_name);
+        const chats = [];
+        for (const file of files) {
+          if (file === request.body.file_name+'.jsonl') { // Only read JSONL files
+            const filePath = path.join(chatsPath, dir_name, file);
+            const fileContent = fs.readFileSync(filePath, 'utf8');
+            const lines = fileContent.split('\n');
+            for (const line of lines) {
+              if (line) {
+                const chat = JSON.parse(line);
+                chats.push(chat);
+              }
             }
+          }
         }
-        
-
+        response.json(chats);
+      } catch (error) {
+        console.log(error);
+        response.status(500).send('Error reading chat files');
+      }
     });
 
-    
-});
+
 app.post("/getstatus", jsonParser, function(request, response_getstatus = response){
     if(!request.body) return response_getstatus.sendStatus(400);
     api_server = request.body.api_server;
@@ -925,71 +900,72 @@ app.post("/generate_novelai", jsonParser, function(request, response_generate_no
     });
 });
 
-app.post("/getallchatsofchatacter", jsonParser, function(request, response){
+function getChatData(char_dir, file) {
+    const fileStream = fs.createReadStream(chatsPath+char_dir+'/'+file);
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
+
+    return new Promise((resolve, reject) => {
+        let lines = [];
+
+        rl.on('line', (line) => {
+            lines.push(line);
+        });
+
+        rl.on('close', () => {
+            try {
+                if(lines.length){
+                    let jsonData1 = JSON.parse(lines[0]);
+                    let jsonData2 = JSON.parse(lines[lines.length - 1]);
+
+                    resolve({
+                        'last_open_date': jsonData1['last_open_date'],
+                        'file_name': file,
+                        'swipe_index': jsonData2['swipe_index'],
+                        'swipe_array': jsonData2['swipe_array']
+                    });
+                } else {
+                    resolve(null);
+                }
+            } catch (error) {
+                console.log(`${chatsPath+char_dir+'/'+file} caused ${error}`);
+                console.log(`${[lines]}`);
+                reject(error);
+            }
+        })
+    })
+}
+
+app.post("/getallchatsofchatacter", jsonParser, async function(request, response){
     if(!request.body) return response.sendStatus(400);
 
     var char_dir = (request.body.avatar_url).replace('.png','')
-    try { 
-        fs.readdir(chatsPath+char_dir, (err, files) => {
-                if (err) {
-                    console.error(err);
-                    response.send({error: true});
-                    return;
-                }
-                
-                // filter for JSON files
-                const jsonFiles = files.filter(file => path.extname(file) === '.jsonl');
-                
-                // sort the files by name
-                //jsonFiles.sort().reverse();
-                
-                // print the sorted file names
-                var chatData = {};
-                let ii = jsonFiles.length;
-                for(let i = jsonFiles.length-1; i >= 0; i--){
-                const file = jsonFiles[i];
-                
-                const fileStream = fs.createReadStream(chatsPath+char_dir+'/'+file);
-                const rl = readline.createInterface({
-                    input: fileStream,
-                    crlfDelay: Infinity
-                });
-                
-                let lastLine;
-                
-                rl.on('line', (line) => {
-                    lastLine = line;
-                });
 
-                rl.on('close', () => {
-                    //this is very ugly and needs a refactor over the whole load func
-                    //but it works for now
-                    if(lastLine){
-                        let fileData = fs.readFileSync(chatsPath+char_dir+'/'+file);
-                        let firstLine = fileData.toString().split('\n')[0];
-                        chatData[i] = {};
-                        let jsonData = JSON.parse(firstLine);
-                        chatData[i]['last_open_date'] = jsonData['last_open_date'];
-                        chatData[i]['file_name'] = file;
-                        jsonData = JSON.parse(lastLine);
-                        chatData[i]['swipe_index'] = jsonData['swipe_index'];
-                        chatData[i]['swipe_array'] = jsonData['swipe_array'];
-                        ii--;
-                        if(ii === 0){ 
-                            response.send(chatData);
-                        }
-                    }
-                    rl.close();
-                });
+    try {
+        const files = fs.readdirSync(chatsPath+char_dir);
+        const chats = [];
+        for (const file of files) {
+          if (path.extname(file) === '.jsonl') { // Only read JSONL files
+            const filePath = path.join(chatsPath, char_dir, file);
+            const fileContent = fs.readFileSync(filePath, 'utf8');
+            const lines = fileContent.split('\n');
+            for (const line of lines) {
+              if (line) {
+                const chat = JSON.parse(line);
+                chats.push(chat);
+              }
             }
-        })
-    } catch (error) {
-        //no files
-        console.log(`empty`)
-        response.send('empty');
-    }  
-});
-
+          }
+        }
+        response.json(chats);
+      } catch (error) {
+        console.log(error);
+        response.status(500).send('Error reading chat files');
+      }
+    }
+)
 app.post("/getstatus_scale", jsonParser, function(request, response_getstatus_scale = response){
     console.log("getstatus_scale", request.body);
     if(!request.body) return response_getstatus_scale.sendStatus(400);

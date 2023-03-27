@@ -65,6 +65,7 @@ em {
     margin-top: 0px;
     margin-bottom: 0px;
     width: -webkit-fill-available;
+    white-space: pre-wrap;
 }
 
 .mes_text strong {
@@ -677,7 +678,12 @@ ol {
 ol li{
     padding-left: 5px;
     color: #238ee9;
-    filter: drop-shadow(2px 2px 1px #ffffff44);
+    /* filter: drop-shadow(2px 2px 1px #ffffff44); */
+}
+
+li ::marker {
+    left: 10px;
+    position: relative;
 }
 
 /*unordered list */
@@ -693,7 +699,6 @@ ul {
 ul li{
     padding-left: 5px;
     color: #238ee9;
-    filter: drop-shadow(2px 2px 1px #ffffff44);
 }
 
 /*code outside box*/
@@ -702,7 +707,7 @@ code {
     padding: 0px;
     font-family: Consolas, monospace;
     color: #11c98c;
-    filter: drop-shadow(2px 2px 6px #23e98e);
+    /* filter: drop-shadow(2px 2px 6px #23e98e); */
 }
 
 /*box for code*/
@@ -721,6 +726,7 @@ pre code {
     padding-bottom: 5px;
     color: mintcream;
     filter: drop-shadow(0px 0px 1px #23e98e);
+    white-space: pre-wrap;
 }
 /* settings buttons */
 .submenu{
