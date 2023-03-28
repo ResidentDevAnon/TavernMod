@@ -1352,15 +1352,18 @@ $("#rm_button_settings").click(function () {
     menu_type = 'settings';
     $("#rm_charaters_block").addClass('generic_hidden');
     $("#rm_api_block").removeClass('generic_hidden');
-
+    
     $("#rm_ch_create_block").addClass('generic_hidden');
     $("#rm_info_block").addClass('generic_hidden');
-
+    
     $("#rm_button_characters").children("h2").removeClass('selected_button')
     $("#rm_button_settings").children("h2").addClass('selected_button')
     $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
     //default selected option
     //$("#api_settings").children("h2").addClass('selected_button')
+    if($("#rm_button_settings").children("h2")[0].classList.contains('selected_button')){
+        $('#sys_sett_block').removeClass('generic_hidden')
+    }
     build_main_system_message()
 });
 $("#rm_button_characters").click(function () {
@@ -3367,8 +3370,8 @@ $(document).ready(function() {
     setTimeout(update_real_cost, 700)
 })
 $("#api_settings").click(function () {
-        $("#API_sett_block").css("display", 'block');
-        $("#sys_sett_block").css("display", 'none');
+        $("#API_sett_block").removeClass('generic_hidden');
+        $("#sys_sett_block").addClass('generic_hidden');
         $("#api_settings").children("h2").addClass('selected_button')
         $("#system_settings").children("h2").removeClass('selected_button')
         //assignments are handled elsewhere in legacy so theres none here
@@ -3376,8 +3379,8 @@ $("#api_settings").click(function () {
     }
 );
 $("#system_settings").click(function () {
-    $("#sys_sett_block").css("display", 'block');
-    $("#API_sett_block").css("display", 'none');
+    $("#sys_sett_block").removeClass('generic_hidden');
+    $("#API_sett_block").addClass('generic_hidden');
     $("#sys_sett_block").removeClass('generic_hidden');
     $("#system_settings").children("h2").addClass('selected_button')
     $("#api_settings").children("h2").removeClass('selected_button')

@@ -18,6 +18,8 @@
     --deselected_butt_color: gray;
     --confirm_green: #00FF00;
     --warning_red:#FF0000;
+    --rm_width: calc(min(400px,30%));
+--lm_width: 145px;
 }
 
 
@@ -167,6 +169,7 @@ todo, make it flop*/
 .active#bg_menu{
     opacity: 1;
     height: 100vh;
+    width: var(--lm_width);
 }.active #bg_menu_content{
     opacity: 1;
     height: 97vh;
@@ -209,8 +212,7 @@ todo, make it flop*/
 
 #right_menu {
     background: var(--bg_right);
-    width: 400px;
-    min-width: 400px;
+    width: var(--rm_width);
     height: 100vh;
     position: fixed;
     right: 0px;
@@ -233,15 +235,15 @@ todo, make it flop*/
     justify-content: space-between;
 }
 #main_chat.left_open{
-    margin-left: 147px !important;
+    margin-left: var(--lm_width);
 }
 #main_chat.right_open{
-    margin-right: 400px !important;
+    margin-right: var(--rm_width);
 }
 
 #rm_charaters_block{
      overflow: scroll;
-     height: 83vh;
+     height: 80vh;
      overflow-x: hidden;
 }
 .character_select .avatar{
@@ -287,7 +289,7 @@ h2{
 .API_block{
     overflow-y: scroll;
     height: -webkit-fill-available;
-    height: 75vh;
+    height: 70vh;
     padding-left: var(--rm_padding_lr);
     padding-right: var(--rm_padding_lr);
 }
@@ -517,7 +519,7 @@ h5 {
 
 div#sys_sett_block {
     overflow-y: scroll;
-    height: 75vh;
+    height: 70vh;
 }
 
 hr {
