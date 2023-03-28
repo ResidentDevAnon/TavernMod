@@ -3,9 +3,15 @@
 ### [original Tavernai](https://github.com/TavernAI/TavernAI)
 
 # this is a complete rewrite / WIP in progress, use the main branch if you want consistency and stability
+
+# YOUR LOGS ARE INCOMPATABLE WITH THE NEW SWIPES UPDATE
+it now uses proper json formatting, not the broken stuff tav uses
+
 ## check notes_to_future_me.txt for some known problems
 ## make backups before using
-i dont think anything will break,but its best to cover bases
+
+
+
 <hr>
 
 ## Notable modifications
@@ -37,6 +43,12 @@ i dont think anything will break,but its best to cover bases
 * auto try again if the message fails
 * auto send message on sucess (continuous mode)
 * system prompt preview
+* swipes
+* proper json formatting for logs
+* dynamic OAI token generation size, with cap to prevent large messages
+* expected cost per message dispaly
+* actual cost per message display
+* total $ spent this message tracker
 
 
 exmaple images (very outdated)

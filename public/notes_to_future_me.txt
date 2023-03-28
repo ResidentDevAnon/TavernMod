@@ -5,7 +5,6 @@ need
 
 
 placeholder elements that need to go:
-    pink HR
     toggles ugly as sin
     submenu for chat options ugly
     new chat submenu buttons need new look
@@ -16,7 +15,6 @@ want:
     toggle greentext / quote behavior in system
 
 maybe:
-    expand 'description' in character by default?
     second /third prompt previews in character and prompt submenu
 
 big maybe:
