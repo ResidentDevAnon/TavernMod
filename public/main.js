@@ -843,7 +843,7 @@ function build_main_system_message(r_flag=false){
     }else
     {return}
 }
-function token_cost_converter(){
+function udpate_tokencost_preview(){
     document.getElementById('cost_preview').value = `Min $${(openai_selected_context*cntx_price_per1k)} (${openai_selected_context} / 0) Max $${((openai_selected_context*cntx_price_per1k)+((4096-openai_selected_context)*gen_price_per1k))} (${openai_selected_context} / ${4096-openai_selected_context})`
 }
 
@@ -859,7 +859,9 @@ async function Generate(type) {
 
             //hook here for split for swipe
             curr_message_id -= 1;
-            chat_mess_content.pop()
+            if (type == 'regenerate'){
+                chat_mess_content.pop()
+            }
             $('#chat').children().last().remove();
             // We MUST remove the last message from the bot here as it's being regenerated.
         } else {
@@ -917,7 +919,16 @@ async function Generate(type) {
         var j = 0;
         // clean openai msgs
         openai_msgs = [];
-        for (var unkown = chat_mess_content.length - 1; unkown >= 0; unkown--) {
+        var runtime
+        //cheats by not counting the one we are currently swipping
+        if (type == 'swipe')
+        {
+            runtime = chat_mess_content.length - 2
+        }
+        else{
+            runtime = chat_mess_content.length - 1
+        }
+        for (var unkown = runtime; unkown >= 0; unkown--) {
             // first greeting message
             if (j == 0) {
                 chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] = replacePlaceholders(chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']]);
@@ -927,7 +938,7 @@ async function Generate(type) {
             //behavior for if last message was a bots
             if (unkown == 0 && !chat_mess_content[j]['is_user']){
                 openai_msgs.unshift(0)
-                openai_msgs[0] = { "role": 'user', "content": `(continue ${curr_charname}'s last message)` };
+                openai_msgs[0] = { "role": 'user', "content": `(continue ${curr_charname}'s last message as if it didnt stop)` };
             }
             j++;
         }
@@ -1920,6 +1931,7 @@ $('#description_textarea').on('keyup paste cut', function () {//change keyup pas
     if (menu_type == 'create') {
         create_save_description = $('#description_textarea').val();
     } else {
+        characters_array[active_character_index].description = $('#description_textarea').val();
         common_click_save()
         prompt_flag_save()
     }
@@ -2091,7 +2103,7 @@ $("#settings_perset").change(function () {
         $('#OAI_gen_input').val(openai_selected_gen);
         $('#OAI_gen_slider').val(openai_selected_gen);
         $('#OAI_gen_display').html(openai_selected_gen + " Tokens");
-        token_cost_converter()
+        udpate_tokencost_preview()
 		
 		$('#scale_max_context').val(scale_max_context);
         $('#scale_max_context_counter').html(scale_max_context + " Tokens");
@@ -2363,7 +2375,7 @@ function update_OAI_contx(){
     $('#OAI_context_input').val(openai_selected_context);
     $('#OAI_context_slider').val(openai_selected_context);
     //console.log(openai_selected_context)
-    token_cost_converter()
+    udpate_tokencost_preview()
     clearTimeout(max_contextTimer)
     var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
 }
@@ -2402,7 +2414,7 @@ function update_OAI_gen(){
     $('#OAI_gen_input').val(openai_selected_gen);
     $('#OAI_gen_slider').val(openai_selected_gen);
     //console.log(openai_selected_gen)
-    token_cost_converter()
+    udpate_tokencost_preview()
     clearTimeout(max_contextTimer)
     var max_contextTimer = setTimeout(saveSettings, durationSaveContext);
 }
@@ -2748,7 +2760,7 @@ async function getSettings(type) {//timer
                 $('#OAI_gen_input').val(openai_selected_gen);
                 $('#OAI_gen_slider').val(openai_selected_gen);
                 $('#OAI_gen_display').html(openai_selected_gen + ' Tokens');
-                token_cost_converter()
+                udpate_tokencost_preview()
 				
 				// Scale max context (supposedly 8k, but 7.5k max because we're using the wrong tokenizer)
                 scale_max_context = settings.scale_max_context ?? 7750;
@@ -3087,7 +3099,7 @@ async function getAllCharaChats() {
             //sorts by timestamp dumbass
             var sortedSet
             try {
-                sortedSet = Object.values(data).sort((a, b) => new Date(b['last_open_date']) - new Date(a['last_open_date']));
+                sortedSet = Object.values(data).sort((a, b) => new Number(b['Last_open']) - new Number(a['Last_open']));
             } catch (error) {
                 console.log(error)
                 sortedSet = dataArr
@@ -3256,6 +3268,7 @@ $(document).on('click', '.select_chat_block', function () {
     characters_array[active_character_index]['chat'] = file_name;
     clearChat();
     chat_mess_content.length = 0;
+    characters_array[active_character_index]['file_name'] = file_name
     getChat();
     $('#selected_chat_pole').val(file_name);
     $("#create_button").click();

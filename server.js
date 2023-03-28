@@ -311,7 +311,12 @@ app.post("/getchat", jsonParser, function(request, response){
         }
         response.json(chats);
       } catch (error) {
-        console.log(error);
+        if (error.code === 'ENOENT' && error.syscall === 'scandir') {
+            console.log('cant get directory, its fine');
+        } else {
+            console.log(`couldnt get chat messages`);
+            console.log(error);
+        }
         response.status(500).send('Error reading chat files');
       }
     });
@@ -959,9 +964,10 @@ app.post("/getallchatsofchatacter", jsonParser, async function(request, response
             const lines = fileContent.split('\n');
             for (const line of lines) {
               if (line) {
-                const chat = JSON.parse(line);
+                var chat = JSON.parse(line);
                 chats.push(chat);
-              }
+            }
+            chat['file_name'] = file
             }
           }
         }

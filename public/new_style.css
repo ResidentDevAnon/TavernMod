@@ -521,7 +521,7 @@ div#sys_sett_block {
 }
 
 hr {
-    background: magenta;
+    background: cyan;
     width: -webkit-fill-available;
 }
 
@@ -534,7 +534,7 @@ h4 {
 }
 
 .switch h4 {
-    color: aquamarine;
+    color: cyan;
     display: flex;
     width: -webkit-fill-available;
     cursor: pointer;
@@ -945,6 +945,7 @@ div#swipe_left img {
     height: 30px;
     width: 30px;
     transform: rotate3d(0, 1, 0, 180deg);
+    /* background-color: green; */
 }
 div#swipe_right {
     align-self: center;
