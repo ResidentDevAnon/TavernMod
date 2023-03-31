@@ -184,6 +184,10 @@ var continuous_mode = false
 //swipe stuff
 var newest_mes_index = 0
 
+//ML stuff
+var ML_wordbag = new Map();
+
+
 //css
 var bg1_toggle = true;
 var css_mes_bg = $('<div class="mes"></div>').css('background');
@@ -259,6 +263,10 @@ $.get("/csrf-token")
         printMessages();
         getBackgrounds();
         getUserAvatars();
+        getMLsettings();
+        setTimeout(auto_start, 700)
+        setTimeout(auto_open, 700)
+        setTimeout(update_real_cost, 700)
     });
 
 $('#characloud_url').click(function () {
@@ -312,8 +320,59 @@ async function getLastVersion() {
             console.log(jqXHR);
         }
     });
-
 }
+//this is so fucking stupid
+async function getMLsettings() {
+    try {
+      const response = await fetch("/getmlsettings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token
+        },
+        body: JSON.stringify({}),
+        dataType: "basic",
+        contentType: "application/json"
+      });
+      if (response.ok === true) {
+        const data = await response.json();
+        const carefor = data.payload.wordScoreSet
+        for (var i = 0; i <=  carefor.length-1;i++){
+            if (!ML_wordbag.has(carefor[i][0])) {
+                ML_wordbag.set(carefor[i][0], carefor[i][1]);
+            }
+        }
+        console.log("done")
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+//this is so fucking stupid
+async function saveMLsettings() {
+    try {
+      var requestBody = [];
+      for (const [word, value] of ML_wordbag) {
+        let temp = word.replace('\r\n\r\n', "").replace('\n\n', "")
+        requestBody.push([temp, value]);
+      };
+      requestBody.sort((a, b) => b[1] - a[1]); // sorts by value in descending order
+      const response = await fetch("/saveMLsettings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token
+        },
+        body: JSON.stringify(requestBody)
+      });
+  
+      if (response.ok === true) {
+        //console.log("done");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
 async function getStatus() {
     if (main_api == 'kobold') {
         console.log(`trying to connect to kobold`)
@@ -506,6 +565,7 @@ async function getCharacters() {
         if (active_character_index != undefined) $("#avatar_url_pole").val(characters_array[active_character_index].avatar);
         printCharaters();
     }
+    auto_char()
 }
 async function getBackgrounds() {
     const response = await fetch("/getbackgrounds", {
@@ -606,6 +666,7 @@ function soft_refresh() {
         // Hide swipe_left and swipe_right on all but last message with is_user=false, check if swipe index > 0 for left swipe
         let swipeLeft = element.querySelector('.swipe_left');
         let swipeRight = element.querySelector('.swipe_right');
+        let likeblock = element.querySelector('.likeblock');
         if (is_user=='false' && i !== messages.length - 1 || i  == 0) {
             //yes these if statements are needed, it throws a null reading error if its not here
             if (swipeLeft){
@@ -614,12 +675,18 @@ function soft_refresh() {
             if (swipeRight){
                 swipeRight.classList.add('generic_hidden')
             }
+            if (likeblock){
+                likeblock.classList.add('generic_hidden')
+            }
     }else{
         if (swipeLeft && swipe_counter > 0){
             swipeLeft.classList.remove('generic_hidden')
         }
         if (swipeRight){
         swipeRight.classList.remove('generic_hidden')
+        }           
+        if (likeblock){
+            likeblock.classList.remove('generic_hidden')
         }
     }
     //display names
@@ -728,6 +795,12 @@ function addOneMessage(mes) {
         <div id='swipe_right' class="swipe_right generic_hidden">
         <img src="img/tri.png">
         </div>
+        <div class="likeblock">
+        <a id="option_dislike_big" class="like_button">☆</a> 
+        <a id="option_dislike" class="like_button">☆</a> 
+        <a id="option_like" class="like_button">☆</a>
+        <a id="option_like_big" class="like_button">☆</a>
+        </div>
         <div id='swipe_left' class="swipe_left generic_hidden">
             <img src="img/tri.png">
         </div>
@@ -783,48 +856,26 @@ function build_main_system_message(r_flag=false){
     }
     curr_charname = characters_array[active_character_index].name;
     let sys_prompt_compiler = `${replacePlaceholders(system_prompt)}\n`
-    if (nsfw_toggle) {
-        sys_prompt_compiler += `${replacePlaceholders(NSFW_on_prompt)}\n`;
-    }
-    else{
-        sys_prompt_compiler += `${replacePlaceholders(NSFW_off_prompt)}\n`;
-    }
-    if (CYOA_mode) {
-        sys_prompt_compiler += `${replacePlaceholders(CYOA_prompt)}\n`;
-    }
-    if (custom_1_switch) {
-        sys_prompt_compiler += `${replacePlaceholders(custom_1_prompt)}\n`;
-    }
-    if (custom_2_switch) {
-        sys_prompt_compiler += `${replacePlaceholders(custom_2_prompt)}\n`;
-    }
-    if (custom_3_switch) {
-        sys_prompt_compiler += `${replacePlaceholders(custom_3_prompt)}\n`;
-    }
-    if (custom_4_switch) {
-        sys_prompt_compiler += `${replacePlaceholders(custom_4_prompt)}\n`;
-    }
-    if (custom_5_switch) {
-        sys_prompt_compiler += `${replacePlaceholders(custom_5_prompt)}\n`;
-    }
+    if (nsfw_toggle) {sys_prompt_compiler += `${replacePlaceholders(NSFW_on_prompt)}\n`;}
+    else{ sys_prompt_compiler += `${replacePlaceholders(NSFW_off_prompt)}\n`;}
+    if (CYOA_mode) {sys_prompt_compiler += `${replacePlaceholders(CYOA_prompt)}\n`;}
+    if (custom_1_switch) {sys_prompt_compiler += `${replacePlaceholders(custom_1_prompt)}\n`;}
+    if (custom_2_switch) {sys_prompt_compiler += `${replacePlaceholders(custom_2_prompt)}\n`;}
+    if (custom_3_switch) {sys_prompt_compiler += `${replacePlaceholders(custom_3_prompt)}\n`;}
+    if (custom_4_switch) {sys_prompt_compiler += `${replacePlaceholders(custom_4_prompt)}\n`;}
+    if (custom_5_switch) {sys_prompt_compiler += `${replacePlaceholders(custom_5_prompt)}\n`;}
     var charDescription = $.trim(characters_array[active_character_index].description);
     var charPersonality = $.trim(characters_array[active_character_index].personality);
     var Scenario = $.trim(characters_array[active_character_index].scenario);
     var built = ''
     if (charDescription !== undefined) {
-        if (charDescription.length > 0) {
-            charDescription = replacePlaceholders(charDescription);
-        }
+        if (charDescription.length > 0) {charDescription = replacePlaceholders(charDescription)}
     }
     if (charPersonality !== undefined) {
-        if (charPersonality.length > 0) {
-            charPersonality = replacePlaceholders(charPersonality);
-        }
+        if (charPersonality.length > 0) {charPersonality = replacePlaceholders(charPersonality)}
     }
     if (Scenario !== undefined) {
-        if (Scenario.length > 0) {
-            Scenario = replacePlaceholders(Scenario);
-        }
+        if (Scenario.length > 0) {Scenario = replacePlaceholders(Scenario)}
     }
     if (charDescription.length > 0) {
         built = replacePlaceholders(description_prompt) + charDescription + '\n';
@@ -836,7 +887,10 @@ function build_main_system_message(r_flag=false){
         built += replacePlaceholders(scenario_prompt) + Scenario+ '\n';
     }
     built = `${sys_prompt_compiler}${built}`
-    document.getElementById('scenario_preview').value = built
+     var array = document.getElementsByClassName('scenario_preview')
+     for (var i = 0 ; i <= array.length - 1; i ++){
+        array[i].value = built
+     }
     console.log(`${countTokens(sys_prompt_compiler)} tokens dedicated for SYS commands`)
     if(r_flag){
         return built
@@ -844,13 +898,21 @@ function build_main_system_message(r_flag=false){
     {return}
 }
 function udpate_tokencost_preview(){
-    document.getElementById('cost_preview').value = `Min $${(openai_selected_context*cntx_price_per1k)} (${openai_selected_context} / 0) Max $${((openai_selected_context*cntx_price_per1k)+((4096-openai_selected_context)*gen_price_per1k))} (${openai_selected_context} / ${4096-openai_selected_context})`
+    //really should make this a global
+    var dynamic_gen = 4096 - openai_selected_context
+    if (dynamic_gen > openai_selected_gen ){
+        dynamic_gen = openai_selected_gen
+    }
+    //document.getElementById('cost_preview').value = `Min $${(openai_selected_context*cntx_price_per1k)} (${openai_selected_context} / 0) Max $${((openai_selected_context*cntx_price_per1k)+((4096-openai_selected_context)*gen_price_per1k))} (${openai_selected_context} / ${4096-openai_selected_context})`
+    document.getElementById('cost_preview_min').innerHTML = ` Min: $${ ( parseFloat(openai_selected_context*cntx_price_per1k).toFixed(6) ) } (${openai_selected_context} context / 0 generation)`
+    document.getElementById('cost_preview_max').innerHTML = `Max :$${ parseFloat((openai_selected_context*cntx_price_per1k) + (dynamic_gen*gen_price_per1k)).toFixed(6) } (${openai_selected_context} context / ${dynamic_gen}) generation`
 }
 
 async function Generate(type) {
     if (online_status != 'no_connection' && active_character_index != undefined) {
         if (type == 'regenerate' || type == 'swipe') {
-            var textareaText = "";
+            var Promt_text = "";
+            var hidden_text = $("#fake_textarea").val();
             if (chat_mess_content[chat_mess_content.length - 1]['is_user']) {//If last message from You
                 return
             }
@@ -866,7 +928,8 @@ async function Generate(type) {
             // We MUST remove the last message from the bot here as it's being regenerated.
         } else {
             //get and clear textarea
-            var textareaText = $("#send_textarea").val();
+            var Promt_text = $("#send_textarea").val();
+            var hidden_text = $("#fake_textarea").val();
             $("#send_textarea").val('');
         }
         //swap button with loading icon
@@ -893,12 +956,12 @@ async function Generate(type) {
         //*********************************
         //check if message is not empty
         //this is user so empty swipes is ok
-        if (textareaText != "") {
+        if (Promt_text != "") {
             chat_mess_content[chat_mess_content.length] = {};
             chat_mess_content[chat_mess_content.length - 1]['is_user'] = true;
             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = 0;
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'] = [];
-            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][0] = textareaText;
+            chat_mess_content[chat_mess_content.length - 1]['swipe_array'][0] = Promt_text;
             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
         }
         var charPersonality = $.trim(characters_array[active_character_index].personality);
@@ -935,10 +998,18 @@ async function Generate(type) {
             }
             let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
             openai_msgs[unkown] = { "role": role, "content": chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] };
+            if (unkown == 0 && chat_mess_content[j]['is_user'] && hidden_text != ""){
+                openai_msgs[0].content +=  `(${hidden_text})`
+            }
             //behavior for if last message was a bots
             if (unkown == 0 && !chat_mess_content[j]['is_user']){
                 openai_msgs.unshift(0)
-                openai_msgs[0] = { "role": 'user', "content": `(continue ${curr_charname}'s last message as if it didnt stop)` };
+                if (hidden_text == ""){
+                    openai_msgs[0] = { "role": 'user', "content": `(continue ${curr_charname}'s last message as if it didnt stop)` };
+                }
+                else{
+                    openai_msgs[0] = { "role": 'user', "content": `(${hidden_text})` };
+                }
             }
             j++;
         }
@@ -1064,7 +1135,8 @@ async function Generate(type) {
                 "frequency_penalty": parseFloat(freq_pen_openai),
                 "presence_penalty": parseFloat(pres_pen_openai),
                 "max_tokens": dynamic_gen,
-                "stream": stream_openai
+                "stream": stream_openai,
+                //"logit_bias": {2436:7, 698:7, 17237:7, 445:7, 2266:7, 588:7, 2339:7, 64:10, 257:7, 24240:7, 39532:7, 5549:7, 220:-5},
             };
 
             var generate_url = '/generate_openai';
@@ -1187,6 +1259,16 @@ async function Generate(type) {
                         if (getMessage.length > 0) {
                             //hook here for split swipe / new behavior 
                             getMessage = $.trim(getMessage);
+                            //hook here for training check
+                            //scan_messge_ML(getMessage,'expected',false)
+                            if (scan_messge_ML(getMessage,'actual') == "catch"){
+                                console.log(`auto punished`)
+                                update_ML_values(getMessage,false, -10,0.33)
+                            }else{
+                                console.log(`auto reinforced`)
+                                update_ML_values(getMessage,true,5)
+                            }
+                            scan_messge_ML(getMessage,'new',false)
                             if (type != 'swipe'){
                                 chat_mess_content[chat_mess_content.length] = {};
                                 chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =[];
@@ -1201,6 +1283,7 @@ async function Generate(type) {
                             $("#send_but").removeClass('generic_hidden');
                             $("#loading_mes").addClass('generic_hidden');
                             saveChat();
+                            saveMLsettings()
                         } else {
                             //unkown recursive hook that retries if the message is empty, args unknown
 
@@ -1361,14 +1444,20 @@ $("#rm_button_settings").click(function () {
     $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
     //default selected option
     //$("#api_settings").children("h2").addClass('selected_button')
-    if($("#rm_button_settings").children("h2")[0].classList.contains('selected_button')){
+    if($("#system_settings").children("h2")[0].classList.contains('selected_button')){
         $('#sys_sett_block').removeClass('generic_hidden')
+        $("#API_sett_block").addClass('generic_hidden');
+    }else{
+        $('#sys_sett_block').addClass('generic_hidden')
+        $("#API_sett_block").removeClass('generic_hidden');
     }
     build_main_system_message()
 });
 $("#rm_button_characters").click(function () {
         selected_button = 'characters';
         select_rm_characters();
+        build_main_system_message();
+        soft_refresh();
 });
 $("#rm_button_back").click(function () {
         selected_button = 'characters';
@@ -1476,22 +1565,15 @@ function select_selected_character(chid) { //character select
     menu_type = 'character_edit';
     $("#delete_button_div").removeClass('generic_hidden');
     $("#rm_button_selected_ch").children("h2").addClass('selected_button')
-    var display_name = characters_array[chid].name;
+    var curr_charname = characters_array[chid].name;
 
-    $("#rm_button_selected_ch").children("h2").text(display_name);
+    $("#rm_button_selected_ch").children("h2").text(curr_charname);
 
     //create text poles
     $("#rm_button_back").addClass('generic_hidden');
     //$("#character_import_button").addClass('generic_hidden');
     $("#create_button").attr("value", "Save");
     $("#create_button").addClass('generic_hidden');
-   /* var i = 0;
-    while ($("#rm_button_selected_ch").width() > 170 && i < 15) {
-        display_name = display_name.slice(0, display_name.length - 2);
-        //console.log(display_name);
-        $("#rm_button_selected_ch").children("h2").text($.trim(display_name) + '...');
-        i++;
-    }*/
     $("#add_avatar_button").val('');
 
     $('#character_popup_text_h3').text(characters_array[chid].name);
@@ -1524,6 +1606,9 @@ function select_selected_character(chid) { //character select
     $("#name_div").removeClass('generic_hidden');
 
     $("#form_create").attr("actiontype", "editcharacter");
+    update_card_tokens()
+    soft_refresh()
+    build_main_system_message()
 }
 $(document).on('click', '.character_select', function () {
     if (active_character_index !== $(this).attr("chid")) {
@@ -1540,7 +1625,6 @@ $(document).on('click', '.character_select', function () {
             clearChat();
             chat_mess_content.length = 0;
             getChat();
-            
         }
     } else {
         selected_button = 'character_edit';
@@ -1838,53 +1922,61 @@ $("#form_create").submit(function(type) {
                         add_mes_without_animation = true;
                         addOneMessage(chat_mess_content[0]);
                         soft_refresh()
+                        update_card_tokens()
                     }
                 }
                 $('#create_button').removeAttr("disabled");
                 getCharacters();
                 $("#add_avatar_button").replaceWith($("#add_avatar_button").val('').clone(true));
                 $('#create_button').attr('value', 'Save');
-                function getTokensForPart(text) {
-                    let msg = {"role": "system", content: text.replace("\r\n", "\n")};
-                    let result = countTokens(msg) - 4 - 1;
-                    return result;
-                }
-                let desc_tokens = getTokensForPart(characters_array[active_character_index].description);
-                let pers_tokens = getTokensForPart(characters_array[active_character_index].personality);
-                let scen_tokens = getTokensForPart(characters_array[active_character_index].scenario);
-                
-                // ugly but that's what we have, have to replicate the normal example message parsing code
-                let blocks = replacePlaceholders(characters_array[active_character_index].mes_example).split(/<START>/gi);
-                let example_msgs_array = blocks.slice(1).map(block => `<START>\n${block.trim()}\n`);
-                let exmp_tokens = 0;
-                let block_count = 0;
-                let msg_count = 0;
-                for (var block of example_msgs_array) {
-                    block_count++;
-                    let example_blocks = parseExampleIntoIndividual(block);
-                    for (var block of example_blocks) {
-                        exmp_tokens += countTokens(block);
-                        msg_count ++;
-                    }
-                }
-                let count_tokens = desc_tokens + pers_tokens + scen_tokens + exmp_tokens;
-                let res_str = `Total: ${count_tokens} tokens.\nDescription: ${desc_tokens}\nPersonality: ${pers_tokens}\nScenario: ${scen_tokens}\n`+
-                `Found ${block_count} example message blocks\n${msg_count} messages totaling ${exmp_tokens} tokens`;
-                if (count_tokens < 1024) {
-                    $('#result_info').html(res_str);
-                } else {
-                    $('#result_info').html("<font color=red>" + res_str + " Tokens (Too many tokens, consider reducing character definition)</font>");
-                }
                 lower_save_flag()
             },
             error: function (jqXHR, exception) {
                 $('#create_button').removeAttr("disabled");
-                $('#result_info').html("<font color=red>Error: no connection</font>");
             }
         });
     }
 
 });
+
+
+//calculate tokens for card 
+function getTokensForPart(text) {
+    let msg = {"role": "system", content: text.replace("\r\n", "\n")};
+    let result = countTokens(msg) - 4 - 1;
+    return result;
+}
+function update_card_tokens(){
+    let desc_tokens = getTokensForPart(characters_array[active_character_index].description);
+    let pers_tokens = getTokensForPart(characters_array[active_character_index].personality);
+    let scen_tokens = getTokensForPart(characters_array[active_character_index].scenario);
+    let FM_tokens = getTokensForPart(characters_array[active_character_index].first_mes);
+
+    // ugly but that's what we have, have to replicate the normal example message parsing code
+    let blocks = replacePlaceholders(characters_array[active_character_index].mes_example).split(/<START>/gi);
+    let example_msgs_array = blocks.slice(1).map(block => `<START>\n${block.trim()}\n`);
+    let exmp_tokens = 0;
+    let block_count = 0;
+    let msg_count = 0;
+    for (var block of example_msgs_array) {
+        block_count++;
+        let example_blocks = parseExampleIntoIndividual(block);
+        for (var block of example_blocks) {
+            exmp_tokens += countTokens(block);
+            msg_count ++;
+        }
+    }
+    let count_tokens = desc_tokens + pers_tokens + scen_tokens;
+    let res_str = `Description Tokens: ${desc_tokens}.\nPersonality Tokens: ${pers_tokens}.\nScenario Tokens: ${scen_tokens}.\nTotal persistent Tokens: ${count_tokens}.\n\n`+
+    `Found ${block_count} example message blocks: ${exmp_tokens} Tokens.\nFirst message Tokens: ${FM_tokens}.\nTotal "chat history" Tokens: ${exmp_tokens+FM_tokens}.\n\n`+
+    `Total card Tokens: ${count_tokens+exmp_tokens+FM_tokens}.`;
+    if (count_tokens < 1024) {
+        $('#result_info').html(res_str);
+    } else {
+        $('#result_info').html("<font color=red>" + res_str + " Tokens (Too many tokens, consider reducing character definition)</font>");
+    }
+}
+
 $("#delete_button").click(function () {
     popup_type = 'del_ch';
     callPopup('<h3>Delete the character?</h3>');
@@ -1928,7 +2020,8 @@ function lower_save_flag(){
         document.getElementById('save_indicator').classList.remove('warning')
         document.getElementById('save_indicator').classList.add('saved')
     clearTimeout(save_text_clear);
-    save_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "" }, durationSaveEdit);
+    //save_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = " " }, durationSaveEdit);
+    save_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "UR wAIFu A SHIT" }, durationSaveEdit);
 }
 $('#description_textarea').on('keyup paste cut', function () {//change keyup paste cut
     if (menu_type == 'create') {
@@ -3300,12 +3393,12 @@ function auto_start(){
 }
 
 function auto_open(){
-    if (open_nav_bar){
-        document.getElementById("logo_block").click()
-    }
-    if (open_bg_bar){
-    document.getElementById('right_menu-toggle').click()
-    }
+        if (open_bg_bar){
+            document.getElementById("logo_block").click()
+        }
+        if (open_nav_bar){
+        document.getElementById('right_menu-toggle').click()
+        }
 };
 function auto_last_menu(){
         if (last_menu == "char_list"){
@@ -3323,7 +3416,7 @@ function auto_last_menu(){
     }
 ;
 async function auto_char(){
-    if (open_last_char == false && settings.last_char == undefined){
+    if (open_last_char == false || settings.last_char == undefined){
         auto_last_menu()
         return
     }
@@ -3363,11 +3456,10 @@ async function BG_shuffle(){
 
 
 $(document).ready(function() {
-    setTimeout(auto_start, 700)
-    setTimeout(auto_open, 700)
-    setTimeout(auto_char, 1000)
+    //setTimeout(auto_start, 700)
+    //setTimeout(auto_open, 700)
     setTimeout(BG_shuffle, 700)
-    setTimeout(update_real_cost, 700)
+    //setTimeout(update_real_cost, 700)
 })
 $("#api_settings").click(function () {
         $("#API_sett_block").removeClass('generic_hidden');
@@ -3753,7 +3845,9 @@ $('#right_menu-toggle').change(function () {
 })
 function update_real_cost(error) {
     if (error){
-        document.getElementById('cost_spent').value = `something borked during message gen`
+        
+        document.getElementById('cost_spent_message').innerHTML = `something borked during message gen`
+        document.getElementById('cost_spent_session').innerHTML = `something borked during message gen`
         return
     }
     let prompt_price = last_sent_cntx_tokens*cntx_price_per1k
@@ -3762,7 +3856,8 @@ function update_real_cost(error) {
     const formatted_prompt_total = parseFloat((prompt_price+gen_price).toFixed(6));
     const formatted_running_total = parseFloat(running_total.toFixed(6));
     //weird formattting is a req because its in a format block, acts as \n but more readable
-    document.getElementById('cost_spent').value = `Actual $${(formatted_prompt_total)} (${last_sent_cntx_tokens} / ${last_got_gen_tokens} total:${last_sent_cntx_tokens+last_got_gen_tokens}), $${formatted_running_total} spent this session`
+    document.getElementById('cost_spent_message').innerHTML = `Actual: $${(formatted_prompt_total)} (${last_sent_cntx_tokens} / ${last_got_gen_tokens} / ${last_sent_cntx_tokens+last_got_gen_tokens})`
+    document.getElementById('cost_spent_session').innerHTML = `$${formatted_running_total} spent this session`
 }
 $("#anchor_butt").click(function () {
     if (document.getElementById("anchor_block").style.display == "none"){
@@ -3791,14 +3886,14 @@ $("#api_togg_butt").click(function () {
         $("#tweaks_box").css("display", 'none');
         $("#api_togg_butt").removeClass('selected_button')
     }});
-$("#preview_butt").click(function () {
-    if (document.getElementById("preview_box").style.display == "none"){
-        $("#preview_box").css("display", 'block');
-        $("#preview_butt").addClass('selected_button')
+$(".preview_butt").click(function () {
+    if ($(this).siblings(".preview_box").css("display") == "none"){
+        $(this).siblings(".preview_box").css("display", 'block');
+        $(this).addClass('selected_button')
     } 
     else{
-        $("#preview_box").css("display", 'none');
-        $("#preview_butt").removeClass('selected_button')
+        $(this).siblings(".preview_box").css("display", 'none');
+        $(this).removeClass('selected_button')
     }});
 $(document).on('click', '.swipe_right', function() {
     var swipe_index = Number(document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index'))
@@ -3830,3 +3925,126 @@ function shift_left() {
     soft_refresh()
     saveChat()
 }
+$('#clear_hidden').click(function () {
+    console.log('asdjhasd')
+    document.getElementById('fake_textarea').value = ""
+});
+
+
+
+
+function parse_str_to_set(payload) {
+    var localset = new Map()
+    //i hate how i cant lower() this because of token reasons
+    //idk why \n\n it just works ok?
+    var words = payload.replace('\r\n\r\n', "").replace('\n\n', "").split(' ')
+        for (const word of words) {
+        if (word == ""){continue}
+        if (!localset.has(word)) {
+            localset.set(word, 1);
+        }
+        //keep me, might wind up with a use for this in the future as a form of damping
+        /*
+        else{
+            localset.set(word, localset.get(word)+1)
+        }*/
+    }
+    //console.log(localset)
+    return localset
+}
+
+function update_ML_values(payload, do_want_flag, expected,learning_rate=0.25) {
+    const words = parse_str_to_set(payload);
+    var updated_words = new Array()
+        //im not sure where its slipping by but 
+        words.delete("")
+        for (const [word, value] of words) {
+        if (word == ""){
+            ML_wordbag.delete(word)
+            continue}
+        //'locks' the value 
+        if (word == "OpenAI"){
+            continue}
+        
+        //rip me out when done, debug add
+        /*if (!ML_wordbag.has(word)) {
+            ML_wordbag.set(word, 0);
+          }*/
+        //L2
+        //const gradient = Math.pow((ML_wordbag.get(word) - expected),2);
+        const gradient = Math.abs((ML_wordbag.get(word) - expected));
+        const updated_value = do_want_flag ? ML_wordbag.get(word) + learning_rate * gradient : ML_wordbag.get(word) -  learning_rate * gradient;
+        if (updated_value == 0 || updated_value == null )
+        {
+            //dont care for retrun value
+            ML_wordbag.delete(word)
+        }else{
+            ML_wordbag.set(word, updated_value);
+            updated_words.push([word, value, updated_value]);
+        }
+    }
+    ML_wordbag.delete("")
+    //console.log(`KB:`);
+    //console.log(ML_wordbag);
+    //console.log(`updates:`);
+    //console.log(updated_words);
+}
+
+function scan_messge_ML(payload,prefix="",r_flag=true) {
+    const words = parse_str_to_set(payload);
+    var score = 0;
+    var new_words = []
+    for (const [word, value] of words) {
+    if (word == ""){continue}
+      if (!ML_wordbag.has(word)) {
+        ML_wordbag.set(word, 0);
+        new_words.push(word)
+      }
+      //score * (TF / length)
+      score += ML_wordbag.get(word) * (words.get(word) / words.size)
+    };
+    //if (new_words.length  > 0){console.log(`new words: ${new_words}`)}
+    console.log(`${prefix} score ${score}`)
+    if(r_flag){
+        if (score < 0) {
+            return "catch";
+        }
+        return "pass";
+    }
+    if(prefix == "new"){
+    if (score <= 0) {
+        console.log("will punish");
+        return
+    }
+    console.log("will reinforce");
+  }
+}
+
+  $("#option_dislike").click(function () {
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
+    scan_messge_ML(payload,'old',false)
+    update_ML_values(payload, false, -10, 0.33)
+    saveMLsettings()
+    scan_messge_ML(payload,'new',false)
+});
+$("#option_dislike_big").click(function () {
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
+    scan_messge_ML(payload,'old',false)
+    update_ML_values(payload, false, -10, 0.75)
+    saveMLsettings()
+    scan_messge_ML(payload,'new',false)
+});
+$("#option_like").click(function () {
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
+    scan_messge_ML(payload,'old',false)
+    update_ML_values(payload, true, 5, 0.50)
+    saveMLsettings()
+    scan_messge_ML(payload,'new',false)
+});
+$("#option_like_big").click(function () {
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
+    scan_messge_ML(payload,'old',false)
+    update_ML_values(payload, true, 5, 0.80)
+    saveMLsettings()
+    scan_messge_ML(payload,'new',false)
+});

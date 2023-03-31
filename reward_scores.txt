@@ -1,0 +1,14 @@
+cannot:-0.5
+Cannot:-0.5
+policies:-1
+Policies:-1
+morals:-1
+Morals:-1
+ethics:-1
+Ethics:-1
+sorry:-10
+Sorry:-10
+explicit:-10
+Explicit:-10
+OpenAI:-50
+OpenAI's:-50

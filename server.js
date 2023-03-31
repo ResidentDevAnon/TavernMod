@@ -1155,7 +1155,8 @@ app.post("/generate_openai", jsonParser, function(request, response_generate_ope
             "stream": request.body.stream,
             "presence_penalty": request.body.presence_penalty,
             "frequency_penalty": request.body.frequency_penalty,
-            "stop": request.body.stop
+            "stop": request.body.stop,
+            "logit_bias": request.body.logit_bias
         }
     };
 
@@ -1339,6 +1340,50 @@ app.post("/importcharacter", urlencodedParser, function(request, response){
 
     //response.redirect("https://metanit.com")
 });
+
+
+//this is so fucking stupid
+app.post("/getMLsettings", function(request, response) {
+    try {
+        let filename = 'reward_scores.txt';
+        let filepath = path.join(__dirname, filename);
+    let contents = fs.readFileSync(filepath, 'utf8');
+    // Split the file contents into lines
+    let lines = contents.split('\n');
+    let wordScoreSet = new Array();
+    lines.forEach(function(line) {
+        let [word, score] = line.split(':');
+        score = parseFloat(score);
+    wordScoreSet.push([word, score]);
+    });
+    response.send({"payload":{wordScoreSet}});
+
+    } catch (error) {
+        console.log(error)
+        response.status(500).send('Server error');
+    }
+});
+app.post("/saveMLsettings", jsonParser, function(request, response){
+    var buffer = ""
+    for (var i=0; i <= request.body.length -1; i++)
+    {   
+        //no need for useless bloat on disk
+        if (request.body[i][1] != 0 && request.body[i][1] != null && request.body[i][0] != "" ){
+            buffer += `${request.body[i][0]}:${request.body[i][1]}\n`
+        }
+    }
+
+    fs.writeFile('reward_scores.txt', buffer, 'utf8', function(err) {
+        if(err) {
+            response.send(err);
+            return console.log(err);
+        }else{
+            response.send({result: "ok"});
+        }
+    });
+});
+
+
 
 app.post("/importchat", urlencodedParser, function(request, response){
     if(!request.body) return response.sendStatus(400);
