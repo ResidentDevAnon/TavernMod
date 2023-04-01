@@ -1,7 +1,3 @@
-// todo after fixing most stuff:
-// format this script with vscode
-// remove document ready function wrapper and just move the script to the bottom of index.html so it still waits for DOM
-
 const VERSION = '1.2.8-Tavmod';
 var converter = new showdown.Converter({ backslashEscapesHTMLTags: true,strikethrough: true,tables:true, underline:true,splitAdjacentBlockquotes:true});
 var default_user_name = "You";
@@ -180,13 +176,46 @@ var custom_5_switch = false
 //auto rety and continous mode
 var auto_retry = false
 var continuous_mode = false
+var ML_swipe = false
 
 //swipe stuff
 var newest_mes_index = 0
 
+//prevent mass messages
+//starts at 1
+var attempt_counter = 1
+var dont_drain_my_bank_please = 0
+
 //ML stuff
 var ML_wordbag = new Map();
+//these are just globals for ease of use finding them
+const ML_auto_reward = 5
+const ML_auto_punish = -10
+const ML_manual_reward = 5
+const ML_manual_reward_big = 5
+const ML_manual_punish =  -10
+const ML_manual_punish_big =  -10
+const ML_usermessage_reward = 5 
 
+//token counters
+//char stuff
+var tokens_ch_name = 0
+var tokens_ch_desc = 0
+var tokens_ch_pers = 0
+var tokens_ch_scen = 0
+var tokens_ch_FM = 0
+var EXM_blocks = 0
+var tokens_EXM = 0
+var EXM_messages = 0
+//proompt stuff
+var tokens_pr_sys = 0
+var tokens_pr_nsfw = 0
+var tokens_pr_cyoa = 0
+var tokens_pr_cust1 = 0
+var tokens_pr_cust2 = 0
+var tokens_pr_cust3 = 0
+var tokens_pr_cust4 = 0
+var tokens_pr_cust5 = 0
 
 //css
 var bg1_toggle = true;
@@ -258,7 +287,6 @@ $.get("/csrf-token")
     .then(data => {
         token = data.token;
         getSettings("def");
-        getLastVersion();
         getCharacters();
         printMessages();
         getBackgrounds();
@@ -269,9 +297,7 @@ $.get("/csrf-token")
         setTimeout(update_real_cost, 700)
     });
 
-$('#characloud_url').click(function () {
-    window.open('https://boosty.to/tavernai', '_blank');
-});
+
 function checkOnlineStatus() {
     console.trace("checkOnlineStatus",{
         main_api,
@@ -293,33 +319,6 @@ function checkOnlineStatus() {
         clearTimeout(connection_text_clear)
         connection_text_clear = setTimeout(() => { $("#online_status_text").html(""); }, durationSaveEdit);
     }
-}
-async function getLastVersion() {
-    jQuery.ajax({
-        type: 'POST', // 
-        url: '/getlastversion', // 
-        data: JSON.stringify({
-            '': ''
-        }),
-        beforeSend: function () {
-        },
-        cache: true,
-        dataType: "json",
-        contentType: "application/json",
-        //processData: false, 
-        success: function (data) {
-            var getVersion = data.version;
-            if (getVersion !== 'error' && getVersion != undefined) {
-                if (compareVersions(getVersion, VERSION) === 1) {
-                    $('#verson').append(' <span style="color: #326d78; font-size: 15px;">(New update @' + getVersion + ')</span>');
-                }
-            }
-        },
-        error: function (jqXHR, exception) {
-            console.log(exception);
-            console.log(jqXHR);
-        }
-    });
 }
 //this is so fucking stupid
 async function getMLsettings() {
@@ -543,6 +542,7 @@ function printCharaters() {
 
 
 }
+var flag_auto_char = false
 async function getCharacters() {
     const response = await fetch("/getcharacters", {
         method: "POST",
@@ -565,7 +565,10 @@ async function getCharacters() {
         if (active_character_index != undefined) $("#avatar_url_pole").val(characters_array[active_character_index].avatar);
         printCharaters();
     }
-    auto_char()
+    if (!flag_auto_char){
+        flag_auto_char = true
+        auto_char()
+    }
 }
 async function getBackgrounds() {
     const response = await fetch("/getbackgrounds", {
@@ -667,6 +670,7 @@ function soft_refresh() {
         let swipeLeft = element.querySelector('.swipe_left');
         let swipeRight = element.querySelector('.swipe_right');
         let likeblock = element.querySelector('.likeblock');
+        let swipe_display = element.querySelector('.swipecounter');
         if (is_user=='false' && i !== messages.length - 1 || i  == 0) {
             //yes these if statements are needed, it throws a null reading error if its not here
             if (swipeLeft){
@@ -678,6 +682,9 @@ function soft_refresh() {
             if (likeblock){
                 likeblock.classList.add('generic_hidden')
             }
+            if (swipe_display){
+                swipe_display.classList.add('generic_hidden')
+            }
     }else{
         if (swipeLeft && swipe_counter > 0){
             swipeLeft.classList.remove('generic_hidden')
@@ -688,6 +695,9 @@ function soft_refresh() {
         if (likeblock){
             likeblock.classList.remove('generic_hidden')
         }
+        if (swipe_display){
+            swipe_display.classList.remove('generic_hidden')
+        }
     }
     //display names
     if(is_user == 'true'){
@@ -696,6 +706,7 @@ function soft_refresh() {
     else{
         element.getElementsByClassName('displayname')[0].textContent = curr_charname
     }
+    update_swipe_display_coutner()
     }}
 //add new messages
 function printMessages() {
@@ -768,43 +779,43 @@ function addOneMessage(mes) {
         <div class='mes' mesid=${curr_message_id} ch_name=${characterName} is_user='${mes['is_user']}' swipe_index='${mes['swipe_index']}'>
             <div class='for_checkbox generic_hidden'></div>
             <input type='checkbox' class='del_checkbox generic_hidden'>
-    `;
-    chatTemplate += `<div class=avatar>
-    <img src='${avatarImg}'>
-    </div>
-    <div class=mes_block>
-    <div class=ch_name>
-    <div class=displayname>${characterName}</div>
-    <div title=Edit class=mes_edit>
-    <img src='img/scroll.png' style='width:30px;height:30px;'>
-    </div>
-    <div class="mes_edit_cancel generic_hidden">
-    <img src='img/cancel.png'>
-    </div>
-    <div class="mes_edit_done generic_hidden">
-    <img src='img/done.png'>
-            </div>
-            </div>
-            <div class=mes_text></div>
-            `
+                <div class=avatar>
+                    <img src='${avatarImg}'>
+                </div>
+                    <div class=mes_block>
+                        <div class=ch_name>
+                            <div class=displayname>${characterName}</div>
+                                <div title=Edit class=mes_edit>
+                                    <img src='img/scroll.png' style='width:30px;height:30px;'>
+                                </div>
+                                <div class="mes_edit_cancel generic_hidden">
+                                    <img src='img/cancel.png'>
+                                </div>
+                                <div class="mes_edit_done generic_hidden">
+                                <img src='img/done.png'>
+                                </div>
+                        </div>
+                        <div class=mes_text></div>
+                        `
 
         //genuis moment, swap the order here and throw it in reverse in the justify so its 'right aligned' by default
         //and stetches left for the left swipe
     if (!mes['is_user']) {
-        chatTemplate += `<div class='swipe_block'>
-        <div id='swipe_right' class="swipe_right generic_hidden">
-        <img src="img/tri.png">
+        chatTemplate += `
+        <div class='swipe_block'>
+            <div id='swipe_right' class="swipe_right generic_hidden">></div>
+        <div id='swipe_left' class="swipe_left generic_hidden"><</div>
         </div>
-        <div class="likeblock">
-        <a id="option_dislike_big" class="like_button">☆</a> 
-        <a id="option_dislike" class="like_button">☆</a> 
-        <a id="option_like" class="like_button">☆</a>
-        <a id="option_like_big" class="like_button">☆</a>
+        <div class ='lower_interact'>
+            <div class="likeblock">
+                <div class="option_dislike_big rate_button">☆</div> 
+                <div class="option_dislike rate_button">☆</div> 
+                <div class="option_like rate_button">☆</div>
+                <div class="option_like_big rate_button">☆</div>
+            </div>
+            <div class=swipecounter>JS broke</div>
         </div>
-        <div id='swipe_left' class="swipe_left generic_hidden">
-            <img src="img/tri.png">
-        </div>
-        </div>`;
+        `;
     }
     chatTemplate += `</div>`;
     
@@ -839,6 +850,7 @@ function typeWriter(target, text, speed, i) {
 $("#send_but").click(function () {
     if (is_send_press == false) {
         is_send_press = true;
+        attempt_counter = 0
         Generate();
     }
 });
@@ -899,16 +911,17 @@ function build_main_system_message(r_flag=false){
 }
 function udpate_tokencost_preview(){
     //really should make this a global
+    //pushed down the line for model selector update
     var dynamic_gen = 4096 - openai_selected_context
     if (dynamic_gen > openai_selected_gen ){
         dynamic_gen = openai_selected_gen
     }
-    //document.getElementById('cost_preview').value = `Min $${(openai_selected_context*cntx_price_per1k)} (${openai_selected_context} / 0) Max $${((openai_selected_context*cntx_price_per1k)+((4096-openai_selected_context)*gen_price_per1k))} (${openai_selected_context} / ${4096-openai_selected_context})`
     document.getElementById('cost_preview_min').innerHTML = ` Min: $${ ( parseFloat(openai_selected_context*cntx_price_per1k).toFixed(6) ) } (${openai_selected_context} context / 0 generation)`
     document.getElementById('cost_preview_max').innerHTML = `Max :$${ parseFloat((openai_selected_context*cntx_price_per1k) + (dynamic_gen*gen_price_per1k)).toFixed(6) } (${openai_selected_context} context / ${dynamic_gen}) generation`
 }
 
 async function Generate(type) {
+    attempt_counter ++
     if (online_status != 'no_connection' && active_character_index != undefined) {
         if (type == 'regenerate' || type == 'swipe') {
             var Promt_text = "";
@@ -916,16 +929,12 @@ async function Generate(type) {
             if (chat_mess_content[chat_mess_content.length - 1]['is_user']) {//If last message from You
                 return
             }
-            //you cant do that?
-            //chat_mess_content.length = chat_mess_content.length - 1;
-
-            //hook here for split for swipe
             curr_message_id -= 1;
             if (type == 'regenerate'){
                 chat_mess_content.pop()
             }
-            $('#chat').children().last().remove();
             // We MUST remove the last message from the bot here as it's being regenerated.
+            $('#chat').children().last().remove();
         } else {
             //get and clear textarea
             var Promt_text = $("#send_textarea").val();
@@ -963,6 +972,11 @@ async function Generate(type) {
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'] = [];
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'][0] = Promt_text;
             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
+            //obviously we want 'more' of any user input
+            scan_messge_ML(Promt_text,'user input',false)
+            update_ML_values(Promt_text, false, ML_usermessage_reward)
+            saveMLsettings()
+            soft_refresh()
         }
         var charPersonality = $.trim(characters_array[active_character_index].personality);
         var mesExamples = $.trim(characters_array[active_character_index].mes_example);
@@ -1254,6 +1268,7 @@ async function Generate(type) {
                             getMessage = getMessage.replace(curr_charname + ':', '');
                             getMessage = getMessage.trimStart();
                         }
+                        var ML_flag = false
                         //might be the create part for bot?
                         //length is string length
                         if (getMessage.length > 0) {
@@ -1262,13 +1277,13 @@ async function Generate(type) {
                             //hook here for training check
                             //scan_messge_ML(getMessage,'expected',false)
                             if (scan_messge_ML(getMessage,'actual') == "catch"){
-                                console.log(`auto punished`)
-                                update_ML_values(getMessage,false, -10,0.33)
+                                update_ML_values(getMessage,false, ML_auto_punish, 0.3)
+                                ML_flag = true
+                                scan_messge_ML(getMessage,'auto punished',false)
                             }else{
-                                console.log(`auto reinforced`)
-                                update_ML_values(getMessage,true,5)
+                                update_ML_values(getMessage,true,ML_auto_reward)
+                                scan_messge_ML(getMessage,'auto reinforced',false)
                             }
-                            scan_messge_ML(getMessage,'new',false)
                             if (type != 'swipe'){
                                 chat_mess_content[chat_mess_content.length] = {};
                                 chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =[];
@@ -1279,20 +1294,24 @@ async function Generate(type) {
                             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] ++;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_array'][chat_mess_content[chat_mess_content.length - 1]['swipe_index']] = getMessage;
                             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
-                            //unhook here for updaring
+                            if (type == 'swipe'){
+                                update_swipe_display_coutner()
+                            }
                             $("#send_but").removeClass('generic_hidden');
                             $("#loading_mes").addClass('generic_hidden');
                             saveChat();
                             saveMLsettings()
                         } else {
                             //unkown recursive hook that retries if the message is empty, args unknown
-
                             //console.log('run force_name2 protocol');
                             Generate('force_name2');
                         }
-                    if (continuous_mode){
+                    if (continuous_mode && (attempt_counter <= dont_drain_my_bank_please)){
                         console.log("generated a new block in continuous")
                         $("#send_but").click()
+                    }
+                    if (ML_flag && ML_swipe && (attempt_counter <= dont_drain_my_bank_please)){
+                        Generate('swipe')
                     }
                     } 
                     //error
@@ -1302,7 +1321,7 @@ async function Generate(type) {
                         //janky hack to resend mesages in scale
                         if (auto_retry){
                             console.log("retry in auto")
-                            $("#send_but").click()
+                            Generate()
                         }
                     }
                     //finally
@@ -1495,7 +1514,7 @@ $("#rm_button_selected_ch").click(function () {
     $("#delete_button_div").addClass('generic_hidden');
     $("#create_button").removeClass('generic_hidden');
     $("#create_button").attr("value", "Create");
-    $('#result_info').html('&nbsp;');
+    $('#total_tokens_char').html('&nbsp;');
     $("#rm_button_characters").children("h2").removeClass('selected_button')
     $("#rm_button_settings").children("h2").removeClass('selected_button')
     $("#rm_button_selected_ch").children("h2").removeClass('selected_button')
@@ -1606,7 +1625,7 @@ function select_selected_character(chid) { //character select
     $("#name_div").removeClass('generic_hidden');
 
     $("#form_create").attr("actiontype", "editcharacter");
-    update_card_tokens()
+    token_counter_total_char()
     soft_refresh()
     build_main_system_message()
 }
@@ -1875,23 +1894,20 @@ $("#form_create").submit(function(type) {
                     $('#create_button').removeAttr("disabled");
                     $("#add_avatar_button").replaceWith($("#add_avatar_button").val('').clone(true));
                     $('#create_button').attr('value', 'Create');
-                    if (true) {
-                        $('#rm_info_block').transition({ opacity: 0, duration: 0 });
-                        var $prev_img = $('#avatar_div_div').clone();
-                        $('#rm_info_avatar').append($prev_img);
-                        select_rm_info("Character created");
-                        $('#rm_info_block').transition({ opacity: 1.0, duration: 2000 });
-                        getCharacters();
-                    } else {
-                        $('#result_info').html(html);
-                    }
+                    $('#rm_info_block').transition({ opacity: 0, duration: 0 });
+                    var $prev_img = $('#avatar_div_div').clone();
+                    $('#rm_info_avatar').append($prev_img);
+                    select_rm_info("Character created");
+                    $('#rm_info_block').transition({ opacity: 1.0, duration: 2000 });
+                    getCharacters();
+                    
                 },
                 error: function (jqXHR, exception) {
                     $('#create_button').removeAttr("disabled");
                 }
             });
         } else {
-            $('#result_info').html("Name not entered");
+            $('#total_tokens_char').html("Name not entered");
         }
     } else {
         jQuery.ajax({
@@ -1922,7 +1938,7 @@ $("#form_create").submit(function(type) {
                         add_mes_without_animation = true;
                         addOneMessage(chat_mess_content[0]);
                         soft_refresh()
-                        update_card_tokens()
+                        token_counter_total_char()
                     }
                 }
                 $('#create_button').removeAttr("disabled");
@@ -1943,39 +1959,70 @@ $("#form_create").submit(function(type) {
 //calculate tokens for card 
 function getTokensForPart(text) {
     let msg = {"role": "system", content: text.replace("\r\n", "\n")};
-    let result = countTokens(msg) - 4 - 1;
+    let result = countTokens(msg) - 5;
     return result;
 }
-function update_card_tokens(){
-    let desc_tokens = getTokensForPart(characters_array[active_character_index].description);
-    let pers_tokens = getTokensForPart(characters_array[active_character_index].personality);
-    let scen_tokens = getTokensForPart(characters_array[active_character_index].scenario);
-    let FM_tokens = getTokensForPart(characters_array[active_character_index].first_mes);
-
-    // ugly but that's what we have, have to replicate the normal example message parsing code
+//tokens for char crap
+function token_counter_chname() {
+    tokens_ch_name = getTokensForPart(characters_array[active_character_index].name);
+    $('#chname_tokens').html(`${tokens_ch_name} Tokens.`);
+}
+function token_counter_desc() {
+    tokens_ch_desc = getTokensForPart(characters_array[active_character_index].description);
+    $('#desc_tokens').html(`${tokens_ch_desc} Tokens.`);
+}
+function token_counter_pers() {
+    tokens_ch_pers = getTokensForPart(characters_array[active_character_index].personality);
+    $('#pers_tokens').html(`${tokens_ch_pers} Tokens.`);
+}
+function token_counter_scen() {
+    tokens_ch_scen = getTokensForPart(characters_array[active_character_index].scenario);
+    $('#scen_tokens').html(`${tokens_ch_scen} Tokens.`);
+}
+function token_counter_FM() {
+    tokens_ch_FM = getTokensForPart(characters_array[active_character_index].first_mes);
+    $('#FM_tokens').html(`${tokens_ch_FM} Tokens.`);
+}
+function token_counter_EXM() {
     let blocks = replacePlaceholders(characters_array[active_character_index].mes_example).split(/<START>/gi);
     let example_msgs_array = blocks.slice(1).map(block => `<START>\n${block.trim()}\n`);
-    let exmp_tokens = 0;
-    let block_count = 0;
-    let msg_count = 0;
+    tokens_EXM = 0;
+    EXM_blocks = 0;
+    EXM_messages = 0;
     for (var block of example_msgs_array) {
-        block_count++;
+        EXM_blocks++;
         let example_blocks = parseExampleIntoIndividual(block);
         for (var block of example_blocks) {
-            exmp_tokens += countTokens(block);
-            msg_count ++;
+            tokens_EXM += countTokens(block);
+            EXM_messages ++;
         }
     }
-    let count_tokens = desc_tokens + pers_tokens + scen_tokens;
-    let res_str = `Description Tokens: ${desc_tokens}.\nPersonality Tokens: ${pers_tokens}.\nScenario Tokens: ${scen_tokens}.\nTotal persistent Tokens: ${count_tokens}.\n\n`+
-    `Found ${block_count} example message blocks: ${exmp_tokens} Tokens.\nFirst message Tokens: ${FM_tokens}.\nTotal "chat history" Tokens: ${exmp_tokens+FM_tokens}.\n\n`+
-    `Total card Tokens: ${count_tokens+exmp_tokens+FM_tokens}.`;
-    if (count_tokens < 1024) {
-        $('#result_info').html(res_str);
-    } else {
-        $('#result_info').html("<font color=red>" + res_str + " Tokens (Too many tokens, consider reducing character definition)</font>");
-    }
+    $('#EXM_tokens').html(`Found ${EXM_blocks} example message blocks: ${tokens_EXM} Tokens.`);
 }
+function token_counter_total_char(){
+    token_counter_chname()
+    token_counter_desc()
+    token_counter_pers()
+    token_counter_scen()
+    token_counter_FM()
+    token_counter_EXM()
+    let count_tokens = tokens_ch_desc + tokens_ch_pers + tokens_ch_scen;
+    let res_str = `Total persistent Tokens: ${count_tokens}.\n`+
+    `Total "chat history" Tokens: ${tokens_EXM+tokens_ch_FM}.\n\n`+
+    `Total card Tokens: ${count_tokens+tokens_EXM+tokens_ch_FM}.\n`+
+    `Total card Tokens including name: ${count_tokens+tokens_EXM+tokens_ch_FM+tokens_ch_name}.`;
+    if (count_tokens > 1024) {
+        $('#total_tokens_char').html("<font color=red>" + res_str + " Tokens (Too many tokens, consider reducing character definition)</font>");
+        return
+    }
+    $('#total_tokens_char').html(res_str);
+}
+
+//tokens for proompt crap
+
+
+
+
 
 $("#delete_button").click(function () {
     popup_type = 'del_ch';
@@ -2582,6 +2629,11 @@ $('#open_bg_start').change(function () {
     saveSettings();
 });
 
+$(document).on('input', '#dont_drain_my_bank_please', function () {
+    dont_drain_my_bank_please = parseInt($(this).val());
+    $('#max_attempts_display').html(dont_drain_my_bank_please);
+});
+
 //***************SETTINGS****************//
 ///////////////////////////////////////////
 async function getSettings(type) {//timer
@@ -2776,6 +2828,7 @@ async function getSettings(type) {//timer
                 bg_shuffle_delay = settings.bg_shuffle_delay ?? 300000;
                 //default to character list
                 last_menu = settings.last_menu ?? "char_list";
+                dont_drain_my_bank_please = settings.dont_drain_my_bank_please ?? 1
 
                 //cheeky use of default values being in index
                 system_prompt = settings.system_prompt ?? document.getElementById("system_prompt").value
@@ -2793,6 +2846,7 @@ async function getSettings(type) {//timer
                 if (settings.custom_5_switch !== undefined) custom_5_switch = !!settings.custom_5_switch;
                 if (settings.auto_retry !== undefined) auto_retry = !!settings.auto_retry;
                 if (settings.continuous_mode !== undefined) continuous_mode = !!settings.continuous_mode;
+                if (settings.ML_swipe !== undefined) ML_swipe = !!settings.ML_swipe;
 
                 for (let i = 1; i <= 5; i++) {
                     const settingTitle = `custom_${i}_title`;
@@ -2919,6 +2973,7 @@ async function getSettings(type) {//timer
                 //auto retry and continuous
                 $("#auto_retry").prop('checked', auto_retry)
                 $("#continuous_mode").prop('checked', continuous_mode)
+                $("#ML_swipes").prop('checked', ML_swipe)
 
 
                 //bookmark
@@ -2941,6 +2996,9 @@ async function getSettings(type) {//timer
                 $('#pres_pen_openai').val(pres_pen_openai);
                 $('#pres_pen_counter_openai').html(pres_pen_openai + addZeros);
 
+
+                $('#max_attempts_display').html(dont_drain_my_bank_please);
+                $('#dont_drain_my_bank_please').val(dont_drain_my_bank_please);
                 //////////////////////
                 if (preset_settings == 'gui') {
                     $("#settings_perset option[value=gui]").attr('selected', 'true');
@@ -3062,6 +3120,8 @@ async function saveSettings(type) {
             custom_5_prompt: custom_5_prompt,
             auto_retry: auto_retry,
             continuous_mode: continuous_mode,
+            ML_swipe: ML_swipe,
+            dont_drain_my_bank_please: dont_drain_my_bank_please,
 
         }),
         cache: false,
@@ -3830,6 +3890,10 @@ $('#continuous_mode').change(function () {
     continuous_mode = !!$('#continuous_mode').prop('checked');
     saveSettings();
 });
+$('#ML_swipes').change(function () {
+    ML_swipe = !!$('#ML_swipes').prop('checked');
+    saveSettings();
+});
 $('#right_menu-toggle').change(function () {
     let target = document.getElementById('right_menu')
     var is_open = target.classList.contains('rm_hidden');
@@ -3845,7 +3909,6 @@ $('#right_menu-toggle').change(function () {
 })
 function update_real_cost(error) {
     if (error){
-        
         document.getElementById('cost_spent_message').innerHTML = `something borked during message gen`
         document.getElementById('cost_spent_session').innerHTML = `something borked during message gen`
         return
@@ -3855,7 +3918,6 @@ function update_real_cost(error) {
     running_total += prompt_price+gen_price
     const formatted_prompt_total = parseFloat((prompt_price+gen_price).toFixed(6));
     const formatted_running_total = parseFloat(running_total.toFixed(6));
-    //weird formattting is a req because its in a format block, acts as \n but more readable
     document.getElementById('cost_spent_message').innerHTML = `Actual: $${(formatted_prompt_total)} (${last_sent_cntx_tokens} / ${last_got_gen_tokens} / ${last_sent_cntx_tokens+last_got_gen_tokens})`
     document.getElementById('cost_spent_session').innerHTML = `$${formatted_running_total} spent this session`
 }
@@ -3887,19 +3949,22 @@ $("#api_togg_butt").click(function () {
         $("#api_togg_butt").removeClass('selected_button')
     }});
 $(".preview_butt").click(function () {
-    if ($(this).siblings(".preview_box").css("display") == "none"){
-        $(this).siblings(".preview_box").css("display", 'block');
-        $(this).addClass('selected_button')
-    } 
-    else{
-        $(this).siblings(".preview_box").css("display", 'none');
-        $(this).removeClass('selected_button')
-    }});
+        var $previewBox = $(this).siblings(".preview_box");
+        if ($previewBox.hasClass("generic_hidden")) {
+            $previewBox.removeClass('generic_hidden');
+            $(this).addClass('selected_button');
+        } else {
+            $previewBox.addClass('generic_hidden');
+            $(this).removeClass('selected_button');
+        }
+});
 $(document).on('click', '.swipe_right', function() {
     var swipe_index = Number(document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index'))
+    //check for if crap already exists
     if (swipe_index != chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'].length-1){
         document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index+1])
         document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].setAttribute('swipe_index', (swipe_index +1))
+        update_swipe_display_coutner()
         chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_index'] = swipe_index +1
         if (document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.contains('generic_hidden')  ){
             document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.remove('generic_hidden')    
@@ -3907,26 +3972,35 @@ $(document).on('click', '.swipe_right', function() {
         saveChat()
         return
     }
+    //should never happen but extra failsafes are ok
+    if (is_send_press == false) {
+        is_send_press = true;
+        attempt_counter = 0
         Generate('swipe');
-      });
-    $(document).on('click', '.swipe_left', function() {
-    shift_left();
-    });
-function shift_left() {
+}});
+//dont remember why past me split this into 2 functions, but present me wants future me to add a 'go to 0' option
+$(document).on('click', '.swipe_left', function() {
     var swipe_index = document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index')
     if (swipe_index == 0){
         return
     }else if (swipe_index == 1){
-    document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.add('generic_hidden')    
+        document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.add('generic_hidden')
+        update_swipe_display_coutner()
     }
     document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index-1])
     document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].setAttribute('swipe_index', (swipe_index -1))
     chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_index'] = swipe_index -1
+    update_swipe_display_coutner()
     soft_refresh()
     saveChat()
+});
+
+function update_swipe_display_coutner() {
+    if (document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('is_user') == "true") {return}
+    document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipecounter')[0].innerHTML = `${Number(document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index'))+1}/${chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'].length}`
 }
+
 $('#clear_hidden').click(function () {
-    console.log('asdjhasd')
     document.getElementById('fake_textarea').value = ""
 });
 
@@ -3993,6 +4067,7 @@ function update_ML_values(payload, do_want_flag, expected,learning_rate=0.25) {
 function scan_messge_ML(payload,prefix="",r_flag=true) {
     const words = parse_str_to_set(payload);
     var score = 0;
+    const threshold = 0;
     var new_words = []
     for (const [word, value] of words) {
     if (word == ""){continue}
@@ -4004,47 +4079,47 @@ function scan_messge_ML(payload,prefix="",r_flag=true) {
       score += ML_wordbag.get(word) * (words.get(word) / words.size)
     };
     //if (new_words.length  > 0){console.log(`new words: ${new_words}`)}
-    console.log(`${prefix} score ${score}`)
+    //console.log(`${prefix} score ${score}`)
     if(r_flag){
-        if (score < 0) {
+        if (score < threshold) {
             return "catch";
         }
         return "pass";
     }
     if(prefix == "new"){
-    if (score <= 0) {
-        console.log("will punish");
-        return
-    }
-    console.log("will reinforce");
+        if (score <= threshold) {
+            console.log(`${prefix} score ${score} below punish threshold of ${threshold}`);
+            return
+        }
+        console.log(`${prefix} score ${score} above reinforce threshold of ${threshold}`);
   }
 }
 
-  $("#option_dislike").click(function () {
+$(document).on('click', '.option_dislike_big', function() {
     var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'old',false)
-    update_ML_values(payload, false, -10, 0.33)
+    scan_messge_ML(payload,'manual punish(big)',false)
+    update_ML_values(payload, false, ML_manual_punish_big, 0.75)
     saveMLsettings()
     scan_messge_ML(payload,'new',false)
 });
-$("#option_dislike_big").click(function () {
+$(document).on('click', '.option_dislike', function() {
     var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'old',false)
-    update_ML_values(payload, false, -10, 0.75)
+    scan_messge_ML(payload,'manual punish',false)
+    update_ML_values(payload, false, ML_manual_punish, 0.33)
     saveMLsettings()
     scan_messge_ML(payload,'new',false)
 });
-$("#option_like").click(function () {
+$(document).on('click', '.option_like', function() {
     var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'old',false)
-    update_ML_values(payload, true, 5, 0.50)
+    scan_messge_ML(payload,'manual reinforce',false)
+    update_ML_values(payload, true, ML_manual_reward, 0.50)
     saveMLsettings()
     scan_messge_ML(payload,'new',false)
 });
-$("#option_like_big").click(function () {
+$(document).on('click', '.option_like_big', function() {
     var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'old',false)
-    update_ML_values(payload, true, 5, 0.80)
+    scan_messge_ML(payload,'manual reinforce(big)',false)
+    update_ML_values(payload, true, ML_manual_reward_big, 0.80)
     saveMLsettings()
     scan_messge_ML(payload,'new',false)
 });

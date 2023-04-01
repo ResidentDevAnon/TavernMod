@@ -403,12 +403,18 @@ input[type="checkbox"] {width: 20px;}
     color:aliceblue;
 }
 
-.like_button {
+.lower_interact {
+    display: inline-flex;
+    width: -webkit-fill-available;
+    justify-content: space-between;
+}
+
+.rate_button {
     cursor: pointer;
     font-size: 1.5em;
 }
 
-.likeblock {/* margin-left: 10%; *//* left: 45%; *//* width: -webkit-fill-available; *//* position: absolute; *//* padding-right: 25%; *//* margin-right: 10%; */white-space: pre-wrap;display: inline-flex;justify-content: center;}
+.likeblock {display: inline-flex;width: 200px;justify-content: space-between;padding-left: 38%;}
 
 #clear_hidden {
     height: 109px;
@@ -448,7 +454,12 @@ div#result_info {
     padding-right: 6px;
     justify-content: space-between;
     flex-direction: row-reverse;
+    font-size: 2em;
 }
+.swipecounter{
+    margin-top: 10px;
+}
+
 div#generating_thumbs {
     width: 137px;
 }
@@ -975,20 +986,9 @@ div#swipe_left {
     align-self: center;
     cursor: pointer;
 }
-div#swipe_left img {
-    align-self: center;
-    height: 30px;
-    width: 30px;
-    transform: rotate3d(0, 1, 0, 180deg);
-    /* background-color: green; */
-}
 div#swipe_right {
     align-self: center;
     cursor: pointer;
-}
-div#swipe_right img {
-    height: 30px;
-    width: 30px;
 }
 .highlighted{background: #222222;}
 

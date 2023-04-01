@@ -74,6 +74,7 @@
                     <div id="name_div">
                         <h5>Character name</h5>
                         <input id="character_name_pole" name="ch_name" class="text_pole" maxlength="120" size="35" value="" autocomplete="off">
+                        <div id="chname_tokens">&nbsp;</div>
                     </div>
                     <div id="avatar_div" class="avatar_div">
                         <div id="avatar_div_div" class="avatar">
@@ -88,32 +89,37 @@
                 <div id="description_div"class="generic_hidden">
                     <h5>Description of personality and other characteristics (<a href="/notes/1" target="_blank">?</a>)</h5>
                 <textarea id="description_textarea" name="description" placeholder=""></textarea>
+                <div id="desc_tokens">&nbsp;</div>
                 </div>
                 <hr> 
                 <h4 id="first_mes_butt">First message</h4>
                 <div id="first_message_div"class="generic_hidden">
                 <h5>First message from the character (<a href="/notes/3" target="_blank">?</a>)</h5>
                 <textarea id="firstmessage_textarea" name="first_mes" placeholder=""></textarea>
+                <div id="FM_tokens">&nbsp;</div>
                 </div>
                 <hr> 
                 <!-- hidden from user -->
-                <div id="avatar_url_div">
-                <input id="avatar_url_pole" class = "generic_hidden"name="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
-                </div>
-                <div id="selected_chat_div">
-                <input id="selected_chat_pole" class = "generic_hidden"name="chat" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
-                </div>
-                <div id="create_date_div">
-                <input id="create_date_pole" class = "generic_hidden"name="create_date" class="text_pole" maxlength="999" size= 40% value="" autocomplete="off">
-                </div>
-                <div id="last_mes_div">
-                <input id="last_mes_pole" class = "generic_hidden"name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                <div>
+                    <div id="avatar_url_div">
+                        <input id="avatar_url_pole" class = "generic_hidden"name="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                    </div>
+                    <div id="selected_chat_div">
+                        <input id="selected_chat_pole" class = "generic_hidden"name="chat" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                    </div>
+                    <div id="create_date_div">
+                        <input id="create_date_pole" class = "generic_hidden"name="create_date" class="text_pole" maxlength="999" size= 40% value="" autocomplete="off">
+                    </div>
+                    <div id="last_mes_div">
+                        <input id="last_mes_pole" class = "generic_hidden"name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                    </div>
                 </div>
                 <!-- personality block-->
                 <h4 id ="pers_butt">Personality summary</h4>
                 <div id="personality_div"class="generic_hidden">
                     <h5>A brief description of the personality (<a href="/notes/2" target="_blank">?</a>)</h5>
                     <textarea id="personality_textarea" name="personality" placeholder="" form="form_create" class="text_pole" autocomplete="off"></textarea>
+                    <div id="pers_tokens">&nbsp;</div>
                 </div>
                 <hr> 
                 <!-- scenario block-->
@@ -121,6 +127,7 @@
                 <div id="scenario_div"class="generic_hidden">
                     <h5>Circumstances and context of the dialogue (<a href="/notes/12" target="_blank">?</a>)</h5>
                     <textarea id="scenario_pole" name="scenario" class="text_pole" maxlength="9999" value="" autocomplete="off" form="form_create"></textarea>
+                    <div id="scen_tokens">&nbsp;</div>
                 </div>
                 <hr> 
                 <!-- example dialog block-->
@@ -128,10 +135,11 @@
                 <div id="mes_example_div"class="generic_hidden">
                     <h5>Forms a personality more clearly (<a href="/notes/11" target="_blank">?</a>)</h5>
                     <textarea id="mes_example_textarea" name="mes_example" placeholder="" form="form_create"></textarea>
+                    <div id="EXM_tokens">&nbsp;</div>
                 </div>
                 <hr>
                 <div class="right_menu_button" ><h2 class="preview_butt">PREVIEW</h2>
-                    <div class = "preview_box">
+                    <div class = "preview_box generic_hidden">
                         <h3>Preview for current card</h3>
                         <textarea class="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
                     </div>
@@ -139,8 +147,8 @@
                 <hr>
                 <!-- export create delete-->
                 <div style="display: flex;">
-                    <div id="result_info">&nbsp;</div>
-                    </div>
+                    <div id="total_tokens_char">&nbsp;</div>
+                </div>
                 <div id="create_button_div">
                 <input id="create_button" type="submit" value="Create">
                 </div>
@@ -380,12 +388,19 @@
                             <h4>Auto retry on fail</h4>
                         </label>
                         <h5>it just slaps enter again for you</h5>
+                        <hr>
+                        <h4>max attempts / messages </h4><h5 id="max_attempts_display">select</h5>
+                        <input type="range" id="dont_drain_my_bank_please" name="volume" min="1" max="10" step="1">
                         <label class="switch">
                             <input id="continuous_mode" type="checkbox"/><span></span>
                             <h4>continuous generation</h4>
                         </label>
                         <h5>slaps enter as soon as possible, either loads current message as is or lets bot continue where it left</h5>
                         <h5>this is potentially a VERY dangerous toggle</h5>
+                        <label class="switch">
+                            <input id="ML_swipes" type="checkbox"/><span></span>
+                            <h4>use training data to swipe 'bad' messages right</h4>
+                        </label>
                     </div>
                 </div>
                 <hr>
@@ -436,7 +451,7 @@
             <!--prompt preview-->
             <hr>                
             <div class="right_menu_button" ><h2 class="preview_butt">PREVIEW</h2>
-                <div class = "preview_box">
+                <div class = "preview_box generic_hidden">
                     <h3>Preview for current card</h3>
                     <textarea class="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
                 </div>
@@ -623,7 +638,7 @@ slow, descriptive pacing</textarea>
                         <textarea id="CUST_5_Prompt" placeholder="">only reply as {{char}}</textarea>
                     </div>
                     <div class="right_menu_button" ><h2 class="preview_butt">PREVIEW</h2>
-                        <div class = "preview_box">
+                        <div class = "preview_box generic_hidden">
                             <h3>Preview for current card</h3>
                             <textarea class="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
                         </div>
@@ -679,6 +694,7 @@ slow, descriptive pacing</textarea>
                 <div id="options_button">
                     <div id="options">
                         <div id="options-content">
+                        <hr>
                         <hr>
                         <a id="option_start_new_chat"><img src="img/save_and_start_new_chat.png" width="20" height="20">Start new chat</a>
                         <hr>
