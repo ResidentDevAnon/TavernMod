@@ -100,18 +100,23 @@
                 </div>
                 <hr> 
                 <!-- hidden from user -->
-                <div>
+                <div class = "generic_hidden">
                     <div id="avatar_url_div">
-                        <input id="avatar_url_pole" class = "generic_hidden"name="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                        <h4>filename</h4>
+                        <input id="avatar_url_pole" claname="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                     </div>
                     <div id="selected_chat_div">
-                        <input id="selected_chat_pole" class = "generic_hidden"name="chat" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                        <h4>selected chat</h4>
+                        <input id="selected_chat_pole" name="chat" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                     </div>
                     <div id="create_date_div">
-                        <input id="create_date_pole" class = "generic_hidden"name="create_date" class="text_pole" maxlength="999" size= 40% value="" autocomplete="off">
+                        <h4>create date</h4>
+                        <input id="create_date_pole" name="create_date" class="text_pole" maxlength="999" size= 40% value="" autocomplete="off">
                     </div>
                     <div id="last_mes_div">
-                        <input id="last_mes_pole" class = "generic_hidden"name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                        <h4>last message</h4>
+                        <h5>this doesnt matter for tavmod but exists for support with other taverns</h5>
+                        <input id="last_mes_pole" name="last_mes" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                     </div>
                 </div>
                 <!-- personality block-->
@@ -227,6 +232,11 @@
                     <input id="api_key_openai" name="api_key_openai" class="text_pole" maxlength="500" value="" autocomplete="off">
                     <input class="api_button" type="submit" value="Connect">
                 </form>
+                <h4>Model</h4><h5>you still need 'access' to it</h5>
+                <select id="model_openai" class="option_select_right_menu">
+                    <option value="gpt-3.5-turbo-0301">gpt-3.5-turbo-0301</option>
+                    <option value="gpt-4">gpt-4</option>
+                </select>
                 <h4>Preset settings</h4><h5>Selecting settings</h5>
                 <select id="settings_perset_openai" class="option_select_right_menu">
                     <option value="gui">Default</option>

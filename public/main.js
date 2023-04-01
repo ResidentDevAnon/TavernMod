@@ -105,6 +105,7 @@ var api_key_openai = "";
 var openai_settings;
 var openai_setting_names;
 var preset_settings_openai = 'Default';
+var openai_selected_model = "";
 
 var openai_selected_gen = 300;
 var openai_min_gen = 300;
@@ -1144,7 +1145,7 @@ async function Generate(type) {
             var generate_data = {
                 "messages": openai_msgs_tosend,
                 // todo: add setting for le custom model
-                "model": "gpt-3.5-turbo-0301",
+                "model": openai_selected_model,
                 "temperature": parseFloat(temp_openai),
                 "frequency_penalty": parseFloat(freq_pen_openai),
                 "presence_penalty": parseFloat(pres_pen_openai),
@@ -1322,6 +1323,8 @@ async function Generate(type) {
                         if (auto_retry){
                             console.log("retry in auto")
                             Generate()
+                        }else{
+                            addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
                         }
                     }
                     //finally
@@ -2815,6 +2818,7 @@ async function getSettings(type) {//timer
                 stream_openai = settings.stream_openai ?? true;
                 openai_selected_context = settings.openai_selected_context ?? 4095;
                 openai_selected_gen = settings.openai_selected_gen ?? 300;
+                openai_selected_model = settings.openai_selected_model ?? 'gpt-3.5-turbo-0301';
                 //future me remember !! converts to bool, ?? is a null check
                 if (settings.nsfw_toggle !== undefined) nsfw_toggle = !!settings.nsfw_toggle;
                 if (settings.CYOA_mode !== undefined) CYOA_mode = !!settings.CYOA_mode;
@@ -2907,6 +2911,16 @@ async function getSettings(type) {//timer
                 $('#OAI_context_input').val(openai_selected_context);
                 $('#OAI_context_slider').val(openai_selected_context);
                 $('#OAI_context_display').html(openai_selected_context + ' Tokens');
+                //hook openai_selected_model
+                const menu = document.getElementById('model_openai');
+                for (var i = 0; i < menu.options.length; i++) {
+                    if (menu.options[i].value === openai_selected_model) {
+                        menu.selectedIndex = i;
+                        break;
+                    }
+                }
+
+
                 $('#OAI_gen_input').val(openai_selected_gen);
                 $('#OAI_gen_slider').val(openai_selected_gen);
                 $('#OAI_gen_display').html(openai_selected_gen + ' Tokens');
@@ -3069,6 +3083,7 @@ async function saveSettings(type) {
             nsfw_toggle: nsfw_toggle,
             openai_selected_context: openai_selected_context,
             openai_selected_gen: openai_selected_gen,
+            openai_selected_model: openai_selected_model,
             open_bg_bar: open_bg_bar,
             open_nav_bar: open_nav_bar,
             open_last_char: open_last_char,
@@ -3571,6 +3586,19 @@ $("#menu_sel_box").change(function() {
     last_menu = menu.options[menu.selectedIndex].value;
     saveSettings();
 });
+
+$("#model_openai").change(function() {
+    var menu = document.getElementById('model_openai');
+    openai_selected_model = menu.options[menu.selectedIndex].value;
+    for (var i = 0; i < menu.options.length; i++) {
+        if (menu.options[i].value === openai_selected_model) {
+            menu.selectedIndex = i;
+            break;
+        }
+    saveSettings();
+}
+});
+
 
 function msToTime(duration) {
     if (duration == 59000){
