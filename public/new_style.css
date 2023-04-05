@@ -458,6 +458,8 @@ div#result_info {
 }
 .swipecounter{
     margin-top: 10px;
+    width: -webkit-fill-available;
+    text-align-last: right;
 }
 
 div#generating_thumbs {
@@ -478,12 +480,12 @@ div#generating_thumbs {
 
 .buton_block {display: flex;}
 
-div#save_indicator.saved {
+.saved {
     color: var(--confirm_green);
     white-space: nowrap;
 }
 
-div#save_indicator.warning {
+.warning {
     color: var(--warning_red);
         white-space: nowrap;
 }
@@ -653,7 +655,9 @@ div#chat {
     height: 103px;
     border-style: none;
     padding:6px;
-    display: inline-block;
+    display: inline-flex;
+    flex-direction: column;
+    align-items:center;
 }
 
 .avatar img {

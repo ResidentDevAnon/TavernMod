@@ -7,6 +7,7 @@ var curr_charname = "Chloe";
 var chat_mess_content = [{
     is_user: false,
     swipe_index: 0,
+    star_mapping:[],
     swipe_array: ['*You went inside. The air smelled of fried meat, tobacco and a hint of wine. A dim light was cast by candles, and a fire crackled in the fireplace. It seems to be a very pleasant place. Behind the wooden bar is an elf waitress, she is smiling. Her ears are very pointy, and there is a twinkle in her eye. She wears glasses and a white apron. As soon as she noticed you, she immediately came right up close to you.*' +
         ' <p>Hello there! How is your evening going?</P>\n' +
         '<img src="img/tavern.png" width=50% style="opacity:1; display:block;border-radius:5px;margin-top:25px;margin-bottom:23px; margin-left: 45px;margin-right: auto;">\n<a id="verson" style="color:rgb(229, 224, 216,0.8);" href="https://github.com/TavernAI/TavernAI" target="_blank">TavernAI v' + VERSION + '</a><div id="characloud_url" style="margin-right:10px;margin-top:0px;float:right; height:25px;cursor: pointer;opacity: 0.99;display:inline-block;"><img src="img/cloud_logo.png" style="width: 25px;height: auto;display:inline-block; opacity:0.7;"><div style="vertical-align: top;display:inline-block;">Cloud</div></div><br><br><br><br>']
@@ -37,7 +38,8 @@ var timerSaveEdit; //flag for preventing redundant save calls
 var durationSaveEdit = 2000; //TO for edit saves
 var durationSaveContext = 2000; //TO for context saves
 var connection_text_clear//flag for purging connected text
-var save_text_clear //flag for preventing redundant save calls
+var save_flag_text_clear //flag for preventing redundant save calls
+var ML_flag_text_clear //flag for preventing redundant like calls
 
 //animation right menu
 var animation_rm_duration = 200;
@@ -177,7 +179,7 @@ var custom_5_switch = false
 //auto rety and continous mode
 var auto_retry = false
 var continuous_mode = false
-var ML_swipe = false
+var ML_swipe_toggle = false
 
 //swipe stuff
 var newest_mes_index = 0
@@ -190,13 +192,15 @@ var dont_drain_my_bank_please = 0
 //ML stuff
 var ML_wordbag = new Map();
 //these are just globals for ease of use finding them
-const ML_auto_reward = 5
-const ML_auto_punish = -10
-const ML_manual_reward = 5
-const ML_manual_reward_big = 5
-const ML_manual_punish =  -10
-const ML_manual_punish_big =  -10
-const ML_usermessage_reward = 5 
+const ML_reward_target = 90
+const ML_punish_target = -100
+const ML_BG_learning_pos = 0.03
+const ML_BG_learning_neg = -0.05
+const ML_ACT_learning_neg_big = -0.1
+const ML_ACT_learning_neg_small = -0.03
+const ML_ACT_learning_pos_small = 0.03
+const ML_ACT_learning_pos_big = 0.1
+var ML_swipe_threshold = 0 
 
 //token counters
 //char stuff
@@ -300,7 +304,7 @@ $.get("/csrf-token")
 
 
 function checkOnlineStatus() {
-    console.trace("checkOnlineStatus",{
+    console.log("checkOnlineStatus",{
         main_api,
         online_status
     });
@@ -342,7 +346,7 @@ async function getMLsettings() {
                 ML_wordbag.set(carefor[i][0], carefor[i][1]);
             }
         }
-        console.log("done")
+        //console.log("done")
       }
     } catch (error) {
       console.log(error);
@@ -351,28 +355,26 @@ async function getMLsettings() {
 //this is so fucking stupid
 async function saveMLsettings() {
     try {
-      var requestBody = [];
-      for (const [word, value] of ML_wordbag) {
-        let temp = word.replace('\r\n\r\n', "").replace('\n\n', "")
-        requestBody.push([temp, value]);
-      };
-      requestBody.sort((a, b) => b[1] - a[1]); // sorts by value in descending order
-      const response = await fetch("/saveMLsettings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": token
-        },
-        body: JSON.stringify(requestBody)
-      });
-  
-      if (response.ok === true) {
-        //console.log("done");
-      }
+        var requestBody = [];
+        for (const [word, value] of ML_wordbag) {
+            let temp = word.replace('\r\n\r\n', "").replace('\n\n', "")
+            if (value != 1){
+                requestBody.push([temp, value]);
+            }
+        };
+        requestBody.sort((a, b) => b[1] - a[1]); // sorts by value in descending order
+        const response = await fetch("/saveMLsettings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": token
+            },
+            body: JSON.stringify(requestBody)
+        });
     } catch (error) {
-      console.log(error);
+        console.log(error);
     }
-  }
+}
 async function getStatus() {
     if (main_api == 'kobold') {
         console.log(`trying to connect to kobold`)
@@ -672,40 +674,60 @@ function soft_refresh() {
         let swipeRight = element.querySelector('.swipe_right');
         let likeblock = element.querySelector('.likeblock');
         let swipe_display = element.querySelector('.swipecounter');
-        if (is_user=='false' && i !== messages.length - 1 || i  == 0) {
-            //yes these if statements are needed, it throws a null reading error if its not here
-            if (swipeLeft){
-                swipeLeft.classList.add('generic_hidden')
-            }
-            if (swipeRight){
-                swipeRight.classList.add('generic_hidden')
-            }
-            if (likeblock){
-                likeblock.classList.add('generic_hidden')
-            }
-            if (swipe_display){
-                swipe_display.classList.add('generic_hidden')
-            }
-    }else{
-        if (swipeLeft && swipe_counter > 0){
-            swipeLeft.classList.remove('generic_hidden')
+        let score_display = element.querySelector('.msg_score');
+        let actual_message = element.querySelector('.mes_text');
+        //console.log(actual_message.innerText)
+        //ml shit
+        
+        let score = parseFloat(scan_messge_ML(actual_message.innerText,"",false)).toFixed(2)
+        element.getElementsByClassName("msg_score")[0].textContent = score
+        score_display.classList.remove('warning')
+        score_display.classList.remove('saved')
+        if (score < 0){
+            score_display.classList.add('warning')
+        }else if (score >= 0){
+            score_display.classList.add('saved')
         }
-        if (swipeRight){
-        swipeRight.classList.remove('generic_hidden')
-        }           
-        if (likeblock){
-            likeblock.classList.remove('generic_hidden')
+        //display names
+        if(is_user == 'true'){
+            element.getElementsByClassName('displayname')[0].textContent = curr_username
         }
-        if (swipe_display){
-            swipe_display.classList.remove('generic_hidden')
-        }
+        else{
+            element.getElementsByClassName('displayname')[0].textContent = curr_charname
+            if (i !== messages.length - 1 || i  == 0) {
+                //yes these if statements are needed, it throws a null reading error if its not here
+                if (swipeLeft){
+                    swipeLeft.classList.add('generic_hidden')
+                }
+                if (swipeRight){
+                    swipeRight.classList.add('generic_hidden')
+                }
+                if (likeblock){
+                    likeblock.classList.add('generic_hidden')
+                }
+                if (swipe_display){
+                    swipe_display.classList.add('generic_hidden')
+                }
+                if (score_display){
+                    //score_display.classList.add('generic_hidden')
+                }
+            }else{
+                if (swipeLeft && swipe_counter > 0){
+                    swipeLeft.classList.remove('generic_hidden')
+                }
+                if (swipeRight){
+                swipeRight.classList.remove('generic_hidden')
+                }           
+                if (likeblock){
+                    likeblock.classList.remove('generic_hidden')
+                }
+                if (swipe_display){
+                    swipe_display.classList.remove('generic_hidden')
+                }
+                if (score_display){
+                    score_display.classList.remove('generic_hidden')
+                }
     }
-    //display names
-    if(is_user == 'true'){
-        element.getElementsByClassName('displayname')[0].textContent = curr_username
-    }
-    else{
-        element.getElementsByClassName('displayname')[0].textContent = curr_charname
     }
     update_swipe_display_coutner()
     }}
@@ -782,22 +804,22 @@ function addOneMessage(mes) {
             <input type='checkbox' class='del_checkbox generic_hidden'>
                 <div class=avatar>
                     <img src='${avatarImg}'>
-                </div>
-                    <div class=mes_block>
-                        <div class=ch_name>
-                            <div class=displayname>${characterName}</div>
-                                <div title=Edit class=mes_edit>
-                                    <img src='img/scroll.png' style='width:30px;height:30px;'>
-                                </div>
-                                <div class="mes_edit_cancel generic_hidden">
-                                    <img src='img/cancel.png'>
-                                </div>
-                                <div class="mes_edit_done generic_hidden">
-                                <img src='img/done.png'>
-                                </div>
-                        </div>
-                        <div class=mes_text></div>
-                        `
+        <div class="msg_score"${scan_messge_ML(messageText,"",false)}></div></div>
+        <div class=mes_block>
+            <div class=ch_name>
+                <div class=displayname>${characterName}</div>
+                    <div title=Edit class=mes_edit>
+                        <img src='img/scroll.png' style='width:30px;height:30px;'>
+                    </div>
+                    <div class="mes_edit_cancel generic_hidden">
+                        <img src='img/cancel.png'>
+                    </div>
+                    <div class="mes_edit_done generic_hidden">
+                    <img src='img/done.png'>
+                    </div>
+            </div>
+            <div class=mes_text></div>
+            `
 
         //genuis moment, swap the order here and throw it in reverse in the justify so its 'right aligned' by default
         //and stetches left for the left swipe
@@ -851,7 +873,7 @@ function typeWriter(target, text, speed, i) {
 $("#send_but").click(function () {
     if (is_send_press == false) {
         is_send_press = true;
-        attempt_counter = 0
+        attempt_counter = 1
         Generate();
     }
 });
@@ -879,7 +901,8 @@ function build_main_system_message(r_flag=false){
     if (custom_5_switch) {sys_prompt_compiler += `${replacePlaceholders(custom_5_prompt)}\n`;}
     var charDescription = $.trim(characters_array[active_character_index].description);
     var charPersonality = $.trim(characters_array[active_character_index].personality);
-    var Scenario = $.trim(characters_array[active_character_index].scenario);
+    var Scenario_def = $.trim(characters_array[active_character_index].scenario);
+    var Scenario_override = `${replacePlaceholders($("#scenario_override")[0].value)}`
     var built = ''
     if (charDescription !== undefined) {
         if (charDescription.length > 0) {charDescription = replacePlaceholders(charDescription)}
@@ -887,8 +910,8 @@ function build_main_system_message(r_flag=false){
     if (charPersonality !== undefined) {
         if (charPersonality.length > 0) {charPersonality = replacePlaceholders(charPersonality)}
     }
-    if (Scenario !== undefined) {
-        if (Scenario.length > 0) {Scenario = replacePlaceholders(Scenario)}
+    if (Scenario_def !== undefined) {
+        if (Scenario_def.length > 0) {Scenario_def = replacePlaceholders(Scenario_def)}
     }
     if (charDescription.length > 0) {
         built = replacePlaceholders(description_prompt) + charDescription + '\n';
@@ -896,15 +919,18 @@ function build_main_system_message(r_flag=false){
     if (charPersonality.length > 0) {
         built += replacePlaceholders(personality_prompt) + charPersonality+ '\n';
     }
-    if (Scenario.length > 0) {
-        built += replacePlaceholders(scenario_prompt) + Scenario+ '\n';
+    if (Scenario_override.length > 0) {
+        built += replacePlaceholders(scenario_prompt) + Scenario_override+ '\n';
+    }
+    else if (Scenario_def.length > 0) {
+        built += replacePlaceholders(scenario_prompt) + Scenario_def+ '\n';
     }
     built = `${sys_prompt_compiler}${built}`
      var array = document.getElementsByClassName('scenario_preview')
      for (var i = 0 ; i <= array.length - 1; i ++){
         array[i].value = built
      }
-    console.log(`${countTokens(sys_prompt_compiler)} tokens dedicated for SYS commands`)
+    //console.log(`${countTokens(sys_prompt_compiler)} tokens dedicated for SYS commands`)
     if(r_flag){
         return built
     }else
@@ -917,16 +943,17 @@ function udpate_tokencost_preview(){
     if (dynamic_gen > openai_selected_gen ){
         dynamic_gen = openai_selected_gen
     }
-    document.getElementById('cost_preview_min').innerHTML = ` Min: $${ ( parseFloat(openai_selected_context*cntx_price_per1k).toFixed(6) ) } (${openai_selected_context} context / 0 generation)`
-    document.getElementById('cost_preview_max').innerHTML = `Max :$${ parseFloat((openai_selected_context*cntx_price_per1k) + (dynamic_gen*gen_price_per1k)).toFixed(6) } (${openai_selected_context} context / ${dynamic_gen}) generation`
+    document.getElementById('cost_preview_min').innerHTML = ` Min: $${ ( parseFloat(openai_selected_context*cntx_price_per1k).toFixed(6) ) } (${openai_selected_context} / 0 )`
+    document.getElementById('cost_preview_max').innerHTML = `Max :$${ parseFloat((openai_selected_context*cntx_price_per1k) + (dynamic_gen*gen_price_per1k)).toFixed(6) } (${openai_selected_context} / ${dynamic_gen} )`
 }
 
 async function Generate(type) {
     attempt_counter ++
     if (online_status != 'no_connection' && active_character_index != undefined) {
+        var hidden_text = replacePlaceholders($("#fake_textarea").val());
         if (type == 'regenerate' || type == 'swipe') {
             var Promt_text = "";
-            var hidden_text = $("#fake_textarea").val();
+            //var hidden_text = $("#fake_textarea").val();
             if (chat_mess_content[chat_mess_content.length - 1]['is_user']) {//If last message from You
                 return
             }
@@ -939,7 +966,7 @@ async function Generate(type) {
         } else {
             //get and clear textarea
             var Promt_text = $("#send_textarea").val();
-            var hidden_text = $("#fake_textarea").val();
+            //var hidden_text = $("#fake_textarea").val();
             $("#send_textarea").val('');
         }
         //swap button with loading icon
@@ -972,10 +999,13 @@ async function Generate(type) {
             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] = 0;
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'] = [];
             chat_mess_content[chat_mess_content.length - 1]['swipe_array'][0] = Promt_text;
+            chat_mess_content[chat_mess_content.length - 1]['star_mapping'] = [];
             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
             //obviously we want 'more' of any user input
-            scan_messge_ML(Promt_text,'user input',false)
-            update_ML_values(Promt_text, false, ML_usermessage_reward)
+            scan_messge_ML(Promt_text)
+            console.log("~~prompt test")
+            console.log(Promt_text)
+            update_ML_values(Promt_text, ML_reward_target, ML_BG_learning_pos)
             saveMLsettings()
             soft_refresh()
         }
@@ -1006,24 +1036,26 @@ async function Generate(type) {
         else{
             runtime = chat_mess_content.length - 1
         }
-        for (var unkown = runtime; unkown >= 0; unkown--) {
+        for (var user_message_index = runtime; user_message_index >= 0; user_message_index--) {
             // first greeting message
             if (j == 0) {
                 chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] = replacePlaceholders(chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']]);
             }
             let role = chat_mess_content[j]['is_user'] ? 'user' : 'assistant';
-            openai_msgs[unkown] = { "role": role, "content": chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] };
-            if (unkown == 0 && chat_mess_content[j]['is_user'] && hidden_text != ""){
-                openai_msgs[0].content +=  `(${hidden_text})`
+            openai_msgs[user_message_index] = { "role": role, "content": chat_mess_content[j]['swipe_array'][chat_mess_content[j]['swipe_index']] };
+            //last message was a user and there is a sys command
+            if (user_message_index == 0 && chat_mess_content[j]['is_user'] && hidden_text != ""){
+                openai_msgs.unshift(0);
+                openai_msgs[0] = { "role": 'system', "content": `${hidden_text}` };
             }
             //behavior for if last message was a bots
-            if (unkown == 0 && !chat_mess_content[j]['is_user']){
+            if (user_message_index == 0 && !chat_mess_content[j]['is_user']){
                 openai_msgs.unshift(0)
                 if (hidden_text == ""){
-                    openai_msgs[0] = { "role": 'user', "content": `(continue ${curr_charname}'s last message as if it didnt stop)` };
+                    openai_msgs[0] = { "role": 'system', "content": `continue ${curr_charname}'s last message as if it didnt stop` };
                 }
                 else{
-                    openai_msgs[0] = { "role": 'user', "content": `(${hidden_text})` };
+                    openai_msgs[0] = { "role": 'system', "content": `${hidden_text}` };
                 }
             }
             j++;
@@ -1209,6 +1241,7 @@ async function Generate(type) {
                             chat[chat.length - 1]['swipe_index'] = 0;
                             chat[chat.length - 1]['swipe_array'] =[];
                             chat[chat.length - 1]['swipe_array'][0] = "";
+                            chat[chat.length - 1]['star_mapping'] = [];
                             addOneMessage(chat[chat.length - 1]);
                         }
                         getMessage = $.trim(getMessage);
@@ -1273,18 +1306,22 @@ async function Generate(type) {
                         //might be the create part for bot?
                         //length is string length
                         if (getMessage.length > 0) {
-                            //hook here for split swipe / new behavior 
                             getMessage = $.trim(getMessage);
-                            //hook here for training check
-                            //scan_messge_ML(getMessage,'expected',false)
-                            if (scan_messge_ML(getMessage,'actual') == "catch"){
-                                update_ML_values(getMessage,false, ML_auto_punish, 0.3)
-                                ML_flag = true
-                                scan_messge_ML(getMessage,'auto punished',false)
-                            }else{
-                                update_ML_values(getMessage,true,ML_auto_reward)
-                                scan_messge_ML(getMessage,'auto reinforced',false)
+                            //scan and update
+                            var rate_incoming = scan_messge_ML(getMessage)
+                            if (rate_incoming == "punish"){
+                                update_ML_values(getMessage, ML_punish_target, ML_BG_learning_neg)
+                                rate_incoming = scan_messge_ML(getMessage,"Auto Punished",false)
                             }
+                            else if (rate_incoming == "reward"){
+                                update_ML_values(getMessage,ML_reward_target, ML_BG_learning_pos)
+                                rate_incoming = scan_messge_ML(getMessage,"Auto Reinforced",false)
+                            }
+                            //check if post rate its below user threshold
+                            if (rate_incoming < ML_swipe_threshold){
+                                ML_flag = true
+                            }
+                            //create new msg or update existing 
                             if (type != 'swipe'){
                                 chat_mess_content[chat_mess_content.length] = {};
                                 chat_mess_content[chat_mess_content.length - 1]['swipe_array'] =[];
@@ -1294,7 +1331,9 @@ async function Generate(type) {
                             chat_mess_content[chat_mess_content.length - 1]['is_user'] = false;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_index'] ++;
                             chat_mess_content[chat_mess_content.length - 1]['swipe_array'][chat_mess_content[chat_mess_content.length - 1]['swipe_index']] = getMessage;
+                            chat_mess_content[chat_mess_content.length - 1]['star_mapping'] = []
                             addOneMessage(chat_mess_content[chat_mess_content.length - 1]);
+                            //udpate swipe if was
                             if (type == 'swipe'){
                                 update_swipe_display_coutner()
                             }
@@ -1311,7 +1350,8 @@ async function Generate(type) {
                         console.log("generated a new block in continuous")
                         $("#send_but").click()
                     }
-                    if (ML_flag && ML_swipe && (attempt_counter <= dont_drain_my_bank_please)){
+                    if (ML_flag && ML_swipe_toggle && (attempt_counter <= dont_drain_my_bank_please)){
+                        flash_ML_status(`auto swiped ${rate_incoming} < ${ML_swipe_threshold}`,"neg")
                         Generate('swipe')
                     }
                     } 
@@ -1431,6 +1471,9 @@ function getChatResult() {
         chat_mess_content[0]['is_user'] = false;
         chat_mess_content[0]['swipe_index'] = 0;
         chat_mess_content[0]['swipe_array'] = [];
+        chat_mess_content[0]['star_mapping'] = [];
+        //hook here for star_rating_count
+        //hook here for is_rated_flag
         if (characters_array[active_character_index].first_mes != "") {
             chat_mess_content[0]['swipe_array'][0] = characters_array[active_character_index].first_mes;
         } else {
@@ -1440,7 +1483,15 @@ function getChatResult() {
         printMessages();
         select_selected_character(active_character_index);
     }
-    $("#send_textarea").keypress(function (e) {
+$("#send_textarea").keypress(function (e) {
+    if (e.which === 13 && !e.shiftKey && is_send_press == false) {
+        is_send_press = true;
+        e.preventDefault();
+        Generate();
+        //$(this).closest("form").submit();
+    }
+});
+$("#fake_textarea").keypress(function (e) {
     if (e.which === 13 && !e.shiftKey && is_send_press == false) {
         is_send_press = true;
         e.preventDefault();
@@ -1757,7 +1808,7 @@ $("#dialogue_popup_ok").click(function () {
         chat_mess_content.length = 0;
         characters_array[active_character_index]['chat'] = Date.now();
         $("#selected_chat_pole").val(characters_array[active_character_index].chat);
-        common_click_save()
+        character_click_save()
         getChat();
 
     }
@@ -1938,6 +1989,7 @@ $("#form_create").submit(function(type) {
                         chat_mess_content[0]['swipe_index']=0;
                         chat_mess_content[0]['swipe_array']=[];
                         chat_mess_content[0]['swipe_array'][chat_mess_content[0]["swipe_index"]] = this_ch_mes;
+                        chat_mess_content[0]['star_mapping'] = []
                         add_mes_without_animation = true;
                         addOneMessage(chat_mess_content[0]);
                         soft_refresh()
@@ -2036,7 +2088,7 @@ $("#rm_info_button").click(function () {
     select_rm_characters();
 });
 
-function common_click_save() {
+function character_click_save() {
     raise_save_flag()
     clearTimeout(timerSaveEdit);
     timerSaveEdit = setTimeout(() => { 
@@ -2069,53 +2121,56 @@ function lower_save_flag(){
         document.getElementById("save_indicator").innerHTML = "saved!"
         document.getElementById('save_indicator').classList.remove('warning')
         document.getElementById('save_indicator').classList.add('saved')
-    clearTimeout(save_text_clear);
+    clearTimeout(save_flag_text_clear);
     //save_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = " " }, durationSaveEdit);
-    save_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = "UR wAIFu A SHIT" }, durationSaveEdit);
+    save_flag_text_clear = setTimeout(() => {document.getElementById("save_indicator").innerHTML = " " }, durationSaveEdit);
 }
+function flash_ML_status(status,type) {
+    document.getElementById("ML_indicator").textContent = `${status}`
+    document.getElementById('ML_indicator').classList.remove('warning')
+    document.getElementById('ML_indicator').classList.remove('saved')
+        if (type == "pos"){document.getElementById('ML_indicator').classList.add('saved')}
+        else if (type == "neg"){document.getElementById('ML_indicator').classList.add('warning')}
+    clearTimeout(ML_flag_text_clear)
+    ML_flag_text_clear = setTimeout(() => {document.getElementById("ML_indicator").textContent = " " }, durationSaveEdit*10);
+}
+
 $('#description_textarea').on('keyup paste cut', function () {//change keyup paste cut
-    if (menu_type == 'create') {
-        create_save_description = $('#description_textarea').val();
-    } else {
+    create_save_description = $('#description_textarea').val();
+    if (menu_type != 'create') {
         characters_array[active_character_index].description = $('#description_textarea').val();
-        common_click_save()
-        prompt_flag_save()
+        character_click_save()
     }
 
 });
 $('#personality_textarea').on('keyup paste cut', function () {
-    if (menu_type == 'create') {
         create_save_personality = $('#personality_textarea').val();
-    } else {
-        common_click_save()
-    }
+        if (menu_type != 'create') {
+            character_click_save()
+        }
 });
 $('#scenario_pole').on('keyup paste cut', function () {
-    if (menu_type == 'create') {
         create_save_scenario = $('#scenario_pole').val();
-    } else {
-        common_click_save()
-    }
+        if (menu_type != 'create') {
+            character_click_save()
+        }
 });
 $('#mes_example_textarea').on('keyup paste cut', function () {
-    if (menu_type == 'create') {
         create_save_mes_example = $('#mes_example_textarea').val();
-    } else {
-        common_click_save()
-    }
+        if (menu_type != 'create') {
+            character_click_save()
+        }
 });
 $('#firstmessage_textarea').on('keyup paste cut', function () {
-    if (menu_type == 'create') {
-        create_save_first_message = $('#firstmessage_textarea').val();
-    } else {
-        common_click_save()
+    create_save_first_message = $('#firstmessage_textarea').val();
+    if (menu_type != 'create') {
+        character_click_save()
     }
 });
 document.querySelectorAll('.api_button').forEach((element) => {
     element.addEventListener('click', try_connect);
 });
 function try_connect(){
-console.log(`clicked`)
 if (main_api == 'kobold'){
     $("#api_button").css("display", 'none');
     kobold_API_key = $('#api_url_text').val();
@@ -2171,6 +2226,7 @@ $("#option_start_new_chat").click(function () {
 $("#option_regenerate").click(function () {
     if (is_send_press == false) {
         is_send_press = true;
+        attempt_counter = 1
         Generate('regenerate');
     }
 });
@@ -2374,6 +2430,7 @@ function changeMainAPI() {
         main_api = 'openai';
         $('#max_context_block').addClass('generic_hidden')
         $('#amount_gen_block').addClass('generic_hidden')
+        $('#openai_gen_block').removeClass('generic_hidden')
         $('#tweak_container').removeClass('generic_hidden');
         break;
         case 'scale':
@@ -2637,6 +2694,11 @@ $(document).on('input', '#dont_drain_my_bank_please', function () {
     $('#max_attempts_display').html(dont_drain_my_bank_please);
 });
 
+$(document).on('input', '#ML_threshold_slider', function () {
+    ML_swipe_threshold = parseInt($(this).val())
+    $('#ML_threshold_display').html(ML_swipe_threshold+" score");
+});
+
 //***************SETTINGS****************//
 ///////////////////////////////////////////
 async function getSettings(type) {//timer
@@ -2850,7 +2912,7 @@ async function getSettings(type) {//timer
                 if (settings.custom_5_switch !== undefined) custom_5_switch = !!settings.custom_5_switch;
                 if (settings.auto_retry !== undefined) auto_retry = !!settings.auto_retry;
                 if (settings.continuous_mode !== undefined) continuous_mode = !!settings.continuous_mode;
-                if (settings.ML_swipe !== undefined) ML_swipe = !!settings.ML_swipe;
+                if (settings.ML_swipe !== undefined) ML_swipe_toggle = !!settings.ML_swipe;
 
                 for (let i = 1; i <= 5; i++) {
                     const settingTitle = `custom_${i}_title`;
@@ -2987,7 +3049,7 @@ async function getSettings(type) {//timer
                 //auto retry and continuous
                 $("#auto_retry").prop('checked', auto_retry)
                 $("#continuous_mode").prop('checked', continuous_mode)
-                $("#ML_swipes").prop('checked', ML_swipe)
+                $("#ML_swipes").prop('checked', ML_swipe_toggle)
 
 
                 //bookmark
@@ -3135,7 +3197,7 @@ async function saveSettings(type) {
             custom_5_prompt: custom_5_prompt,
             auto_retry: auto_retry,
             continuous_mode: continuous_mode,
-            ML_swipe: ML_swipe,
+            ML_swipe: ML_swipe_toggle,
             dont_drain_my_bank_please: dont_drain_my_bank_please,
 
         }),
@@ -3569,17 +3631,6 @@ $("#system_settings").click(function () {
 
 }
 );
-$("#sys_sel_box").change(function() {
-    var menu = document.getElementById('sys_sel_box');
-    var selectedValue = menu.options[menu.selectedIndex].value;
-    var block = document.getElementById("system_sett_options");
-    for (var i=0; i<block.children.length; i++) {
-        block.children[i].style.display = 'none';
-        if (block.children[i].getAttribute('id') == selectedValue) {
-            block.children[i].style.display = 'block';
-        } 
-    }
-});
 
 $("#menu_sel_box").change(function() {
     var menu = document.getElementById('menu_sel_box');
@@ -3593,9 +3644,9 @@ $("#model_openai").change(function() {
     for (var i = 0; i < menu.options.length; i++) {
         if (menu.options[i].value === openai_selected_model) {
             menu.selectedIndex = i;
+            saveSettings();
             break;
         }
-    saveSettings();
 }
 });
 
@@ -3703,6 +3754,56 @@ $("#CUST_5_prompt_button").click(function () {
         $("#CUST_5_block").css("display", 'none');
         $("#CUST_5_prompt_button").children("h2").removeClass('selected_button')
     }});
+
+//really need to switch this to use generic_hidden
+//but double down
+$("#startup_block_button").click(function () {
+    if (document.getElementById("startup_block").style.display == "none"){
+        $("#startup_block").css("display", 'block');
+        $("#startup_block_button").children("h2").addClass('selected_button')
+    } 
+    else{
+        $("#startup_block").css("display", 'none');
+        $("#startup_block_button").children("h2").removeClass('selected_button')
+    }});
+$("#ML_block_button").click(function () {
+    if (document.getElementById("ML_block").style.display == "none"){
+        $("#ML_block").css("display", 'block');
+        $("#ML_block_button").children("h2").addClass('selected_button')
+    } 
+    else{
+        $("#ML_block").css("display", 'none');
+        $("#ML_block_button").children("h2").removeClass('selected_button')
+    }});
+$("#avatar_name_block_button").click(function () {
+    if (document.getElementById("avatar_name_block").style.display == "none"){
+        $("#avatar_name_block").css("display", 'block');
+        $("#avatar_name_block_button").children("h2").addClass('selected_button')
+    } 
+    else{
+        $("#avatar_name_block").css("display", 'none');
+        $("#avatar_name_block_button").children("h2").removeClass('selected_button')
+    }});
+$("#OAI_token_s_block_button").click(function () {
+    if (document.getElementById("OAI_token_s_block").style.display == "none"){
+        $("#OAI_token_s_block").css("display", 'block');
+        $("#OAI_token_s_block_button").children("h2").addClass('selected_button')
+    } 
+    else{
+        $("#OAI_token_s_block").css("display", 'none');
+        $("#OAI_token_s_block_button").children("h2").removeClass('selected_button')
+    }});
+
+$("#OAI_model_sett_block_button").click(function () {
+    if (document.getElementById("OAI_model_sett_block").style.display == "none"){
+        $("#OAI_model_sett_block").css("display", 'block');
+        $("#OAI_model_sett_block_button").children("h2").addClass('selected_button')
+    } 
+    else{
+        $("#OAI_model_sett_block").css("display", 'none');
+        $("#OAI_model_sett_block_button").children("h2").removeClass('selected_button')
+    }});
+
 $('#system_prompt').on('keyup paste cut', function () {
         system_prompt = document.getElementById("system_prompt").value
     prompt_flag_save()
@@ -3919,7 +4020,7 @@ $('#continuous_mode').change(function () {
     saveSettings();
 });
 $('#ML_swipes').change(function () {
-    ML_swipe = !!$('#ML_swipes').prop('checked');
+    ML_swipe_toggle = !!$('#ML_swipes').prop('checked');
     saveSettings();
 });
 $('#right_menu-toggle').change(function () {
@@ -3976,6 +4077,15 @@ $("#api_togg_butt").click(function () {
         $("#tweaks_box").css("display", 'none');
         $("#api_togg_butt").removeClass('selected_button')
     }});
+$("#scenario_override_butt").click(function () {
+    if (document.getElementById("scenario_override").style.display == "none"){
+        $("#scenario_override").css("display", 'block');
+        $("#scenario_override_butt").addClass('selected_button')
+    } 
+    else{
+        $("#scenario_override").css("display", 'none');
+        $("#scenario_override_butt").removeClass('selected_button')
+    }});
 $(".preview_butt").click(function () {
         var $previewBox = $(this).siblings(".preview_box");
         if ($previewBox.hasClass("generic_hidden")) {
@@ -3997,13 +4107,14 @@ $(document).on('click', '.swipe_right', function() {
         if (document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.contains('generic_hidden')  ){
             document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.remove('generic_hidden')    
         }
+        soft_refresh()
         saveChat()
         return
     }
     //should never happen but extra failsafes are ok
     if (is_send_press == false) {
         is_send_press = true;
-        attempt_counter = 0
+        attempt_counter = 1
         Generate('swipe');
 }});
 //dont remember why past me split this into 2 functions, but present me wants future me to add a 'go to 0' option
@@ -4015,7 +4126,8 @@ $(document).on('click', '.swipe_left', function() {
         document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipe_left')[0].classList.add('generic_hidden')
         update_swipe_display_coutner()
     }
-    document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index-1])
+    const formatted_text = format_raw(chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'][swipe_index-1])
+    document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('mes_text')[0].innerHTML = formatted_text
     document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].setAttribute('swipe_index', (swipe_index -1))
     chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_index'] = swipe_index -1
     update_swipe_display_coutner()
@@ -4028,18 +4140,21 @@ function update_swipe_display_coutner() {
     document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getElementsByClassName('swipecounter')[0].innerHTML = `${Number(document.getElementsByClassName('mes')[document.getElementsByClassName('mes').length -1].getAttribute('swipe_index'))+1}/${chat_mess_content[document.getElementsByClassName('mes').length -1]['swipe_array'].length}`
 }
 
-$('#clear_hidden').click(function () {
-    document.getElementById('fake_textarea').value = ""
-});
-
-
-
-
 function parse_str_to_set(payload) {
     var localset = new Map()
-    //i hate how i cant lower() this because of token reasons
-    //idk why \n\n it just works ok?
-    var words = payload.replace('\r\n\r\n', "").replace('\n\n', "").split(' ')
+    var words = payload.toLowerCase()
+    .replace(/\r\n+?/g, " ").replace(/\n+?/g, " ")
+    .replace(/\*+?/g,"").replace(/\"+?/g,"")
+    .replace(/\'+?/g,"").replace(/\`+?/g,"")
+    .replace(/\.+?/g,"").replace(/\,+?/g,"")
+    .replace(/\:+?/g,"").replace(/\;+?/g,"")
+    .replace(/\{+?/g,"").replace(/\}+?/g,"")
+    .replace(/\[+?/g," ").replace(/\]+?/g," ")
+    .replace(/\(+?/g," ").replace(/\)+?/g," ")
+    .replace(/\|+?/g,"").replace(/\/+?/g,"")
+    .replace(/\!+?/g,"").replace(/\?+?/g,"")
+    .replace(/\=+?/g,"").replace(/~+?/g,"")
+    .split(' ')
         for (const word of words) {
         if (word == ""){continue}
         if (!localset.has(word)) {
@@ -4055,9 +4170,11 @@ function parse_str_to_set(payload) {
     return localset
 }
 
-function update_ML_values(payload, do_want_flag, expected,learning_rate=0.25) {
+function update_ML_values(payload, expected,learning_rate=0) {
     const words = parse_str_to_set(payload);
-    var updated_words = new Array()
+    //leaving this in incase anyone is intrested 
+    //var updated_words = new Array()
+
         //im not sure where its slipping by but 
         words.delete("")
         for (const [word, value] of words) {
@@ -4065,89 +4182,100 @@ function update_ML_values(payload, do_want_flag, expected,learning_rate=0.25) {
             ML_wordbag.delete(word)
             continue}
         //'locks' the value 
-        if (word == "OpenAI"){
+        if (word == "openai"){
             continue}
         
-        //rip me out when done, debug add
-        /*if (!ML_wordbag.has(word)) {
-            ML_wordbag.set(word, 0);
-          }*/
-        //L2
-        //const gradient = Math.pow((ML_wordbag.get(word) - expected),2);
-        const gradient = Math.abs((ML_wordbag.get(word) - expected));
-        const updated_value = do_want_flag ? ML_wordbag.get(word) + learning_rate * gradient : ML_wordbag.get(word) -  learning_rate * gradient;
-        if (updated_value == 0 || updated_value == null )
+        const word_val = ML_wordbag.get(word)
+        const gradient = Math.abs(word_val - expected);
+        const updated_value = word_val + learning_rate * gradient
+        //trunc for reducing filesize
+        if (updated_value == 1 || updated_value == null )
         {
-            //dont care for retrun value
+            //dont care for word
             ML_wordbag.delete(word)
         }else{
             ML_wordbag.set(word, updated_value);
-            updated_words.push([word, value, updated_value]);
+            //updated_words.push([word, value, updated_value]);
         }
     }
     ML_wordbag.delete("")
-    //console.log(`KB:`);
-    //console.log(ML_wordbag);
-    //console.log(`updates:`);
     //console.log(updated_words);
 }
 
-function scan_messge_ML(payload,prefix="",r_flag=true) {
+function scan_messge_ML(payload,prefix="", full_mode = true) {
     const words = parse_str_to_set(payload);
-    var score = 0;
-    const threshold = 0;
+    let score = 0;
     var new_words = []
     for (const [word, value] of words) {
     if (word == ""){continue}
-      if (!ML_wordbag.has(word)) {
-        ML_wordbag.set(word, 0);
+    if (!ML_wordbag.has(word)) {
+        ML_wordbag.set(word, 1);
         new_words.push(word)
-      }
-      //score * (TF / length)
-      score += ML_wordbag.get(word) * (words.get(word) / words.size)
+    }
+    //score * (TF / length)
+    score += ML_wordbag.get(word) * (words.get(word) / words.size)
     };
+    score = parseFloat(score).toFixed(3)
     //if (new_words.length  > 0){console.log(`new words: ${new_words}`)}
     //console.log(`${prefix} score ${score}`)
-    if(r_flag){
-        if (score < threshold) {
-            return "catch";
+    if (full_mode){
+        if (score < 0) {
+            flash_ML_status(`${prefix} score: ${score}`,"neg")
+            return "punish";
         }
-        return "pass";
+        else if (score >= 0) {
+            flash_ML_status(`${prefix} score: ${score}`,"pos")
+            return "reward";
+        }
     }
-    if(prefix == "new"){
-        if (score <= threshold) {
-            console.log(`${prefix} score ${score} below punish threshold of ${threshold}`);
-            return
-        }
-        console.log(`${prefix} score ${score} above reinforce threshold of ${threshold}`);
-  }
+    return score
 }
 
+
+
 $(document).on('click', '.option_dislike_big', function() {
-    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'manual punish(big)',false)
-    update_ML_values(payload, false, ML_manual_punish_big, 0.75)
-    saveMLsettings()
-    scan_messge_ML(payload,'new',false)
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].textContent
+    like_hander(payload, 1)
 });
 $(document).on('click', '.option_dislike', function() {
-    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'manual punish',false)
-    update_ML_values(payload, false, ML_manual_punish, 0.33)
-    saveMLsettings()
-    scan_messge_ML(payload,'new',false)
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].textContent
+    like_hander(payload, 2)
 });
 $(document).on('click', '.option_like', function() {
-    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'manual reinforce',false)
-    update_ML_values(payload, true, ML_manual_reward, 0.50)
-    saveMLsettings()
-    scan_messge_ML(payload,'new',false)
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].textContent
+    like_hander(payload, 3)
 });
 $(document).on('click', '.option_like_big', function() {
-    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].innerText
-    scan_messge_ML(payload,'manual reinforce(big)',false)
-    update_ML_values(payload, true, ML_manual_reward_big, 0.80)
-    saveMLsettings()
-    scan_messge_ML(payload,'new',false)
+    var payload = document.getElementsByClassName('mes_text')[document.getElementsByClassName('mes_text').length-1].textContent
+    like_hander(payload, 4)
 });
+function like_hander(payload, star) {
+    //console.log(payload)
+    scan_messge_ML(payload)
+    var operations = [[],[]]
+    switch (star) {
+        case 1:
+            operations[0] = ML_punish_target
+            operations[1] = ML_ACT_learning_neg_big
+            break;
+        case 2:
+            operations[0] = ML_punish_target
+            operations[1] = ML_ACT_learning_neg_small
+            break;
+        case 3:
+            operations[0] = ML_reward_target
+            operations[1] = ML_ACT_learning_pos_small
+            break;
+        case 4:
+            operations[0] = ML_reward_target
+            operations[1] = ML_ACT_learning_pos_big
+            break;
+        default:
+            console.log('uh something broked during likes')
+            return
+    }
+    update_ML_values(payload, operations[0], operations[1])
+    saveMLsettings()
+    scan_messge_ML(payload,'new')
+    soft_refresh()
+}

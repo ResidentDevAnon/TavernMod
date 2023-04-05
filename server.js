@@ -500,6 +500,9 @@ async function charaWrite(img_url, data, target_img, response = undefined, mes =
 
 
 function charaRead(img_url){
+    try {
+        
+   
     const buffer = fs.readFileSync(img_url);
     const chunks = extract(buffer);
      
@@ -513,6 +516,9 @@ function charaRead(img_url){
     return base64DecodedData;//textChunks[0].text;
     //console.log(textChunks[0].keyword); // 'hello'
     //console.log(textChunks[0].text);    // 'world'
+} catch (error) {
+        console.log(`could not load ${img_url} reason: ${error}`)
+}
 }
 
 app.post("/getcharacters", jsonParser, function(request, response){

@@ -103,7 +103,7 @@
                 <div class = "generic_hidden">
                     <div id="avatar_url_div">
                         <h4>filename</h4>
-                        <input id="avatar_url_pole" claname="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
+                        <input id="avatar_url_pole" name="avatar_url" class="text_pole" maxlength="999" size="2" value="" autocomplete="off">
                     </div>
                     <div id="selected_chat_div">
                         <h4>selected chat</h4>
@@ -227,6 +227,8 @@
             </div>
             <!-- OAI api block-->
             <div id="openai_api" style="display: none;position: relative;">
+                <div class="right_menu_button" id="OAI_model_sett_block_button"><h2>MODEL AND TEMP</h2></div>
+                <div id="OAI_model_sett_block"style="display: none;">
                 <form  action="javascript:void(null);" method="post" enctype="multipart/form-data">
                     <h4>API key </h4>
                     <input id="api_key_openai" name="api_key_openai" class="text_pole" maxlength="500" value="" autocomplete="off">
@@ -234,8 +236,10 @@
                 </form>
                 <h4>Model</h4><h5>you still need 'access' to it</h5>
                 <select id="model_openai" class="option_select_right_menu">
+                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                     <option value="gpt-3.5-turbo-0301">gpt-3.5-turbo-0301</option>
                     <option value="gpt-4">gpt-4</option>
+                    <option value="gpt-4-0314">gpt-4-0314</option>
                 </select>
                 <h4>Preset settings</h4><h5>Selecting settings</h5>
                 <select id="settings_perset_openai" class="option_select_right_menu">
@@ -243,11 +247,39 @@
                 </select>
                 <div id="range_block_openai">
                     <h4>Temperature </h4><h5 id="temp_counter_openai">select</h5>
-                    <input type="range" id="temp_openai" name="volume" min="0" max="2.0" step="0.01">
+                    <input type="range" id="temp_openai" name="volume" min="0" max="2.0" step="0.01" list="OAI_temper_labels">
                     <h4>Frequency Penalty </h4><h5 id="freq_pen_counter_openai">select</h5>
-                    <input type="range" id="freq_pen_openai" name="volume" min="-2" max="2" step="0.01">
+                    <input type="range" id="freq_pen_openai" name="volume" min="-2" max="2" step="0.01" list="OAI_freq_rep_labels">
                     <h4>Presence Penalty</h4><h5 id="pres_pen_counter_openai">select</h5>
-                    <input type="range" id="pres_pen_openai" name="volume" min="-2" max="2" step="0.01">
+                    <input type="range" id="pres_pen_openai" name="volume" min="-2" max="2" step="0.01" list="OAI_freq_rep_labels">
+                </div>
+                <datalist id="OAI_temper_labels">
+                    <option value="0" label="0"></option>
+                    <option value="0.3" label="0.3"></option>
+                    <option value="0.5" label="0.5"></option>
+                    <option value="0.7" label="0.7"></option>
+                    <option value="1" label="1"></option>
+                    <option value="1.3" label="1.3"></option>
+                    <option value="1.7" label="1.7"></option>
+                    <option value="2" label="2"></option>
+                  </datalist>
+                <datalist id="OAI_freq_rep_labels">
+                    <option value="-2" label="-2"></option>
+                    <option value="-1.7" label="-1.7"></option>
+                    <option value="-1.3" label="-1.3"></option>
+                    <option value="-1" label="-1"></option>
+                    <option value="-0.7" label="-0.7"></option>
+                    <option value="-0.5" label="-0.5"></option>
+                    <option value="-0.3" label="-0.3"></option>
+                    <option value="0" label="0"></option>
+                    <option value="0.3" label="0.3"></option>
+                    <option value="0.5" label="0.5"></option>
+                    <option value="0.7" label="0.7"></option>
+                    <option value="1" label="1"></option>
+                    <option value="1.3" label="1.3"></option>
+                    <option value="1.7" label="1.7"></option>
+                    <option value="2" label="2"></option>
+                  </datalist>
                 </div>
             </div>
             <!-- scale api block-->
@@ -323,55 +355,58 @@
             <!-- OAI / scale settings block-->
             <!-- seperate because its shared-->
             <div>
-                <h3 style='margin-bottom: 10px;'>Pro Settings</h3>
-                <div id="amount_gen_block">
-                <h4>Amount generation </h4><h5 id="amount_gen_counter">select</h5>
-                <input type="range" id="amount_gen" name="volume" min="16" max="512" step="1">
-                </div>
-                <div id="max_context_block">
-                    <h4>Context Size</h4><h5 id="max_context_counter">select</h5>
-                    <input type="range" id="max_context" name="volume" min="512" max="2048" step="1">
-                </div>
-                <div id="openai_streaming">
-                    <label class="checkbox">
-                        <input id="stream_toggle" type="checkbox"/><span style="margin-left: 10px"></span><h4 style="display: inline-block;">Streaming</h4><h5>Enables OpenAI completion streaming</h5>
-                    </label>
-                </div>
-                <div id="openai_gen_block">
-                    <h4>Max Tokens to Generate</h4><h5>its dynmaic now</h5><h5>you can slide this all the way right no problem</h5><h5>or cap to prevent huge text blocks</h5><h5 id="OAI_gen_display">select</h5>
-                    <input type="number" id="OAI_gen_input" name="volume" min="300" max="3795" placeholder='0'value='0'step="1">
-                    <input type="range" id="OAI_gen_slider" name="volume" min="300" max="3795" placeholder='0'value='0'step="1" list="values">
-                    <div class="buton_block">
-                        <input type="button" id="OAI_gen_button" value='300'>
-                        <input type="button" id="OAI_gen_button" value='1000'>
-                        <input type="button" id="OAI_gen_button" value='2048'>
-                        <input type="button" id="OAI_gen_button" value='3795'>
+                <div class="right_menu_button" id="OAI_token_s_block_button"><h2>TOKENS AND STREAMING</h2></div>
+                <div id="OAI_token_s_block"style="display: none;">
+                    <div id="amount_gen_block">
+                    <h4>Amount generation </h4><h5 id="amount_gen_counter">select</h5>
+                    <input type="range" id="amount_gen" name="volume" min="16" max="512" step="1">
                     </div>
-                </div>
-				<div id="openai_context_block">
-                    <h4>OpenAI Context Size</h4><h5 id="OAI_context_display">select</h5>
-                    <input type="number" id="OAI_context_input" name="volume" min="300" max="3795" placeholder='0'value='0'step="1">
-                    <input type="range" id="OAI_context_slider" name="volume" min="300" max="3795" step="1" list="values">
-                    <div class="buton_block">
-                        <input type="button" id="OAI_contx_button" value='300'>
-                        <input type="button" id="OAI_contx_button" value='1000'>
-                        <input type="button" id="OAI_contx_button" value='2048'>
-                        <input type="button" id="OAI_contx_button" value='3795'>
+                    <div id="max_context_block">
+                        <h4>Context Size</h4><h5 id="max_context_counter">select</h5>
+                        <input type="range" id="max_context" name="volume" min="512" max="2048" step="1">
                     </div>
-                    <!-- cost preview block, no need for class-->
-                    <div>
-                        <h4 id="cost_preview_min">Min</h4>
-                        <h4 id="cost_preview_max">Max</h4>
+                    <div id="openai_streaming">
+                        <label class="checkbox">
+                            <input id="stream_toggle" type="checkbox"/><span style="margin-left: 10px"></span><h4 style="display: inline-block;">Streaming</h4><h5>Enables OpenAI completion streaming</h5>
+                        </label>
+                    </div>
+                    <div id="openai_gen_block">
+                        <h4>Max Tokens to Generate</h4><h5>its dynmaic now</h5><h5>you can slide this all the way right no problem</h5><h5>or cap to prevent huge text blocks</h5><h5 id="OAI_gen_display">select</h5>
+                        <input type="number" id="OAI_gen_input" name="volume" min="300" max="3795" placeholder='0'value='0'step="1">
+                        <input type="range" id="OAI_gen_slider" name="volume" min="300" max="3795" placeholder='0'value='0'step="1" list="values">
+                        <div class="buton_block">
+                            <input type="button" id="OAI_gen_button" value='300'>
+                            <input type="button" id="OAI_gen_button" value='1000'>
+                            <input type="button" id="OAI_gen_button" value='2048'>
+                            <input type="button" id="OAI_gen_button" value='3795'>
+                        </div>
+                    </div>
+                    <div id="openai_context_block">
+                        <h4>OpenAI Context Size</h4><h5 id="OAI_context_display">select</h5>
+                        <input type="number" id="OAI_context_input" name="volume" min="300" max="3795" placeholder='0'value='0'step="1">
+                        <input type="range" id="OAI_context_slider" name="volume" min="300" max="3795" step="1" list="values">
+                        <div class="buton_block">
+                            <input type="button" id="OAI_contx_button" value='300'>
+                            <input type="button" id="OAI_contx_button" value='1000'>
+                            <input type="button" id="OAI_contx_button" value='2048'>
+                            <input type="button" id="OAI_contx_button" value='3795'>
+                        </div>
+                        <!-- cost preview block, no need for class-->
+                        <div>
+                            <h4 id="cost_preview_min">Min</h4>
+                            <h4 id="cost_preview_max">Max</h4>
+                        </div>
                     </div>
                 </div>
             </div>
+            <hr>
 			<!-- Tweaks -->
+			<!-- wtf is this? -->
 			<div style='clear: both'></div>
 			<hr id = "tweak_hr">
 			<div id = "tweak_container">
-                <h3 style='margin-bottom: 10px;'>Tweaks and Reply Mods</h3>
                 <div class="right_menu_button"><h2 id="anchor_butt">ANCHORS</h2>
-                    <div id = 'anchor_block'>
+                    <div id = "anchor_block" style="display: none;">
                         <h4>Anchors Order</h4><h5>Helps to increase the length of messages (<a href="/notes/anchors" target="_blank">?</a>)</h5>
                         <select id="anchor_order">
                             <option value="0">Detail Anchor -> Length Anchor</option>
@@ -391,8 +426,8 @@
                 </div>
                 </div>
                 <hr>
-                <div class="right_menu_button"><h2 id="retry_butt">RETRY</h2> 
-                    <div id="retry_block">
+                <div class="right_menu_button"><h2 id="retry_butt">RETRY AND AUTOSWIPE</h2> 
+                    <div id="retry_block" style="display: none;">
                         <label class="switch">
                             <input id="auto_retry" type="checkbox"/><span></span>
                             <h4>Auto retry on fail</h4>
@@ -411,11 +446,26 @@
                             <input id="ML_swipes" type="checkbox"/><span></span>
                             <h4>use training data to swipe 'bad' messages right</h4>
                         </label>
+                        <div id="ML_threshold_setting">
+                            <h4>swipe messages below</h4><h5 id="ML_threshold_display">0 score</h5>
+                            <input type="range" id="ML_threshold_slider" name="volume" min="-100" max="90" step="1" list="values_ml">
+                            <datalist id="values_ml">
+                                <option value="-100" label="-100"></option>
+                                <option value="-75" label="-75"></option>
+                                <option value="-25" label="-25"></option>
+                                <option value="-10" label="-10"></option>
+                                <option value="0" label="0"></option>
+                                <option value="10" label="10"></option>
+                                <option value="25" label="25"></option>
+                                <option value="75" label="75"></option>
+                                <option value="90" label="90"></option>
+                              </datalist>
+                        </div>
                     </div>
                 </div>
                 <hr>
                 <div class="right_menu_button" ><h2 id="api_togg_butt">TOGGLES</h2>
-                <div id="tweaks_box">
+                <div id="tweaks_box" style="display: none;">
                     <label class="switch">
                         <input id="keep_example_dialogue" type="checkbox"/><span></span>
                         <h4>Keep Example Dialogue</h4>
@@ -425,60 +475,143 @@
                         <input id="nsfw_toggle" type="checkbox" checked><span class="slider round"></span>
                         <h4 style="display: inline-block;">NSFW Toggle</h4>
 					</label>
-					<label class="switch">
-                    <input id="CYOA_mode" type="checkbox" checked><span class="slider round"></span>
-                    <h4>CYOA Toggle</h4>
-					</label>
-                    <label class="switch" >
-                        <input id="custom_1_switch" type="checkbox"/><span class="slider round"></span>
-                        <h4 id = "custom_1_title"style="display: inline-block;">replaced in JS</h4>
-                    </label>
-                        <h5 id = "custom_1_desc">repalced in JS</h5>
+                    <!--NSFW prompt settings-->
+                <div class="right_menu_button" id="NSFW_prompt_button"><h2>Edit Prompt</h2>
+                    <div id="NSFW_prompt_block" style="display: none;">
+                        <h3>(ON) prompt</h3>
+                        <textarea id="NSFW_ON_prompt" palceholder="">Drive a NSFW setting</textarea>
+                        <br>
+                        <h3>(OFF) prompt</h3>
+                        <textarea id="NSFW_OFF_prompt" palceholder=""></textarea>
+                    </div>
+                </div>
+                <label class="switch">
+                <input id="CYOA_mode" type="checkbox" checked><span class="slider round"></span>
+                <h4>CYOA Toggle</h4>
+                </label>
+                <!--CYOA prompt settings-->
+                <div class="right_menu_button" id="CYOA_prompt_button"><h2>Edit Prompt</h2>
+                    <div id="CYOA_prompt_block" style="display: none;">
+                        <h3>prompt</h3>
+                        <br>
+                        <textarea id="CYOA_prompt" palceholder="">make the last paragraph one consisting of multiple choices the user can take to drive the story, using a formatting similar to 1)route A 2)route B 3)route C 4)route D</textarea>
+                    </div>
+                </div>
+                <label class="switch" >
+                    <input id="custom_1_switch" type="checkbox"/><span class="slider round"></span>
+                    <h4 id = "custom_1_title"style="display: inline-block;">replaced in JS</h4>
+                </label>
+                <h5 id = "custom_1_desc">repalced in JS</h5>
+                <!--CUST_1 prompt settings-->
+                <div class="right_menu_button" id="CUST_1_prompt_button"><h2>Edit Prompt</h2>
+                </div>
+                <div id="CUST_1_block" style="display: none;">
+                    <input id="CUST_1_title" class="text_pole" maxlength="500" size="35" placeholder = "Title" value="Todd Howard Mode" autocomplete="off">
+                    <br>
+                    <input id="CUST_1_description" class="text_pole" maxlength="500" size="35" placeholder = "description" value="SIXTEEN TIMES THE DETAIL" autocomplete="off">
+                    <br>
+                    <h3>prompt</h3>
+                    <textarea id="CUST_1_Prompt" palceholder="">use 16x (verbs adjectives) to describe</textarea>
+                    </div>
+                    <!--end cust1-->
                     <label class="switch" >
                         <input id="custom_2_switch" type="checkbox"/><span class="slider round"></span>
                         <h4 id = "custom_2_title"style="display: inline-block;">replaced in JS</h4>
                     </label>
-                        <h5 id = "custom_2_desc">repalced in JS</h5>
+                    <h5 id = "custom_2_desc">repalced in JS</h5>
+                    <!--CUST_2 prompt settings-->
+                    <div class="right_menu_button" id="CUST_2_prompt_button"><h2>Edit Prompt</h2>
+                    </div>
+                    <div id="CUST_2_block" style="display: none;">
+                        <input id="CUST_2_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Agressive parter" autocomplete="off">
+                        <br>
+                        <input id="CUST_2_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="be more agressive (also helps with filter)" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <textarea id="CUST_2_Prompt" placeholder="">be more agressive</textarea>
+                    </div>
+                    <!--end cust2-->
                     <label class="switch" >
                         <input id="custom_3_switch" type="checkbox"/><span class="slider round"></span>
                         <h4 id = "custom_3_title"style="display: inline-block;">replaced in JS</h4>
                     </label>
-                        <h5 id = "custom_3_desc">repalced in JS</h5>
+                    <h5 id = "custom_3_desc">repalced in JS</h5>
+                    <!--CUST_3 prompt settings-->
+                    <div class="right_menu_button" id="CUST_3_prompt_button"><h2>Edit Prompt</h2>
+                    </div>
+                    <div id="CUST_3_block" style="display: none;">
+                        <input id="CUST_3_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Partner MC" autocomplete="off">
+                        <br>
+                        <input id="CUST_3_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="Pov your a side character" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <textarea id="CUST_3_Prompt" placeholder="">take the lead role of the story. write in first person from {{char}}'s pov.</textarea>
+                    </div>
+                    <!--end cust3-->
                     <label class="switch" >
                         <input id="custom_4_switch" type="checkbox"/><span class="slider round"></span>
                         <h4 id = "custom_4_title"style="display: inline-block;">replaced in JS</h4>
                     </label>
                         <h5 id = "custom_4_desc">repalced in JS</h5>
-                    <label class="switch" >
+                        <!--CUST_4 prompt settings-->
+                        <div class="right_menu_button" id="CUST_4_prompt_button"><h2>Edit Prompt</h2>
+                    </div>
+                </label>
+                <div id="CUST_4_block" style="display: none;">
+                        <input id="CUST_4_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Exaplain The Scene" autocomplete="off">
+                        <br>
+                        <input id="CUST_4_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="Proselet" autocomplete="off">
+                        <br>
+                        <h3>prompt</h3>
+                        <!-- needs weird formatting for \n tokens-->
+                        <textarea id="CUST_4_Prompt" placeholder="">focus currently happening actions and events
+slow, descriptive pacing</textarea>
+                        </div>
+                        <!--end cust4-->
+                        <label class="switch" >
                         <input id="custom_5_switch" type="checkbox"/><span class="slider round"></span>
                         <h4 id = "custom_5_title"style="display: inline-block;">replaced in JS</h4>
                     </label>
-                        <h5 id = "custom_5_desc">repalced in JS</h5>
+                    <h5 id = "custom_5_desc">repalced in JS</h5>
+                        <!--CUST_5 prompt settings-->
+                        <div class="right_menu_button" id="CUST_5_prompt_button"><h2>Edit Prompt</h2>
+                        </div>
+                        <div id="CUST_5_block" style="display: none;">
+                            <input id="CUST_5_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="No (you)'s' mode" autocomplete="off">
+                            <br>
+                            <input id="CUST_5_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="do not generate actions for you" autocomplete="off">
+                            <br>
+                            <h3>prompt</h3>
+                            <textarea id="CUST_5_Prompt" placeholder="">only reply as {{char}}</textarea>
+                        </div>
                     </div>
                 </div>
                 
-			</div>
+                <hr>
+            </div>
+            <div class="right_menu_button" ><h2 id="scenario_override_butt">SCENARIO OVERRIDE</h2>
+                <textarea id="scenario_override"style="display:none;" name="scenario" class="text_pole" maxlength="9999" value="" placeholder="this replaces the card scenario if filled in. this is fake commands but steroids if used properly." autocomplete="off"></textarea>
+            </div>
             <!--prompt preview-->
-            <hr>                
+            <hr>
             <div class="right_menu_button" ><h2 class="preview_butt">PREVIEW</h2>
                 <div class = "preview_box generic_hidden">
                     <h3>Preview for current card</h3>
                     <textarea class="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
                 </div>
+                
             </div>
-            <hr>
         </div>
     
         </div>
         <!--system settings-->
+        <!--system settings-->
+        <!--system settings-->
         <div id="sys_sett_block" class="generic_hidden">
-            <select id="sys_sel_box">
-                <option value="startup_sett">System Settings</option>
-                <option value="reply_sett">Prompt Settings</option>
-            </select>
-            <div id="system_sett_options">
                 <!--startup settings-->
-                <div id="startup_sett">                
+                <div id="startup_sett">
+                    <div class="right_menu_button" id="startup_block_button"><h2>startup and BG shuffler</h2></div>
+                    <div id="startup_block" style="display: none;">
                     <!-- background shuffle-->
                     <div id="range_block_bg_shuff_settings">
                         <h4>Background Shuffle Time</h4>
@@ -515,26 +648,14 @@
                             <option value="last_char">selected char (if possible)</option>
                         </select>
                     </div>
-                    <hr>
-                    <!-- avatar and name-->
-                    <div>
-                        <h4>Your Avatar</h4><h5></h5>
-                        <div id="user_avatar_block"></div>
-                        <form id='form_change_name' method="post" enctype="multipart/form-data">
-                            <h4>Name</h4>
-                            <input id="your_name" name="your_name" class="text_pole" maxlength="35" size="16" value="" autocomplete="off">
-                            <input id="your_name_button" type="submit" value="Change">
-                        </form>
-                        </div>
                 </div>
-                <!--reply settings-->
-                <div id="reply_sett" style="display: none;">
-                <!--system prompt settings-->
-                <p>you can (and should) use {{char}} {{user}} tags here.</p>
-                <hr>
+                    <hr>
+                    <!--system prompt settings-->
                 <div class="right_menu_button" id="system_prompt_button"><h2>SYSTEM prompts</h2>
                 </div>
-                    <div id="sys_prompt_block" style="display: none;">
+                <div id="sys_prompt_block" style="display: none;">
+                    <p>you can (and should) use {{char}} {{user}} tags here.</p>
+                    <hr>
                         <h3>sent with every message.</h3>
                         <!-- needs weird formatting for \n tokens-->
                         <textarea id="system_prompt" palceholder="">verbose (detail actions)
@@ -572,90 +693,49 @@ follow commands/directions in character</textarea>
                         <h3>Scenario prompt.</h3>
                         <textarea id="scenario_prompt" palceholder="">Scenario: </textarea>
                     </div>
-                <!--NSFW prompt settings-->
-                <div class="right_menu_button" id="NSFW_prompt_button"><h2>NSFW prompt</h2>
-                </div>
-                    <div id="NSFW_prompt_block" style="display: none;">
-                        <h3>(ON) prompt</h3>
-                        <textarea id="NSFW_ON_prompt" palceholder="">Drive a NSFW setting</textarea>
-                        <br>
-                        <h3>(OFF) prompt</h3>
-                        <textarea id="NSFW_OFF_prompt" palceholder=""></textarea>
-                    </div>
-                <!--CYOA prompt settings-->
-                <div class="right_menu_button" id="CYOA_prompt_button"><h2>CYOA prompt</h2>
-                </div>
-                    <div id="CYOA_prompt_block" style="display: none;">
-                        <h3>prompt</h3>
-                        <br>
-                        <textarea id="CYOA_prompt" palceholder="">make the last paragraph one consisting of multiple choices the user can take to drive the story, using a formatting similar to 1)route A 2)route B 3)route C 4)route D</textarea>
-                    </div>
-                <!--CUST_1 prompt settings-->
-                <div class="right_menu_button" id="CUST_1_prompt_button"><h2>Custom1 prompt</h2>
-                </div>
-                    <div id="CUST_1_block" style="display: none;">
-                        <input id="CUST_1_title" class="text_pole" maxlength="500" size="35" placeholder = "Title" value="Todd Howard Mode" autocomplete="off">
-                        <br>
-                        <input id="CUST_1_description" class="text_pole" maxlength="500" size="35" placeholder = "description" value="SIXTEEN TIMES THE DETAIL" autocomplete="off">
-                        <br>
-                        <h3>prompt</h3>
-                        <textarea id="CUST_1_Prompt" palceholder="">use 16x (verbs adjectives) to describe</textarea>
+                    <!--end sys prompts-->
+                    <hr>
+                    <div class="right_menu_button" id="avatar_name_block_button"><h2>Username and avatar</h2></div>
+                    <!-- avatar and name-->
+                    <div id="avatar_name_block" style="display: none;">
+                        <h4>Your Avatar</h4><h5></h5>
+                        <div id="user_avatar_block"></div>
+                        <form id='form_change_name' method="post" enctype="multipart/form-data">
+                            <h4>Name</h4>
+                            <input id="your_name" name="your_name" class="text_pole" maxlength="35" size="16" value="" autocomplete="off">
+                            <input id="your_name_button" type="submit" value="Change">
+                        </form>
                         </div>
-                    <!--CUST_2 prompt settings-->
-                    <div class="right_menu_button" id="CUST_2_prompt_button"><h2>Custom2 prompt</h2>
-                    </div>
-                    <div id="CUST_2_block" style="display: none;">
-                        <input id="CUST_2_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Agressive parter" autocomplete="off">
-                        <br>
-                        <input id="CUST_2_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="be more agressive (also helps with filter)" autocomplete="off">
-                        <br>
-                        <h3>prompt</h3>
-                        <textarea id="CUST_2_Prompt" placeholder="">be more agressive</textarea>
-                    </div>
-                    <!--CUST_3 prompt settings-->
-                    <div class="right_menu_button" id="CUST_3_prompt_button"><h2>Custom3 prompt</h2>
-                    </div>
-                    <div id="CUST_3_block" style="display: none;">
-                        <input id="CUST_3_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Partner MC" autocomplete="off">
-                        <br>
-                        <input id="CUST_3_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="Pov your a side character" autocomplete="off">
-                        <br>
-                        <h3>prompt</h3>
-                        <textarea id="CUST_3_Prompt" placeholder="">take the lead role of the story. write in first person from {{char}}'s pov.</textarea>
-                    </div>
-                    <!--CUST_4 prompt settings-->
-                    <div class="right_menu_button" id="CUST_4_prompt_button"><h2>Custom4 prompt</h2>
-                    </div>
-                    <div id="CUST_4_block" style="display: none;">
-                        <input id="CUST_4_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="Exaplain The Scene" autocomplete="off">
-                        <br>
-                        <input id="CUST_4_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="Proselet" autocomplete="off">
-                        <br>
-                        <h3>prompt</h3>
-                        <!-- needs weird formatting for \n tokens-->
-                        <textarea id="CUST_4_Prompt" placeholder="">focus currently happening actions and events
-slow, descriptive pacing</textarea>
-                    </div>
-                    <!--CUST_5 prompt settings-->
-                    <div class="right_menu_button" id="CUST_5_prompt_button"><h2>Custom5 prompt</h2>
-                    </div>
-                    <div id="CUST_5_block" style="display: none;">
-                        <input id="CUST_5_title" class="text_pole" maxlength="500" size="35" placeholder="Title" value="No (you)'s' mode" autocomplete="off">
-                        <br>
-                        <input id="CUST_5_description" class="text_pole" maxlength="500" size="35" placeholder="description" value="do not generate actions for you" autocomplete="off">
-                        <br>
-                        <h3>prompt</h3>
-                        <textarea id="CUST_5_Prompt" placeholder="">only reply as {{char}}</textarea>
-                    </div>
-                    <div class="right_menu_button" ><h2 class="preview_butt">PREVIEW</h2>
-                        <div class = "preview_box generic_hidden">
-                            <h3>Preview for current card</h3>
-                            <textarea class="scenario_preview" palceholder="" disabled>replaced in JS</textarea>
-                        </div>
+                    <hr>
+                    <div class="right_menu_button" id="ML_block_button"><h2>ML stuff</h2></div>
+                    <!--ML settings-->
+                    <div id="ML_block"style="display: none;">
+                        <!-- enable background training-->
+                        <div id="ML_background_T">
+                            <label class="checkbox">
+                                <input id="ML_background_T" type="checkbox"/><span></span>
+                                <h4>disable ML background training</h4>
+                            </div>
+                            <!--like boxes-->
+                            <div id="ML_display_likes">
+                                <label class="checkbox">
+                                    <input id="ML_display_likes" type="checkbox"/><span></span>
+                                    <h4>hide like boxes</h4>
+                            </div>
+                            <!--like boxes-->
+                            <div id="ML_display_scores">
+                                <h4>message scores</h4>
+                                    <select id="ML_score_display_box">
+                                        <option value="3">show all</option>
+                                        <option value="2">show only character</option>
+                                        <option value="1">show only last</option>
+                                        <option value="0">hide all</option>
+                                    </select>
+                            </div>
+                        <hr>
                     </div>
                 </div>
-            </div>
-        </select>
+        <!--there was a </select> here for some reason?-->
         </div>
         <!--char import-->
         <div id="rm_charater_import" class="right_menu" style="display: none;">
@@ -679,7 +759,9 @@ slow, descriptive pacing</textarea>
             </div>
         </div>
     </div>
+
     <!--main / middle chat block-->
+    <!--i just want to take a moment to complain that this it last inthe file instead of in the middle-->
     <div id="main_chat">
         <div id="chat"></div>
         <div id="form_sheld">
@@ -693,7 +775,9 @@ slow, descriptive pacing</textarea>
                 <!--cheat space at end for dynamic spacing-->
                 <div id="online_status_indicator"></div><div id="online_status_text"class="disconnected">No connection... </div>
                 <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->
-                <div id="save_indicator"style="position: relative;"> </div>
+                <div id="save_indicator"style="position: relative;"> </div> 
+                <!--textbox save indicator, value replaced through JS, needs some form of blank input for initalize-->
+                <div id="ML_indicator"style="position: relative;"> </div>
                 </div>
             <div class="cost_tracker_block">
                 <div class = 'cost_preview' id="cost_spent_message">Updates on message success</div>
@@ -719,8 +803,7 @@ slow, descriptive pacing</textarea>
                 </div>
                 <div class="prompt_boxes">
                     <textarea class = "send_textarea"id="send_textarea" placeholder="real message go here, this is saved as is." name="text"></textarea>
-                    <input type="button" id="clear_hidden" value="clear fake text. yes, ugly button"></input>
-                    <textarea class = "send_textarea" id="fake_textarea" placeholder="fake message commands go here, these get wrapped in parenthesis and are sent, but not saved/displayed in the logs.
+                    <textarea class = "send_textarea" id="fake_textarea" placeholder="fake message commands go here, are sent as an invisible system message and are not saved/displayed in the logs.
 commands here affect swipes.
 leaving both fields blank uses 
 `continue {{char}}'s last message as if it didnt stop` 
@@ -731,8 +814,7 @@ only if BOTH fields are blank and the last message wasnt your 'turn'." name="tex
             </form>
         </div>
     </div>
-   
-    
+
 
 <script src="main.js" type="module"></script>
 </body>
