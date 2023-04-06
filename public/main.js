@@ -201,6 +201,9 @@ const ML_ACT_learning_neg_small = -0.03
 const ML_ACT_learning_pos_small = 0.03
 const ML_ACT_learning_pos_big = 0.1
 var ML_swipe_threshold = 0 
+var ML_BG_train_toggle = false
+var display_likes = false
+var like_display_switch = 3
 
 //token counters
 //char stuff
@@ -683,6 +686,7 @@ function soft_refresh() {
         element.getElementsByClassName("msg_score")[0].textContent = score
         score_display.classList.remove('warning')
         score_display.classList.remove('saved')
+        score_display.classList.remove('generic_hidden')
         if (score < 0){
             score_display.classList.add('warning')
         }else if (score >= 0){
@@ -691,9 +695,13 @@ function soft_refresh() {
         //display names
         if(is_user == 'true'){
             element.getElementsByClassName('displayname')[0].textContent = curr_username
+            if (like_display_switch < 3){
+                score_display.classList.add('generic_hidden')
+            }
         }
         else{
             element.getElementsByClassName('displayname')[0].textContent = curr_charname
+            //eveyrthing but last
             if (i !== messages.length - 1 || i  == 0) {
                 //yes these if statements are needed, it throws a null reading error if its not here
                 if (swipeLeft){
@@ -708,10 +716,12 @@ function soft_refresh() {
                 if (swipe_display){
                     swipe_display.classList.add('generic_hidden')
                 }
-                if (score_display){
-                    //score_display.classList.add('generic_hidden')
+                if (score_display && like_display_switch < 2){
+                    score_display.classList.add('generic_hidden')
                 }
-            }else{
+            }
+            //last message
+            else{
                 if (swipeLeft && swipe_counter > 0){
                     swipeLeft.classList.remove('generic_hidden')
                 }
@@ -719,13 +729,17 @@ function soft_refresh() {
                 swipeRight.classList.remove('generic_hidden')
                 }           
                 if (likeblock){
-                    likeblock.classList.remove('generic_hidden')
+                    if (!display_likes){
+                        likeblock.classList.remove('generic_hidden')
+                    }else{
+                        likeblock.classList.add('generic_hidden')
+                    }
                 }
                 if (swipe_display){
                     swipe_display.classList.remove('generic_hidden')
                 }
-                if (score_display){
-                    score_display.classList.remove('generic_hidden')
+                if (score_display && like_display_switch == 0){
+                    score_display.classList.add('generic_hidden')
                 }
     }
     }
@@ -1005,9 +1019,11 @@ async function Generate(type) {
             scan_messge_ML(Promt_text)
             console.log("~~prompt test")
             console.log(Promt_text)
-            update_ML_values(Promt_text, ML_reward_target, ML_BG_learning_pos)
-            saveMLsettings()
-            soft_refresh()
+            if(!ML_BG_train_toggle){
+                update_ML_values(Promt_text, ML_reward_target, ML_BG_learning_pos)
+                saveMLsettings()
+                soft_refresh()
+            }
         }
         var charPersonality = $.trim(characters_array[active_character_index].personality);
         var mesExamples = $.trim(characters_array[active_character_index].mes_example);
@@ -1309,13 +1325,15 @@ async function Generate(type) {
                             getMessage = $.trim(getMessage);
                             //scan and update
                             var rate_incoming = scan_messge_ML(getMessage)
-                            if (rate_incoming == "punish"){
-                                update_ML_values(getMessage, ML_punish_target, ML_BG_learning_neg)
-                                rate_incoming = scan_messge_ML(getMessage,"Auto Punished",false)
-                            }
-                            else if (rate_incoming == "reward"){
-                                update_ML_values(getMessage,ML_reward_target, ML_BG_learning_pos)
-                                rate_incoming = scan_messge_ML(getMessage,"Auto Reinforced",false)
+                            if (!ML_BG_train_toggle){
+                                if (rate_incoming == "punish"){
+                                    update_ML_values(getMessage, ML_punish_target, ML_BG_learning_neg)
+                                    rate_incoming = scan_messge_ML(getMessage,"Auto Punished",false)
+                                }
+                                else if (rate_incoming == "reward"){
+                                    update_ML_values(getMessage,ML_reward_target, ML_BG_learning_pos)
+                                    rate_incoming = scan_messge_ML(getMessage,"Auto Reinforced",false)
+                                }
                             }
                             //check if post rate its below user threshold
                             if (rate_incoming < ML_swipe_threshold){
@@ -2688,15 +2706,42 @@ $('#open_bg_start').change(function () {
     open_bg_bar = !!$('#open_bg_start').prop('checked');
     saveSettings();
 });
+$('#ML_background_T').change(function () {
+    ML_BG_train_toggle = !!$('#ML_background_T').prop('checked');
+    saveSettings();
+});
+$('#ML_display_likes').change(function () {
+    display_likes = !!$('#ML_display_likes').prop('checked');
+    soft_refresh()
+    saveSettings();
+});
+
+
 
 $(document).on('input', '#dont_drain_my_bank_please', function () {
     dont_drain_my_bank_please = parseInt($(this).val());
     $('#max_attempts_display').html(dont_drain_my_bank_please);
 });
+$(document).on('change', '#dont_drain_my_bank_please', function () {
+    saveSettings();
+    lower_save_flag()
+});
 
 $(document).on('input', '#ML_threshold_slider', function () {
     ML_swipe_threshold = parseInt($(this).val())
     $('#ML_threshold_display').html(ML_swipe_threshold+" score");
+});
+$(document).on('change', '#ML_threshold_slider', function () {
+    saveSettings();
+    lower_save_flag()
+});
+
+$("#ML_score_display_box").change(function() {
+    var menu = document.getElementById('ML_score_display_box');
+    like_display_switch = menu.options[menu.selectedIndex].value;
+    console.log(like_display_switch)
+    soft_refresh()
+    saveSettings();
 });
 
 //***************SETTINGS****************//
@@ -2895,6 +2940,10 @@ async function getSettings(type) {//timer
                 //default to character list
                 last_menu = settings.last_menu ?? "char_list";
                 dont_drain_my_bank_please = settings.dont_drain_my_bank_please ?? 1
+                ML_swipe_threshold = settings.ML_swipe_threshold ?? 0
+                if (settings.display_likes !== undefined) display_likes = !!settings.display_likes
+                if (settings.ML_BG_train_toggle !== undefined) ML_BG_train_toggle = !!settings.ML_BG_train_toggle
+                like_display_switch = settings.like_display_switch ?? 3;
 
                 //cheeky use of default values being in index
                 system_prompt = settings.system_prompt ?? document.getElementById("system_prompt").value
@@ -3075,6 +3124,10 @@ async function getSettings(type) {//timer
 
                 $('#max_attempts_display').html(dont_drain_my_bank_please);
                 $('#dont_drain_my_bank_please').val(dont_drain_my_bank_please);
+                $('#ML_threshold_display').html(ML_swipe_threshold+" score");
+                $('#ML_threshold_slider').val(ML_swipe_threshold);
+                $('#ML_background_T').prop('checked', ML_BG_train_toggle);
+                $('#ML_display_likes').prop('checked', display_likes);
                 //////////////////////
                 if (preset_settings == 'gui') {
                     $("#settings_perset option[value=gui]").attr('selected', 'true');
@@ -3199,6 +3252,10 @@ async function saveSettings(type) {
             continuous_mode: continuous_mode,
             ML_swipe: ML_swipe_toggle,
             dont_drain_my_bank_please: dont_drain_my_bank_please,
+            ML_BG_train_toggle: ML_BG_train_toggle,
+            display_likes: display_likes,
+            ML_swipe_threshold: ML_swipe_threshold,
+            like_display_switch: like_display_switch,
 
         }),
         cache: false,
@@ -3627,8 +3684,17 @@ $("#system_settings").click(function () {
                 menu.selectedIndex = i;
                 break;
             }
+            $('#ML_background_T').prop('checked', ML_BG_train_toggle);
+            $('#ML_display_likes').prop('checked', display_likes);
         } 
-
+        //reuse
+        menu = document.getElementById('ML_score_display_box');
+        for (var i = 0; i < menu.options.length; i++) {
+            if (menu.options[i].value === like_display_switch) {
+                menu.selectedIndex = i;
+                break;
+            }
+        } 
 }
 );
 
@@ -3845,12 +3911,16 @@ $('#CYOA_prompt').on('keyup paste cut', function () {
 
 $('#CUST_1_title').on('keyup paste cut', function () {
     custom_1_title = document.getElementById("CUST_1_title").value
+    console.log(custom_1_title)
+    document.getElementById("custom_1_title").innerHTML = custom_1_title
     prompt_flag_save()
     }
 );
 
 $('#CUST_1_description').on('keyup paste cut', function () {
     custom_1_desc = document.getElementById("CUST_1_description").value
+    //really shouldnt use inner for that but whatever
+    document.getElementById("custom_1_desc").innerHTML = custom_1_desc
     prompt_flag_save()
     }
 );
@@ -3863,12 +3933,14 @@ $('#CUST_1_Prompt').on('keyup paste cut', function () {
 
 $('#CUST_2_title').on('keyup paste cut', function () {
     custom_2_title = document.getElementById("CUST_2_title").value
+    document.getElementById("custom_2_title").innerHTML = custom_2_title
     prompt_flag_save()
     }
 );
 
 $('#CUST_2_description').on('keyup paste cut', function () {
     custom_2_desc = document.getElementById("CUST_2_description").value
+    document.getElementById("custom_2_desc").innerHTML = custom_2_desc
     prompt_flag_save()
     }
 );
@@ -3881,12 +3953,14 @@ $('#CUST_2_Prompt').on('keyup paste cut', function () {
 
 $('#CUST_3_title').on('keyup paste cut', function () {
     custom_3_title = document.getElementById("CUST_3_title").value
+    document.getElementById("custom_3_title").innerHTML = custom_3_title
     prompt_flag_save()
     }
 );
 
 $('#CUST_3_description').on('keyup paste cut', function () {
     custom_3_desc = document.getElementById("CUST_3_description").value
+    document.getElementById("custom_3_desc").innerHTML = custom_3_desc
     prompt_flag_save()
     }
 );
@@ -3899,12 +3973,14 @@ $('#CUST_3_Prompt').on('keyup paste cut', function () {
 
 $('#CUST_4_title').on('keyup paste cut', function () {
     custom_4_title = document.getElementById("CUST_4_title").value
+    document.getElementById("custom_4_title").innerHTML = custom_4_title
     prompt_flag_save()
     }
 );
 
 $('#CUST_4_description').on('keyup paste cut', function () {
     custom_4_desc = document.getElementById("CUST_4_description").value
+    document.getElementById("custom_4_desc").innerHTML = custom_4_desc
     prompt_flag_save()
     }
 );
@@ -3917,12 +3993,14 @@ $('#CUST_4_Prompt').on('keyup paste cut', function () {
 
 $('#CUST_5_title').on('keyup paste cut', function () {
     custom_5_title = document.getElementById("CUST_5_title").value
+    document.getElementById("custom_5_title").innerHTML = custom_5_title
     prompt_flag_save()
     }
 );
 
 $('#CUST_5_description').on('keyup paste cut', function () {
     custom_5_desc = document.getElementById("CUST_5_description").value
+    document.getElementById("custom_5_desc").innerHTML = custom_5_desc
     prompt_flag_save()
     }
 );

@@ -18,7 +18,7 @@
     --deselected_butt_color: gray;
     --confirm_green: #00FF00;
     --warning_red:#FF0000;
-    --rm_width: calc(min(400px,30%));
+    --rm_width: calc(min(400px,50%));
 --lm_width: 145px;
 }
 
@@ -215,11 +215,13 @@ todo, make it flop*/
     background: var(--bg_right);
     width: var(--rm_width);
     height: 100vh;
+    height: 100svh !important;
     position: fixed;
     right: 0px;
     padding-bottom: 20vh;
     z-index: 2000;
     white-space: normal;
+    font-size: calc(min(3vw,100%));
 }
 
 #right_menu .hidden{
@@ -293,6 +295,7 @@ h2{
     overflow-y: scroll;
     height: -webkit-fill-available;
     height: 70vh;
+    height: 70svh !important;
     padding-left: var(--rm_padding_lr);
     padding-right: var(--rm_padding_lr);
 }
@@ -591,7 +594,7 @@ h4 {
     background-image: var(--bg_right);
     color: var(--deselected_butt_color);
     cursor: pointer;
-    font-size: x-large;
+        font-size: calc(min(3vw,125%));
 }
 
 div#rm_ch_create_block {
